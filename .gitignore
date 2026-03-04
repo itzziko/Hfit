@@ -1,0 +1,10 @@
+node_modules/
+.env
+database.sqlite
+.vscode/
+.DS_Store
+Thumbs.db
+*.log
+hfit-server/node_modules/
+hfit-server/database.sqlite
+hfit-server/.env

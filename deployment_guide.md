@@ -1,0 +1,35 @@
+# Hfit Deployment Guide (Free Hosting)
+
+Follow these steps to put your Hfit application online for free using **Render.com**.
+
+## 1. Prepare your GitHub Repository
+1. Go to [GitHub.com](https://github.com) and create a new repository (e.g., `Hfit`).
+2. Push all your files (`index.html`, `script.js`, `style.css`, and the `hfit-server` folder) to this repository.
+
+## 2. Deploy on Render.com
+1. Create a free account at [Render.com](https://render.com).
+2. Click **"New +"** and select **"Web Service"**.
+3. Connect your GitHub repository.
+4. Set the following configurations:
+   - **Name**: `hfit-premium`
+   - **Root Directory**: `hfit-server`
+   - **Build Command**: `npm install`
+   - **Start Command**: `node server.js`
+
+## 3. Add Environment Variables
+On Render, go to the **"Environment"** tab for your service and add:
+- `OPENAI_API_KEY`: Paste your OpenRouter API key here.
+- `JWT_SECRET`: Create a random long string (e.g., `hfit_ultra_secure_123`).
+
+## 4. Launch!
+Render will build the app and give you a URL like `https://hfit-premium.onrender.com`.
+
+**Important**: Because you are using the Free tier, the server will "sleep" after 15 minutes of inactivity. It may take 30-60 seconds to "wake up" the first time you visit the URL after a break.
+
+## 5. Keep it "Always Online" (Anti-Sleep)
+To prevent your Render app from sleeping, follow these steps:
+1. Go to [Cron-job.org](https://cron-job.org) and create a free account.
+2. Click **"Create Cronjob"**.
+3. **URL**: Enter your Render URL followed by `/ping` (e.g., `https://hfit-premium.onrender.com/ping`).
+4. **Execution Schedule**: Set it to run every **14 minutes**.
+5. This will "ping" your server constantly, making Render think someone is using it, so it **never goes to sleep**.

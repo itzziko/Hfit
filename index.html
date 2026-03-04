@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hfit | Premium Health Intelligence</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <meta name="google-signin-client_id"
+    content="1076269008094-dvnppm0t808ug6n48kna9krj8mddvgm9.apps.googleusercontent.com">
+  <script src="https://apis.google.com/js/platform.js" async defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="dark-mode">
+
+  <!-- THEME TOGGLE -->
+  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Light/Dark Mode">🌓</button>
+
+  <!-- AUTH SCREEN -->
+  <div id="authScreen" class="auth-screen">
+    <h1>Hfit</h1>
+    <p style="color:var(--text-dim); font-weight:500;">Premium AI Health Companion</p>
+
+    <form id="authForm" class="auth-container" onsubmit="handleAuth(event)">
+      <div id="authTypeSelector" style="display:flex; gap:12px; margin-bottom:5px;">
+        <button type="button" id="btn-mode-signup" class="btn-small active" onclick="setAuthMode('signup')">Sign
+          Up</button>
+        <button type="button" id="btn-mode-signin" class="btn-small" onclick="setAuthMode('signin')">Sign In</button>
+      </div>
+
+      <!-- For Google Password Manager -->
+      <div style="display:flex; flex-direction:column; gap:15px;">
+        <input id="email" name="email" type="email" autocomplete="username email" placeholder="Email Address"
+          required />
+        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Password"
+          required />
+
+        <div id="signupFields" style="display:contents;">
+          <input id="firstName" name="given-name" autocomplete="given-name" placeholder="First Name" />
+          <input id="ageInput" name="age" type="number" placeholder="Age" />
+        </div>
+      </div>
+
+      <button type="submit" id="authSubmitBtn">Initialize Health AI</button>
+
+      <div id="googleSection" style="display:flex; flex-direction:column; gap:16px; margin-top:10px;">
+        <div class="auth-separator">OR</div>
+
+        <button type="button" class="google-auth-btn" onclick="triggerGoogleSignIn()">
+          <img src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_128dp.png"
+            alt="Google Logo">
+          <span id="googleAuthText">Initialize with Google</span>
+        </button>
+
+        <p style="font-size:0.75rem; color:var(--text-dim); text-align:center;">Hfit Core Cloud Sync Enabled</p>
+      </div>
+
+      <div id="authError" class="auth-error hidden"></div>
+    </form>
+  </div>
+
+  <!-- APP -->
+  <div id="app" class="app hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>Hfit</h2>
+      </div>
+      <nav>
+        <button id="btn-dashboard" onclick="openTab('dashboard')" class="active">📊 <span>Dashboard</span></button>
+        <button id="btn-ai" onclick="openTab('ai')">🤖 <span>AI Assistant</span></button>
+        <button id="btn-food" onclick="openTab('food')">🍎 <span>Food & Nutrition</span></button>
+        <button id="btn-sleep" onclick="openTab('sleep')">😴 <span>Sleep Tracker</span></button>
+        <button id="btn-workout" onclick="openTab('workout')">💪 <span>Fitness & Meals</span></button>
+        <button id="btn-goals" onclick="openTab('goals')">🎯 <span>My Goals</span></button>
+        <button id="btn-bruise" onclick="openTab('bruise')">🩹 <span>Bruise Identifier</span></button>
+        <button id="btn-feedback" onclick="openTab('feedback')">💬 <span>Feedback</span></button>
+      </nav>
+      <div style="padding: 15px; margin-top: auto; border-top: 1px solid var(--glass-border);">
+        <button class="logout" onclick="logout()" style="width: 100%; padding: 10px; font-size: 0.8rem;">Logout
+          Profile</button>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+      <!-- DASHBOARD -->
+      <section id="dashboard" class="tab active">
+        <div class="welcome-section" style="display:flex; justify-content:space-between; align-items:start;">
+          <div>
+            <h1 id="welcomeText">Hi, <span id="userName">User</span></h1>
+            <p class="subtitle">Your health performance overview.</p>
+          </div>
+          <div class="status-badge">
+            <span class="pulse-dot"></span>
+            <span id="ai-status-pulse">INITIALIZING...</span>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="card stat-card">
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+              <h3>Nutrition</h3>
+              <span style="font-size:0.8rem; color:var(--accent-primary); font-weight:700;">LIVE</span>
+            </div>
+            <div style="margin:20px 0;">
+              <span id="dash-cals" class="stat-val">0</span>
+              <span class="stat-label">DAILY CALORIES</span>
+            </div>
+            <button class="btn-secondary btn-small" onclick="openTab('food')">LOG MEAL</button>
+          </div>
+
+          <div class="card stat-card">
+            <h3>Sleep Recovery</h3>
+            <div style="display:flex; align-items:center; gap:25px; margin:20px 0;">
+              <div class="mini-circle" id="dash-sleep-circle">
+                <span id="dash-sleep-val">0%</span>
+              </div>
+              <div>
+                <p id="dash-sleep-status" style="font-weight:700; font-size:1.1rem;">No data yet</p>
+                <p style="font-size:0.8rem; color:var(--text-dim);">Last 24 hours</p>
+              </div>
+            </div>
+            <button class="btn-secondary btn-small" onclick="openTab('sleep')">ADD SLEEP</button>
+          </div>
+
+          <div class="card stat-card">
+            <h3>Active Goals</h3>
+            <div id="dash-goals-list"
+              style="margin:20px 0; display:flex; flex-direction:column; gap:10px; min-height:80px;">
+              <p style="color:var(--text-dim); font-size:0.9rem;">No goals set.</p>
+            </div>
+            <button class="btn-secondary btn-small" onclick="openTab('goals')">MANAGE</button>
+          </div>
+
+          <div class="card full-width-card" style="grid-column: 1 / -1;">
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+              <span style="font-size:1.5rem;">✨</span>
+              <h3 style="margin-bottom:0;">AI Health Recommendation</h3>
+            </div>
+            <p id="dash-ai-insight" class="ai-insight-text">Use our tracking tools to receive personalized wellness
+              insights here.</p>
+          </div>
+
+          <!-- PERFORMANCE TRENDS -->
+          <div class="card full-width-card trend-card" style="grid-column: 1 / -1;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+              <div style="display:flex; align-items:center; gap:15px;">
+                <span style="font-size:1.5rem;">📈</span>
+                <h3 style="margin-bottom:0;">Performance Trends</h3>
+              </div>
+            </div>
+            <div class="chart-container" style="position: relative; height:250px; width:100%">
+              <canvas id="performanceChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- AI ASSISTANT (Immersive) -->
+      <section id="ai" class="tab">
+        <div style="display:flex; width: 100%; height: 100%; gap: 20px;">
+          <!-- Chat History Sidebar -->
+          <div class="chat-sidebar" id="chatSidebar">
+            <button class="new-chat-btn" onclick="startNewChat()">+ New Chat</button>
+            <div id="chatHistoryList" class="chat-history-list"></div>
+          </div>
+
+          <!-- Chat Window -->
+          <div class="chat-card" style="position: relative;">
+            <div id="chatHistory" class="chat-container">
+              <!-- Chat messages injected here -->
+            </div>
+            <div class="chat-input-area">
+              <label for="chatImage" class="chat-upload-btn" title="Upload Image">📷</label>
+              <input type="file" id="chatImage" accept="image/*" class="hidden" onchange="handleChatImage(event)" />
+              <input id="chatInput" placeholder="Message Hfit AI (ask about health, meds, or upload a photo)..."
+                onkeyup="if(event.key==='Enter') sendMessage()" />
+              <button onclick="sendMessage()" style="padding: 10px 20px;">Send</button>
+            </div>
+            <div id="chatImagePreviewContainer" class="hidden">
+              <img id="chatImagePreview" src="" />
+              <button onclick="clearChatImage()">✖</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FOOD ANALYZER -->
+      <section id="food" class="tab">
+        <h2 style="font-size:2.5rem; margin-bottom:30px;">Food Analyzer</h2>
+        <div class="card" style="max-width:800px; margin:0 auto;">
+          <div class="upload-zone" id="uploadZone" onclick="document.getElementById('foodImage').click()">
+            <img id="foodPreview" src="" class="hidden" />
+            <div id="uploadPlaceholder">
+              <span style="font-size:3.5rem; display:block; margin-bottom:15px;">📸</span>
+              <p style="font-weight:600; color:var(--text-dim);">TOSS IN A PHOTO OF YOUR MEAL</p>
+            </div>
+            <input type="file" id="foodImage" accept="image/*" class="hidden" onchange="handleImageUpload(event)" />
+          </div>
+
+          <div class="food-stats">
+            <div class="stat-item"><span class="stat-val" id="food-cals">0</span><span class="stat-label">CALS</span>
+            </div>
+            <div class="stat-item"><span class="stat-val" id="food-protein">0g</span><span
+                class="stat-label">PRTN</span></div>
+            <div class="stat-item"><span class="stat-val" id="food-carbs">0g</span><span class="stat-label">CARB</span>
+            </div>
+            <div class="stat-item"><span class="stat-val" id="food-fats">0g</span><span class="stat-label">FATS</span>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:15px;">
+            <input type="text" id="foodInput" placeholder="What did you eat today?" onfocus="this.select()" />
+            <button onclick="analyzeFood()" style="width:180px;">ANALYZE</button>
+          </div>
+          <div id="foodResult" style="margin-top:20px; font-weight:600; color:var(--accent-primary);"></div>
+        </div>
+      </section>
+
+      <!-- SLEEP -->
+      <section id="sleep" class="tab">
+        <h2 style="font-size:2.5rem; margin-bottom:30px;">Sleep Performance</h2>
+        <div class="card" style="max-width:800px; margin:0 auto;">
+          <div style="display:flex; align-items:center; justify-content:space-around; margin-bottom:40px;">
+            <div class="progress-circle" id="sleepCircle" style="width:180px; height:180px;">
+              <span id="sleepPercent" style="font-size:2rem;">0%</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:15px;">
+              <p style="font-weight:700; color:var(--text-dim);">LOG LAST NIGHT'S SLEEP</p>
+              <input type="number" id="sleepInput" placeholder="0" min="0" max="24" onfocus="this.select()" />
+              <button onclick="trackSleep()">LOG DATA</button>
+              <div id="sleepStatus" class="auth-error hidden" style="margin-top:15px;"></div>
+            </div>
+          </div>
+
+          <div>
+            <h3 style="margin-bottom:20px;">7-Day History</h3>
+            <div id="sleepWeeklyList" class="weekly-row"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FITNESS -->
+      <section id="workout" class="tab">
+        <h2 style="font-size:2.5rem; margin-bottom:30px;">Professional Planning</h2>
+        <div class="card" style="max-width:800px; margin:0 auto;">
+          <div class="plan-type-toggle">
+            <button id="btn-mode-workout" class="active" onclick="setPlanMode('workout')">WORKOUT GENERATOR</button>
+            <button id="btn-mode-meal" onclick="setPlanMode('meal')">MEAL PREP ENGINE</button>
+          </div>
+
+          <div id="workoutInputs" style="display:flex; flex-direction:column; gap:15px;">
+            <input id="targetArea" placeholder="TARGET MUSCLES" onfocus="this.select()" />
+            <input id="timePerWorkout" placeholder="SESSION DURATION (MIN)" onfocus="this.select()" />
+            <select id="location">
+              <option value="Gym">FULLY EQUIPPED GYM</option>
+              <option value="Home">HOME / NO EQUIPMENT</option>
+              <option value="Outdoor">OUTDOOR PERFORMANCE</option>
+            </select>
+          </div>
+
+          <div id="mealInputs" class="hidden" style="display:flex; flex-direction:column; gap:15px;">
+            <input id="mealGoal" placeholder="PHYSIQUE GOAL" onfocus="this.select()" />
+            <input id="dietType" placeholder="DIETARY RESTRICTIONS" onfocus="this.select()" />
+          </div>
+
+          <button onclick="generatePlan()" style="margin-top:30px;">GENERATE AI STRATEGY</button>
+          <div id="planResult" class="ai-msg hidden" style="margin-top:25px; padding:30px; border-radius:24px;"></div>
+        </div>
+      </section>
+
+      <!-- GOALS -->
+      <section id="goals" class="tab">
+        <h2 style="font-size:2.5rem; margin-bottom:30px;">Health Milestones</h2>
+        <div class="card" style="max-width:800px; margin:0 auto;">
+          <div style="display:flex; gap:15px; margin-bottom:30px;">
+            <input id="goalInput" placeholder="ENTER NEW GOAL..." onfocus="this.select()" />
+            <button onclick="addGoal()" style="width:150px;">ADD</button>
+          </div>
+          <ul id="goalList" class="goal-list"></ul>
+        </div>
+      </section>
+
+      <!-- BRUISE IDENTIFIER -->
+      <section id="bruise" class="tab">
+        <h2 style="font-size:2.5rem; margin-bottom:30px;">Hfit Vision: Medical Identifier</h2>
+        <div class="card" style="max-width:800px; margin:0 auto;">
+          <p style="color:var(--text-dim); margin-bottom:20px; font-weight:500;">Upload an image of a bruise, rash, or
+            skin concern for an AI-powered diagnostic analysis. <br><strong>DISCLAIMER: For informational purposes only.
+              Consult a doctor for any health decisions.</strong></p>
+
+          <div class="upload-zone" id="bruiseUploadZone" onclick="document.getElementById('bruiseImage').click()">
+            <img id="bruisePreview" src="" class="hidden" />
+            <div id="bruisePlaceholder">
+              <span style="font-size:3.5rem; display:block; margin-bottom:15px;">🔍</span>
+              <p style="font-weight:600; color:var(--text-dim);">UPLOAD PHOTO FOR ANALYSIS</p>
+            </div>
+            <input type="file" id="bruiseImage" accept="image/*" class="hidden" onchange="handleBruiseUpload(event)" />
+          </div>
+
+          <button onclick="analyzeBruise()" style="width:100%; margin-top:20px;">START CLASSIFICATION</button>
+
+          <div id="bruiseResult" class="ai-msg hidden"
+            style="margin-top:25px; padding:30px; border-radius:24px; border: 1px solid var(--accent-primary);"></div>
+        </div>
+      </section>
+
+      <!-- FEEDBACK -->
+      <section id="feedback" class="tab">
+        <h2 style="font-size:2.5rem; margin-bottom:30px;">Transmission Feedback</h2>
+        <div class="card" style="max-width:800px; margin:0 auto;">
+          <p style="color:var(--text-dim); margin-bottom:20px;">Your feedback is transmitted directly to our performance
+            architects. We use this data to calibrate the Hfit AI core.</p>
+          <input type="text" id="nameInput" placeholder="Your Name" style="width: 100%; margin-bottom: 15px;" />
+          <textarea id="feedbackInput" placeholder="Describe your experience or requested optimizations..."></textarea>
+          <button onclick="sendFeedback()" style="margin-top:20px;">SUBMIT FEEDBACK</button>
+          <div id="feedbackStatus" class="auth-error hidden" style="margin-top:15px;"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,3 @@
+go to cmd
+then CD c:\Hfit\Hfit-server
+and then node view-db.js
