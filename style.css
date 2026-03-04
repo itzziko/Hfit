@@ -161,58 +161,6 @@ button:active {
   text-align: center;
 }
 
-.auth-separator {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: 10px 0;
-  color: var(--text-dim);
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-}
-
-.auth-separator::before,
-.auth-separator::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid var(--glass-border);
-}
-
-.auth-separator:not(:empty)::before {
-  margin-right: 15px;
-}
-
-.auth-separator:not(:empty)::after {
-  margin-left: 15px;
-}
-
-.google-auth-btn {
-  background: white;
-  color: #1f2937;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  text-transform: none;
-  font-weight: 600;
-  letter-spacing: normal;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-}
-
-.google-auth-btn:hover {
-  background: #f9fafb;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-  filter: none;
-}
-
-.google-auth-btn img {
-  width: 20px;
-  height: 20px;
-}
 
 @keyframes authFadeIn {
   from {

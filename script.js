@@ -38,7 +38,8 @@ async function createAccount(email, password, username, age) {
     }
     return { success: false, message: result.message || "Signup failed." };
   } catch (e) {
-    return { success: false, message: "Network error. Is the server running?" };
+    console.error("Transmission Error:", e);
+    return { success: false, message: `Hfit Core Connection Failed at: ${BACKEND_URL}. Check if the server is live.` };
   }
 }
 
@@ -61,49 +62,11 @@ async function login(email, password) {
     }
     return { success: false, message: result.message || "Login failed." };
   } catch (e) {
-    return { success: false, message: "Network error. Is the server running?" };
+    console.error("Transmission Error:", e);
+    return { success: false, message: `Hfit Core Connection Failed at: ${BACKEND_URL}. Check if the server is live.` };
   }
 }
 
-// Google Sign-in Callback (Platform JS)
-async function onSignIn(googleUser) {
-  var profile = googleUser.getBasicProfile();
-  var email = profile.getEmail();
-  var name = profile.getName();
-
-  const errorDiv = document.getElementById("authError");
-  if (errorDiv) errorDiv.classList.add("hidden");
-
-  try {
-    const res = await fetch(`${BACKEND_URL}/google-auth`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, name, age: 25 })
-    });
-    const result = await res.json();
-    if (result.success) {
-      setSession(result.token);
-      currentUser = {
-        email: result.user.email,
-        profile: { username: result.user.username, age: result.user.age },
-        data: result.user.data
-      };
-      initChatSystem();
-      showApp();
-      checkAiStatus();
-    } else {
-      if (errorDiv) {
-        errorDiv.textContent = result.message || "Google Login failed.";
-        errorDiv.classList.remove("hidden");
-      }
-    }
-  } catch (e) {
-    if (errorDiv) {
-      errorDiv.textContent = "Network error connecting to core.";
-      errorDiv.classList.remove("hidden");
-    }
-  }
-}
 
 // --- INITIALIZATION ---
 window.onload = async () => {
@@ -289,63 +252,6 @@ function setAuthMode(mode) {
   document.getElementById("btn-mode-signin").classList.toggle("active", mode === 'signin');
   document.getElementById("signupFields").style.display = mode === 'signup' ? "contents" : "none";
   document.getElementById("authSubmitBtn").textContent = mode === 'signup' ? "Initialize Health AI" : "Authenticate Session";
-
-  // Update Google Auth Text
-  const googleText = document.getElementById("googleAuthText");
-  if (googleText) {
-    googleText.textContent = mode === 'signup' ? "Sign Up with Google" : "Sign In with Google";
-  }
-}
-
-async function triggerGoogleSignIn() {
-  const errorDiv = document.getElementById("authError");
-  if (errorDiv) errorDiv.classList.add("hidden");
-
-  // Check if running via file://
-  if (window.location.protocol === 'file:') {
-    if (errorDiv) {
-      errorDiv.textContent = "Google Auth requires a server. Run 'node server.js' and go to http://localhost:3000";
-      errorDiv.classList.remove("hidden");
-    }
-    return;
-  }
-
-  try {
-    if (typeof gapi !== 'undefined') {
-      gapi.load('auth2', function () {
-        const client_id = document.querySelector('meta[name="google-signin-client_id"]').content;
-
-        gapi.auth2.init({
-          client_id: client_id,
-          prompt: 'select_account'
-        }).then((auth2) => {
-          auth2.signIn().then(onSignIn).catch(err => {
-            console.error("Google Sign-In Error:", err);
-            if (errorDiv) {
-              errorDiv.textContent = "Sign-In Error: " + (err.error || "Cancelled by user.");
-              errorDiv.classList.remove("hidden");
-            }
-          });
-        }).catch(err => {
-          console.error("GAPI Init Error:", err);
-          if (errorDiv) {
-            errorDiv.textContent = "Config Error: Ensure YOUR URL is authorized in Google Console.";
-            errorDiv.classList.remove("hidden");
-          }
-        });
-      });
-    } else {
-      if (errorDiv) {
-        errorDiv.textContent = "Hfit Core: Google Services not loaded. Check your internet.";
-        errorDiv.classList.remove("hidden");
-      }
-    }
-  } catch (e) {
-    if (errorDiv) {
-      errorDiv.textContent = "Hfit Core: Transmission error during Google Auth.";
-      errorDiv.classList.remove("hidden");
-    }
-  }
 }
 
 async function handleAuth(e) {

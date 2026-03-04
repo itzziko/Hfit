@@ -10,9 +10,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet">
-  <meta name="google-signin-client_id"
-    content="1076269008094-dvnppm0t808ug6n48kna9krj8mddvgm9.apps.googleusercontent.com">
-  <script src="https://apis.google.com/js/platform.js" async defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -47,18 +44,6 @@
       </div>
 
       <button type="submit" id="authSubmitBtn">Initialize Health AI</button>
-
-      <div id="googleSection" style="display:flex; flex-direction:column; gap:16px; margin-top:10px;">
-        <div class="auth-separator">OR</div>
-
-        <button type="button" class="google-auth-btn" onclick="triggerGoogleSignIn()">
-          <img src="https://www.gstatic.com/images/branding/googleg/1x/googleg_standard_color_128dp.png"
-            alt="Google Logo">
-          <span id="googleAuthText">Initialize with Google</span>
-        </button>
-
-        <p style="font-size:0.75rem; color:var(--text-dim); text-align:center;">Hfit Core Cloud Sync Enabled</p>
-      </div>
 
       <div id="authError" class="auth-error hidden"></div>
     </form>

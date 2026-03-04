@@ -134,36 +134,7 @@ app.post("/api/data", authenticateToken, async (req, res) => {
     }
 });
 
-app.post("/google-auth", async (req, res) => {
-    const { email, name } = req.body;
-    try {
-        const db = await dbPromise;
-        const normalizedEmail = email.trim().toLowerCase();
-
-        let user = await db.get("SELECT * FROM users WHERE email = ?", [normalizedEmail]);
-        if (!user) {
-            // Create user
-            const result = await db.run(
-                "INSERT INTO users (email, password_hash, username, age) VALUES (?, ?, ?, ?)",
-                [normalizedEmail, "google_oauth_no_password", name, req.body.age || 25]
-            );
-            const initialData = { sleep: [], goals: [], chatThreads: [], currentChatId: null };
-            await db.run("INSERT INTO user_data (user_id, data_json) VALUES (?, ?)", [result.lastID, JSON.stringify(initialData)]);
-
-            const token = jwt.sign({ id: result.lastID, email: normalizedEmail }, JWT_SECRET);
-            return res.json({ success: true, token, user: { id: result.lastID, email: normalizedEmail, username: name, age: 25, data: initialData } });
-        }
-
-        const userData = await db.get("SELECT data_json FROM user_data WHERE user_id = ?", [user.id]);
-        const data = userData ? JSON.parse(userData.data_json) : {};
-        const token = jwt.sign({ id: user.id, email: normalizedEmail }, JWT_SECRET);
-
-        res.json({ success: true, token, user: { id: user.id, email: user.email, username: user.username, age: user.age, data } });
-    } catch (e) {
-        console.error("Google Auth error:", e);
-        res.status(500).json({ success: false, message: "Server error during Google auth" });
-    }
-});
+// Google integration removed as requested
 
 app.post("/chat", async (req, res) => {
     const userMessage = req.body.message;
@@ -189,15 +160,23 @@ app.post("/chat", async (req, res) => {
             if (req.body.image) userContent.push({ type: "image_url", image_url: { url: req.body.image } });
             messages.push({ role: "user", content: userContent });
 
+            const apiKey = (process.env.OPENAI_API_KEY || "").trim();
+            if (!apiKey) {
+                lastError = "Hfit Core: AI_KEY is missing in Render environment variables.";
+                console.error("[CRITICAL] Missing OPENAI_API_KEY");
+                break;
+            }
+
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-                    "HTTP-Referer": "http://localhost:3000",
-                    "X-Title": "Hfit Premium"
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ model: model, messages: messages }),
+                body: JSON.stringify({
+                    model: model,
+                    messages: messages
+                }),
                 timeout: 30000
             });
 
