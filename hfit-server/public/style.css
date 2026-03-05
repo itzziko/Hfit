@@ -825,16 +825,18 @@ button:active {
     width: 100%;
     height: auto;
     flex-direction: row;
-    padding: 10px;
+    padding: 10px 5px;
     position: fixed;
     bottom: 0;
     left: 0;
     top: auto;
     border-right: none;
     border-top: 1px solid var(--glass-border);
-    justify-content: space-around;
-    gap: 0;
-    background: rgba(5, 5, 10, 0.95);
+    justify-content: flex-start;
+    overflow-x: auto;
+    gap: 10px;
+    background: rgba(5, 5, 10, 0.98);
+    z-index: 1000;
   }
 
   .sidebar-header {
@@ -843,16 +845,18 @@ button:active {
 
   .sidebar nav {
     flex-direction: row;
-    width: 100%;
-    justify-content: space-around;
+    width: max-content;
+    justify-content: flex-start;
+    gap: 8px;
   }
 
   .sidebar button {
     flex-direction: column;
-    padding: 10px;
+    padding: 8px 12px;
     gap: 4px;
     font-size: 0.7rem;
-    flex: 1;
+    flex: 0 0 auto;
+    min-width: 60px;
     justify-content: center;
     align-items: center;
   }
@@ -1057,29 +1061,5 @@ button:active {
 
   .chat-input-area {
     width: 80%;
-  }
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    width: 85px;
-    padding: 30px 15px;
-  }
-
-  .sidebar h2,
-  .sidebar nav button span {
-    display: none;
-  }
-
-  .tab {
-    padding: 40px 30px;
-  }
-
-  .chat-container {
-    padding: 60px 20px 150px 20px;
-  }
-
-  .chat-input-area {
-    width: 90%;
   }
 }

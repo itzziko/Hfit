@@ -776,6 +776,7 @@ const originalOpenTab = openTab;
 openTab = (id) => {
   originalOpenTab(id);
   if (id === 'workout') loadSavedPlans();
+  if (id === 'feedback') loadRecentFeedback();
 };
 
 // --- BRUISE IDENTIFIER ---
@@ -990,11 +991,38 @@ async function sendFeedback() {
       document.getElementById("feedbackInput").value = "";
       document.getElementById("nameInput").value = "";
       showNotification("Success", "Your feedback has been logged to GitHub.");
+      loadRecentFeedback(); // refresh the list
     } else {
       throw new Error();
     }
   } catch (e) {
     status.textContent = "TRANSMISSION FAILED. CORE OFFLINE.";
+  }
+}
+
+async function loadRecentFeedback() {
+  const list = document.getElementById("recentFeedbackList");
+  if (!list) return;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/feedback`);
+    const data = await res.json();
+
+    if (data.success && data.feedback.length > 0) {
+      list.innerHTML = data.feedback.slice(0, 10).map(f => `
+        <li class="goal-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; width: 100%;">
+            <span style="font-weight: 700; color: var(--accent-primary);">${f.name || 'Anonymous'}</span>
+            <span style="font-size: 0.8rem; color: var(--text-dim);">${new Date(f.timestamp).toLocaleDateString()}</span>
+          </div>
+          <span style="line-height: 1.5;">${f.message}</span>
+        </li>
+      `).join('');
+    } else {
+      list.innerHTML = `<li class="goal-item"><span style="color:var(--text-dim);">No recent updates available.</span></li>`;
+    }
+  } catch (e) {
+    list.innerHTML = `<li class="goal-item"><span style="color:#ef4444;">Failed to sync recent data.</span></li>`;
   }
 }
 

@@ -196,9 +196,9 @@ app.post("/chat", async (req, res) => {
             if (req.body.image) userContent.push({ type: "image_url", image_url: { url: req.body.image } });
             messages.push({ role: "user", content: userContent });
 
-            const apiKey = (process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || "").trim();
+            const apiKey = (process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || "").replace(/['"]/g, '').trim();
             if (!apiKey) {
-                lastError = "HFIT CORE ERROR: API_KEY is missing in Render environment variables. Please add OPENAI_API_KEY to your Render dashboard.";
+                lastError = "API_KEY is missing. Please add OPENAI_API_KEY to your Render Environment Variables or .env file.";
                 console.error("[CRITICAL] Missing API Key");
                 break;
             }
@@ -207,7 +207,9 @@ app.post("/chat", async (req, res) => {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${apiKey}`,
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://hfit.ai",
+                    "X-Title": "Hfit Core"
                 },
                 body: JSON.stringify({
                     model: model,
@@ -217,6 +219,13 @@ app.post("/chat", async (req, res) => {
             });
 
             const data = await response.json();
+
+            if (response.status === 401 || (data.error && data.error.message && data.error.message.includes("Authentication"))) {
+                lastError = `API Key Authentication Failed: ${data.error?.message || "Invalid Key"}. Make sure your OPENAI_API_KEY in Render or .env is copied exactly, with no quotes around it.`;
+                console.error("[CRITICAL] Auth Failed:", lastError);
+                break; // Stop trying other models; it's an API Key issue
+            }
+
             if (data.choices && data.choices[0]) {
                 console.log(`[AI SUCCESS] Response delivered via ${model}`);
                 return res.json({ reply: data.choices[0].message.content, model_used: model });
