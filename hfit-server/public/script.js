@@ -333,7 +333,6 @@ function openTab(id) {
     const chatHist = document.getElementById("chatHistory");
     chatHist.scrollTop = chatHist.scrollHeight;
   }, 100);
-  if (id === 'feedback') fetchFeedback();
 }
 
 // --- DATA PERSISTENCE HELPERS ---
@@ -945,46 +944,13 @@ async function sendFeedback() {
       status.textContent = "FEEDBACK RECEIVED. CORE CALIBRATED.";
       document.getElementById("feedbackInput").value = "";
       document.getElementById("nameInput").value = "";
-      fetchFeedback(); // Refresh the list
+      showNotification("Success", "Your feedback has been logged to GitHub.");
     } else {
       throw new Error();
     }
   } catch (e) {
     status.textContent = "TRANSMISSION FAILED. CORE OFFLINE.";
   }
-}
-
-async function fetchFeedback() {
-  const list = document.getElementById("feedbackList");
-  if (!list) return;
-
-  try {
-    const res = await fetch(`${BACKEND_URL}/feedback`);
-    const data = await res.json();
-    if (data.success) {
-      renderFeedbackList(data.feedback);
-    }
-  } catch (e) {
-    console.warn("Could not fetch transmissions:", e);
-  }
-}
-
-function renderFeedbackList(feedbackItems) {
-  const list = document.getElementById("feedbackList");
-  if (feedbackItems.length === 0) {
-    list.innerHTML = `<p style="color:var(--text-dim); font-size:0.9rem;">No transmissions yet.</p>`;
-    return;
-  }
-
-  list.innerHTML = feedbackItems.map(f => `
-    <div style="background:var(--glass-bg); border:1px solid var(--glass-border); padding:15px; border-radius:12px;">
-      <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
-        <span style="font-weight:700; color:var(--accent-primary); font-size:0.8rem;">${f.name.toUpperCase()}</span>
-        <span style="font-size:0.7rem; color:var(--text-dim);">${new Date(f.timestamp).toLocaleDateString()}</span>
-      </div>
-      <p style="font-size:0.9rem; line-height:1.4; color:var(--text-main);">${f.message}</p>
-    </div>
-  `).join('');
 }
 
 // --- PERFORMANCE TRENDS ---
@@ -1113,43 +1079,44 @@ let notifInterval = null;
 function showNotification(title, message) {
   const notif = document.createElement("div");
   notif.style.position = "fixed";
-  notif.style.bottom = "20px";
-  notif.style.right = "20px";
-  notif.style.backgroundColor = "var(--bg-secondary, #1a1a2e)";
-  notif.style.borderLeft = "4px solid var(--accent-primary, #00f2ff)";
-  notif.style.color = "#fff";
-  notif.style.padding = "15px 20px";
-  notif.style.borderRadius = "12px";
-  notif.style.boxShadow = "0 10px 40px rgba(0,0,0,0.6)";
-  notif.style.zIndex = "9999";
-  notif.style.transform = "translateX(120%)";
-  notif.style.transition = "transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)";
+  notif.style.top = "30px";
+  notif.style.right = "30px";
+  notif.style.backgroundColor = "#fff";
+  notif.style.borderLeft = "6px solid #000";
+  notif.style.color = "#000";
+  notif.style.padding = "20px 25px";
+  notif.style.borderRadius = "16px";
+  notif.style.boxShadow = "0 25px 50px -12px rgba(0, 0, 0, 0.4)";
+  notif.style.zIndex = "10000";
+  notif.style.transform = "translateX(calc(100% + 40px))";
+  notif.style.transition = "transform 0.5s cubic-bezier(0.19, 1, 0.22, 1)";
   notif.style.fontFamily = "'Inter', sans-serif";
-  notif.style.maxWidth = "320px";
+  notif.style.minWidth = "280px";
+  notif.style.maxWidth = "calc(100vw - 60px)";
   notif.style.display = "flex";
   notif.style.flexDirection = "column";
-  notif.style.gap = "5px";
+  notif.style.gap = "4px";
 
   notif.innerHTML = `
-    <div style="display:flex; align-items:center; gap:8px;">
-        <span style="font-size:16px;">🔔</span>
-        <h4 style="margin:0; font-size:14px; font-weight:600; color:var(--text-primary, #fff);">${title}</h4>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-size:18px;">✨</span>
+        <h4 style="margin:0; font-size:15px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#000;">${title}</h4>
     </div>
-    <p style="margin:0; font-size:13px; color:var(--text-dim, #a0abc0); line-height:1.5;">${message}</p>
+    <p style="margin:0; font-size:14px; color:#555; line-height:1.4; font-weight:500;">${message}</p>
   `;
 
   document.body.appendChild(notif);
 
   // Animate in
-  requestAnimationFrame(() => {
-    notif.style.transform = "translateX(0)";
-  });
-
-  // Animate out after 5 seconds
   setTimeout(() => {
-    notif.style.transform = "translateX(120%)";
-    setTimeout(() => notif.remove(), 400);
-  }, 5000);
+    notif.style.transform = "translateX(0)";
+  }, 100);
+
+  // Animate out after 6 seconds
+  setTimeout(() => {
+    notif.style.transform = "translateX(calc(100% + 40px))";
+    setTimeout(() => notif.remove(), 600);
+  }, 6000);
 }
 
 function toggleNotifications() {

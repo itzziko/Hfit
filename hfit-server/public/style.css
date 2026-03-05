@@ -134,7 +134,7 @@ button:active {
 
 .btn-secondary:hover {
   background: var(--glass-border);
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .btn-small {
@@ -815,7 +815,137 @@ button:active {
   }
 }
 
-/* PERFORMANCE TRENDS */
+/* MOBILE RESPONSIVENESS */
+@media (max-width: 900px) {
+  .app {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    padding: 10px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    top: auto;
+    border-right: none;
+    border-top: 1px solid var(--glass-border);
+    justify-content: space-around;
+    gap: 0;
+    background: rgba(5, 5, 10, 0.95);
+  }
+
+  .sidebar-header {
+    display: none;
+  }
+
+  .sidebar nav {
+    flex-direction: row;
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .sidebar button {
+    flex-direction: column;
+    padding: 10px;
+    gap: 4px;
+    font-size: 0.7rem;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sidebar button span {
+    display: block;
+    font-size: 0.6rem;
+  }
+
+  .sidebar .logout {
+    display: none;
+  }
+
+  .content {
+    padding-bottom: 80px;
+    /* Space for bottom nav */
+  }
+
+  .tab {
+    padding: 40px 20px;
+  }
+
+  #dashboard {
+    padding: 40px 20px 100px 20px;
+  }
+
+  .welcome-section h1 {
+    font-size: 2.5rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .chat-input-area {
+    width: 90%;
+    bottom: 90px;
+    padding: 15px;
+  }
+
+  .chat-container {
+    padding: 40px 15px 160px 15px;
+  }
+
+  .message {
+    max-width: 90%;
+    font-size: 0.95rem;
+  }
+
+  #ai {
+    height: calc(100vh - 70px);
+  }
+
+  .chat-sidebar {
+    display: none;
+    /* Hide chat history sidebar on mobile to save space */
+  }
+
+  .auth-container {
+    padding: 30px;
+    width: 90%;
+  }
+
+  .auth-screen h1 {
+    font-size: 3.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-section {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .stat-val {
+    font-size: 2.2rem;
+  }
+
+  .progress-circle {
+    width: 140px !important;
+    height: 140px !important;
+  }
+
+  .upload-zone {
+    height: 200px;
+  }
+
+  .tab h2 {
+    font-size: 1.8rem !important;
+  }
+}
+
 .trend-card {
   overflow: hidden;
 }
