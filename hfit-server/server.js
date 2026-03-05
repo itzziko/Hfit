@@ -251,7 +251,54 @@ app.post("/feedback", async (req, res) => {
         const db = await dbPromise;
         await db.run("INSERT INTO feedback (name, message) VALUES (?, ?)", [name || 'Anonymous', feedback]);
         console.log(`[FEEDBACK SAVED] from ${name || 'Anonymous'}`);
-        res.json({ success: true, message: "Feedback received and synced to Hfit Core." });
+
+        // GitHub Logging Logic
+        const ghToken = process.env.GITHUB_TOKEN;
+        if (ghToken) {
+            try {
+                const timestamp = new Date().toLocaleString();
+                const logEntry = `\n--- FEEDBACK ENTRY ---\nTime: ${timestamp}\nName: ${name || 'Anonymous'}\nResponse: ${feedback}\n----------------------\n`;
+
+                const repo = "itzziko/hfit";
+                const filePath = "feedback-logs.txt";
+                const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
+
+                // 1. Get current file data (to get the 'sha')
+                const getFile = await fetch(url, {
+                    headers: { "Authorization": `Bearer ${ghToken}` }
+                });
+
+                let sha = null;
+                let existingContent = "";
+                if (getFile.ok) {
+                    const fileData = await getFile.json();
+                    sha = fileData.sha;
+                    existingContent = Buffer.from(fileData.content, 'base64').toString('utf-8');
+                }
+
+                const newContent = existingContent + logEntry;
+                const base64Content = Buffer.from(newContent).toString('base64');
+
+                // 2. Push/Update file
+                await fetch(url, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `Bearer ${ghToken}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: `New feedback from ${name || 'Anonymous'}`,
+                        content: base64Content,
+                        sha: sha // Required for updates
+                    })
+                });
+                console.log("[GITHUB SYNC] Feedback logged to GitHub successfully.");
+            } catch (ghErr) {
+                console.error("[GITHUB SYNC ERROR]", ghErr.message);
+            }
+        }
+
+        res.json({ success: true, message: "Feedback received and synced to Hfit Core & GitHub." });
     } catch (e) {
         console.error("Feedback save error:", e);
         res.status(500).json({ success: false, message: "Failed to save feedback" });
