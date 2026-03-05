@@ -23,6 +23,13 @@
     <h1>Hfit</h1>
     <p style="color:var(--text-dim); font-weight:500;">Premium AI Health Companion</p>
 
+    <div id="recentAccountsContainer" class="hidden" style="margin-bottom: 20px; width: 100%; max-width: 400px;">
+      <p
+        style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+        Recent Accounts</p>
+      <div id="recentAccountsList" style="display: flex; flex-direction: column; gap: 10px;"></div>
+    </div>
+
     <form id="authForm" class="auth-container" onsubmit="handleAuth(event)">
       <div id="authTypeSelector" style="display:flex; gap:12px; margin-bottom:5px;">
         <button type="button" id="btn-mode-signup" class="btn-small active" onclick="setAuthMode('signup')">Sign

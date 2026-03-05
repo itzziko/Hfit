@@ -5,8 +5,19 @@ let currentUser = null;
 let authMode = 'signup';
 
 // --- STORAGE HELPERS ---
-function setSession(token) {
+function setSession(token, email) {
   localStorage.setItem("hfit_token", token);
+  if (email) {
+    const accounts = JSON.parse(localStorage.getItem("hfit_accounts") || "[]");
+    if (!accounts.includes(email)) {
+      accounts.push(email);
+      localStorage.setItem("hfit_accounts", JSON.stringify(accounts));
+    }
+  }
+}
+
+function getRecentAccounts() {
+  return JSON.parse(localStorage.getItem("hfit_accounts") || "[]");
 }
 
 function getSession() {
@@ -27,7 +38,7 @@ async function createAccount(email, password, username, age) {
     });
     const result = await res.json();
     if (result.success) {
-      setSession(result.token);
+      setSession(result.token, email);
       currentUser = {
         email: result.user.email,
         profile: { username: result.user.username, age: result.user.age },
@@ -51,7 +62,7 @@ async function login(email, password) {
     });
     const result = await res.json();
     if (result.success) {
-      setSession(result.token);
+      setSession(result.token, email);
       currentUser = {
         email: result.user.email,
         profile: { username: result.user.username, age: result.user.age },
@@ -138,25 +149,59 @@ window.onload = async () => {
         throw new Error("Invalid session");
       }
     } catch (e) {
-      clearSession();
-      // Ensure auth screen is visible
-      document.getElementById("authScreen").classList.remove("hidden");
-      document.getElementById("app").classList.add("hidden");
+      console.warn("Session check failed:", e);
+      // Only clear if it was explicitly an invalid session from server
+      if (e.message === "Invalid session") clearSession();
+
+      if (!currentUser) {
+        document.getElementById("authScreen").classList.remove("hidden");
+        document.getElementById("app").classList.add("hidden");
+      }
     }
   } else {
-    clearSession();
-    // Ensure auth screen is visible
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("app").classList.add("hidden");
   }
 
-  // Apply saved theme
   const theme = localStorage.getItem("hfitTheme") || "dark-mode";
   document.body.className = theme;
 
-  // Initialize Auth Mode Text
+  const recentAccounts = getRecentAccounts();
+  if (recentAccounts.length > 0) {
+    authMode = 'signin';
+    renderRecentAccounts();
+  }
   setAuthMode(authMode);
 };
+
+function renderRecentAccounts() {
+  const container = document.getElementById("recentAccountsContainer");
+  const list = document.getElementById("recentAccountsList");
+  const accounts = getRecentAccounts();
+
+  if (accounts.length === 0) {
+    container.classList.add("hidden");
+    return;
+  }
+
+  container.classList.remove("hidden");
+  list.innerHTML = accounts.map(email => `
+    <div class="card stat-card" style="padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 15px; background: var(--glass-bg); margin: 0;" onclick="selectRecentAccount('${email}')">
+      <div style="width: 32px; height: 32px; background: var(--accent-primary); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">${email[0].toUpperCase()}</div>
+      <div style="flex-grow: 1;">
+        <p style="font-weight: 700; font-size: 0.9rem; margin: 0;">${email}</p>
+        <p style="font-size: 0.7rem; color: var(--text-dim); margin: 0;">Stored Profile</p>
+      </div>
+      <span style="font-size: 1.2rem; opacity: 0.5;">→</span>
+    </div>
+  `).join('');
+}
+
+function selectRecentAccount(email) {
+  document.getElementById("email").value = email;
+  setAuthMode('signin');
+  document.getElementById("password").focus();
+}
 
 async function checkAiStatus() {
   const statusEl = document.getElementById("ai-status-pulse");

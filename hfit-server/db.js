@@ -6,8 +6,11 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Support for persistent disks (Render / Docker)
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'database.sqlite');
+
 const dbPromise = open({
-  filename: path.join(__dirname, 'database.sqlite'),
+  filename: dbPath,
   driver: sqlite3.Database
 });
 

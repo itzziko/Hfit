@@ -257,7 +257,7 @@ app.post("/feedback", async (req, res) => {
         if (ghToken) {
             try {
                 const timestamp = new Date().toLocaleString();
-                const logEntry = `\n--- FEEDBACK ENTRY ---\nTime: ${timestamp}\nName: ${name || 'Anonymous'}\nResponse: ${feedback}\n----------------------\n`;
+                const logEntry = `\n--- FEEDBACK ENTRY ---\nTime: ${timestamp}\nName: ${name || 'Anonymous'}\nResponse: ${feedback}\nStatus: Sent to Hfit Developers\n----------------------\n`;
 
                 const repo = "itzziko/hfit";
                 const filePath = "feedback-logs.txt";
@@ -298,7 +298,7 @@ app.post("/feedback", async (req, res) => {
             }
         }
 
-        res.json({ success: true, message: "Feedback received and synced to Hfit Core & GitHub." });
+        res.json({ success: true, message: "Feedback has been sent to Hfit developers." });
     } catch (e) {
         console.error("Feedback save error:", e);
         res.status(500).json({ success: false, message: "Failed to save feedback" });
