@@ -12,6 +12,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '.env') });
+// Owner secret key for protected feedback access
+const OWNER_KEY = process.env.OWNER_KEY || "default_owner_key";
+// Debug: confirm that the OpenRouter key is loaded (will print true/false in console)
+console.log('OPENROUTER_API_KEY loaded:', !!process.env.OPENROUTER_API_KEY);
 
 const app = express();
 app.use(cors());
@@ -196,9 +200,10 @@ app.post("/chat", async (req, res) => {
             if (req.body.image) userContent.push({ type: "image_url", image_url: { url: req.body.image } });
             messages.push({ role: "user", content: userContent });
 
-            const apiKey = (process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || "").replace(/['"]/g, '').trim();
+            // Prefer the OpenRouter key; fallback to OpenAI key if needed
+            const apiKey = (process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "").replace(/['\"]/g, '').trim();
             if (!apiKey) {
-                lastError = "API_KEY is missing. Please add OPENAI_API_KEY to your Render Environment Variables or .env file.";
+                lastError = "API key missing. Add OPENROUTER_API_KEY (or OPENAI_API_KEY) to .env or Render env vars.";
                 console.error("[CRITICAL] Missing API Key");
                 break;
             }
@@ -207,9 +212,7 @@ app.post("/chat", async (req, res) => {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${apiKey}`,
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "https://hfit.ai",
-                    "X-Title": "Hfit Core"
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     model: model,
@@ -243,14 +246,20 @@ app.post("/chat", async (req, res) => {
     res.status(503).json({ error: "HFIT CORE OVERLOADED: All available nodes are busy. Details: " + lastError });
 });
 
+// OWNER_KEY already defined above (line 15)
 app.get("/feedback", async (req, res) => {
+    // Require owner key as a query parameter for privacy
+    const providedKey = req.query.ownerKey;
+    if (providedKey !== OWNER_KEY) {
+        return res.status(403).json({ success: false, error: "Unauthorized access to feedback" });
+    }
     try {
         const db = await dbPromise;
         const feedbackList = await db.all("SELECT * FROM feedback ORDER BY timestamp DESC");
         res.json({ success: true, feedback: feedbackList });
     } catch (e) {
-        console.error("Feedback fetch error:", e);
-        res.status(500).json({ success: false, message: "Failed to fetch feedback" });
+        console.error(e);
+        res.status(500).json({ success: false, error: "DB error" });
     }
 });
 
