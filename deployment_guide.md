@@ -33,3 +33,24 @@ To prevent your Render app from sleeping, follow these steps:
 3. **URL**: Enter your Render URL followed by `/ping` (e.g., `https://hfit-premium.onrender.com/ping`).
 4. **Execution Schedule**: Set it to run every **14 minutes**.
 5. This will "ping" your server constantly, making Render think someone is using it, so it **never goes to sleep**.
+
+## 6. Persistent Data (Save Accounts Forever)
+Render's **Free Tier** wipes all local files (like `database.sqlite`) whenever the server restarts or you update the code. To save accounts permanently, you need a **Persistent Disk**.
+
+> [!IMPORTANT]
+> Persistent Disks on Render require a **paid instance** (starting at $7/mo).
+
+### Steps to add a Disk:
+1. In your Render Dashboard, select your **Web Service**.
+2. Go to the **"Disks"** tab in the sidebar.
+3. Click **"Add Disk"**.
+4. **Name**: `hfit-data`
+5. **Mount Path**: `/data`
+6. **Size**: `1GB` is plenty.
+
+### Final Configuration:
+1. Go to the **"Environment"** tab.
+2. Add a new variable:
+   - **Key**: `DATABASE_PATH`
+   - **Value**: `/data/database.sqlite`
+3. **Save Changes**. Your database is now stored on the disk and will **never be deleted**, even if the server restarts!

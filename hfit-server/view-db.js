@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function viewDb() {
-    const dbPath = path.join(__dirname, 'database.sqlite');
+    const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'database.sqlite');
     console.log("=========================================");
     console.log("Opening Database: " + dbPath);
     console.log("=========================================\n");
