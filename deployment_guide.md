@@ -4,7 +4,7 @@ Follow these steps to put your Hfit application online for free using **Render.c
 
 ## 1. Prepare your GitHub Repository
 1. Go to [GitHub.com](https://github.com) and create a new repository (e.g., `Hfit`).
-2. Push all your files (`index.html`, `script.js`, `style.css`, and the `hfit-server` folder) to this repository.
+Push all your files (`hfit-server` folder, which now contains your `public` folder with the HTML/CSS/JS) to this repository.
 
 ## 2. Deploy on Render.com
 1. Create a free account at [Render.com](https://render.com).
@@ -16,9 +16,9 @@ Follow these steps to put your Hfit application online for free using **Render.c
    - **Build Command**: `npm install`
    - **Start Command**: `node server.js`
 
-## 3. Add Environment Variables
+## 3. Add Environment Variables (IMPORTANT)
 On Render, go to the **"Environment"** tab for your service and add:
-- `OPENAI_API_KEY`: Paste your OpenRouter API key here.
+- `OPENAI_API_KEY`: Paste your OpenRouter API key here (e.g., `sk-or-v1-...`). **Do not use your OpenAI key here unless you know what you are doing.** Use OpenRouter.
 - `JWT_SECRET`: Create a random long string (e.g., `hfit_ultra_secure_123`).
 
 ## 4. Launch!

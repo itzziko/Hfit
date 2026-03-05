@@ -308,6 +308,14 @@
           <textarea id="feedbackInput" placeholder="Describe your experience or requested optimizations..."></textarea>
           <button onclick="sendFeedback()" style="margin-top:20px;">SUBMIT FEEDBACK</button>
           <div id="feedbackStatus" class="auth-error hidden" style="margin-top:15px;"></div>
+          
+          <div style="margin-top:50px;">
+            <h3 style="margin-bottom:20px; font-size:1.2rem; color:var(--accent-primary);">RECENT TRANSMISSIONS</h3>
+            <div id="feedbackList" class="feedback-list" style="display:flex; flex-direction:column; gap:15px;">
+              <!-- Feedback items will be injected here -->
+              <p style="color:var(--text-dim); font-size:0.9rem;">Authenticating core feedback history...</p>
+            </div>
+          </div>
         </div>
       </section>
 

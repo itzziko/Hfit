@@ -17,7 +17,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(express.static(path.join(__dirname, "../"))); // Serve frontend files from parent directory
+app.use(express.static(path.join(__dirname, "public"))); // Serve frontend files from local public folder
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret_key_123";
 
@@ -34,7 +34,12 @@ const authenticateToken = (req, res, next) => {
 };
 
 app.get("/health", (req, res) => {
-    res.json({ status: "ok", message: "Hfit Core is active." });
+    const hasKey = !!process.env.OPENAI_API_KEY || !!process.env.OPENROUTER_API_KEY;
+    res.json({
+        status: "ok",
+        message: "Hfit Core is active.",
+        ai_key_status: hasKey ? "Detected" : "MISSING"
+    });
 });
 
 app.post("/signup", async (req, res) => {
@@ -134,19 +139,50 @@ app.post("/api/data", authenticateToken, async (req, res) => {
     }
 });
 
-// Google integration removed as requested
+// Mock Google Auth for simulation purposes (Front-end still uses this for 'Premium' feel)
+app.post("/google-auth", async (req, res) => {
+    const { email, name } = req.body;
+    try {
+        const db = await dbPromise;
+        const normalizedEmail = email.trim().toLowerCase();
+
+        let user = await db.get("SELECT * FROM users WHERE email = ?", [normalizedEmail]);
+
+        if (!user) {
+            // Auto-signup for simulated Google users
+            const result = await db.run(
+                "INSERT INTO users (email, password_hash, username, age) VALUES (?, ?, ?, ?)",
+                [normalizedEmail, 'google_simulated_auth', name, 25]
+            );
+            user = { id: result.lastID, email: normalizedEmail, username: name, age: 25 };
+
+            const initialData = { sleep: [], goals: [], chats: [], chatThreads: [], currentChatId: null };
+            await db.run("INSERT INTO user_data (user_id, data_json) VALUES (?, ?)", [user.id, JSON.stringify(initialData)]);
+        }
+
+        const userData = await db.get("SELECT data_json FROM user_data WHERE user_id = ?", [user.id]);
+        const data = userData ? JSON.parse(userData.data_json) : {};
+
+        const token = jwt.sign({ id: user.id, email: normalizedEmail }, JWT_SECRET);
+        res.json({ success: true, token, user: { ...user, data } });
+    } catch (e) {
+        console.error("Google Auth error:", e);
+        res.status(500).json({ success: false, message: "Server error during Google simulation" });
+    }
+});
 
 app.post("/chat", async (req, res) => {
     const userMessage = req.body.message;
     const initialModel = req.body.model || "google/gemini-2.0-flash-exp:free";
     const systemMessage = req.body.system || "You are a helpful health assistant.";
 
-    // Fallback list of models in case of failure
     const models = [
         initialModel,
-        "google/gemini-pro-1.5-exp:free",
+        "google/gemini-2.0-flash-exp:free",
+        "google/gemini-2.0-flash-lite-preview-02-05:free",
         "mistralai/mistral-7b-instruct:free",
-        "openrouter/auto" // Last resort: let OpenRouter decide
+        "google/gemini-pro-1.5-exp:free",
+        "openrouter/auto"
     ];
 
     let lastError = null;
@@ -160,10 +196,10 @@ app.post("/chat", async (req, res) => {
             if (req.body.image) userContent.push({ type: "image_url", image_url: { url: req.body.image } });
             messages.push({ role: "user", content: userContent });
 
-            const apiKey = (process.env.OPENAI_API_KEY || "").trim();
+            const apiKey = (process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || "").trim();
             if (!apiKey) {
-                lastError = "Hfit Core: AI_KEY is missing in Render environment variables.";
-                console.error("[CRITICAL] Missing OPENAI_API_KEY");
+                lastError = "HFIT CORE ERROR: API_KEY is missing in Render environment variables. Please add OPENAI_API_KEY to your Render dashboard.";
+                console.error("[CRITICAL] Missing API Key");
                 break;
             }
 

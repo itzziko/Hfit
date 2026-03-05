@@ -1,6 +1,5 @@
-// CONFIG & CONSTANTS
-const AI_MODEL = "google/gemini-2.0-flash-001"; // Updated for stability and speed
-const BACKEND_URL = (!window.location.origin || window.location.origin === "null" || window.location.origin.includes("localhost") || window.location.protocol === "file:") ? "http://localhost:3000" : window.location.origin;
+const AI_MODEL = "google/gemini-2.0-flash-exp:free"; // Default to FREE model to prevent credit errors
+const BACKEND_URL = (!window.location.origin || window.location.origin === "null" || window.location.origin.includes("localhost") || window.location.protocol === "file:") ? "http://localhost:3000" : ""; // Relative path works automatically on Render
 
 let currentUser = null;
 let authMode = 'signup';
@@ -163,14 +162,24 @@ async function checkAiStatus() {
   const statusEl = document.getElementById("ai-status-pulse");
   if (!statusEl) return;
 
+  statusEl.textContent = "SYNCING WITH CORE...";
+  statusEl.style.color = "var(--accent-primary)";
+
   try {
     const res = await fetch(`${BACKEND_URL}/health`, {
       method: "GET",
-      signal: AbortSignal.timeout(3000)
+      signal: AbortSignal.timeout(15000) // 15s to allow for Render cold starts
     });
+
     if (res.ok) {
-      statusEl.textContent = "CONNECTED TO CORE";
-      statusEl.style.color = "var(--accent-primary)";
+      const data = await res.json();
+      if (data.ai_key_status === "MISSING") {
+        statusEl.textContent = "AI KEY MISSING";
+        statusEl.style.color = "#f59e0b"; // Warning orange
+      } else {
+        statusEl.textContent = "CORE ONLINE";
+        statusEl.style.color = "var(--accent-primary)";
+      }
     } else {
       throw new Error();
     }
@@ -324,6 +333,7 @@ function openTab(id) {
     const chatHist = document.getElementById("chatHistory");
     chatHist.scrollTop = chatHist.scrollHeight;
   }, 100);
+  if (id === 'feedback') fetchFeedback();
 }
 
 // --- DATA PERSISTENCE HELPERS ---
@@ -367,10 +377,7 @@ async function askAI(message, systemPrompt = "You are a helpful health assistant
 
       if (!res.ok) {
         const errorData = await res.json();
-        // Check for specific error reasons
-        if (res.status === 429) throw new Error("RATE_LIMIT: Hfit Core is overloaded. Try again in 60s.");
-        if (res.status === 401 || res.status === 403) throw new Error("AUTH_ERROR: Invalid API configuration in Hfit Core.");
-        throw new Error(errorData.error || "Hfit Core returned an error.");
+        throw new Error(errorData.error || `Server Error ${res.status}: ${res.statusText}`);
       }
 
       const data = await res.json();
@@ -441,9 +448,13 @@ function formatAIResponse(text) {
 function renderChat() {
   const container = document.getElementById("chatHistory");
   const messages = getCurrentChatMessages();
-  container.innerHTML = messages.map(m => `
-    <div class="message ${m.role === 'user' ? 'user-msg' : 'ai-msg'}">${m.role === 'assistant' ? formatAIResponse(m.content) : m.content}</div>
-  `).join('');
+  container.innerHTML = messages.map(m => {
+    let contentHtml = m.role === 'assistant' ? formatAIResponse(m.content) : m.content;
+    if (m.image) {
+      contentHtml = `<img src="${m.image}" style="max-width:100%; border-radius:12px; margin-bottom:10px; display:block;" />` + contentHtml;
+    }
+    return `<div class="message ${m.role === 'user' ? 'user-msg' : 'ai-msg'}">${contentHtml}</div>`;
+  }).join('');
 
   if (messages.length === 0) {
     container.innerHTML = `<div class="message ai-msg">Welcome to Hfit Premium, ${currentUser.profile.username}. How can I optimize your performance today? I am now equipped with <strong>Medical Vision</strong>. You can upload photos of food or even skin concerns for analysis.</div>`;
@@ -476,9 +487,11 @@ async function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  updateCurrentChatMessages({ role: "user", content: text });
+  const currentImage = chatImageBase64;
+  updateCurrentChatMessages({ role: "user", content: text, image: currentImage });
   renderChat();
   input.value = "";
+  clearChatImage(); // Clear preview immediately
   saveCurrentUserData();
 
   const container = document.getElementById("chatHistory");
@@ -493,8 +506,7 @@ async function sendMessage() {
   container.appendChild(tempMsg);
   container.scrollTop = container.scrollHeight;
 
-  const currentImage = chatImageBase64;
-  clearChatImage();
+  container.scrollTop = container.scrollHeight;
 
   const reply = await askAI(text, `User: ${currentUser.profile.username}. Context: Expert health companion. Tone: professional, neat, elite. Focus: Medical knowledge, meds, biohacking, longevity. Formatting: Use bullet points and paragraphs. Always include a short disclaimer if giving medical advice.`, currentImage);
 
@@ -539,7 +551,7 @@ function handleImageUpload(e) {
 }
 
 async function analyzeFood() {
-  const query = document.getElementById("foodQuery").value;
+  const query = document.getElementById("foodInput").value;
   const status = document.getElementById("foodResult");
   const currentImage = foodImageBase64;
 
@@ -933,12 +945,46 @@ async function sendFeedback() {
       status.textContent = "FEEDBACK RECEIVED. CORE CALIBRATED.";
       document.getElementById("feedbackInput").value = "";
       document.getElementById("nameInput").value = "";
+      fetchFeedback(); // Refresh the list
     } else {
       throw new Error();
     }
   } catch (e) {
     status.textContent = "TRANSMISSION FAILED. CORE OFFLINE.";
   }
+}
+
+async function fetchFeedback() {
+  const list = document.getElementById("feedbackList");
+  if (!list) return;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/feedback`);
+    const data = await res.json();
+    if (data.success) {
+      renderFeedbackList(data.feedback);
+    }
+  } catch (e) {
+    console.warn("Could not fetch transmissions:", e);
+  }
+}
+
+function renderFeedbackList(feedbackItems) {
+  const list = document.getElementById("feedbackList");
+  if (feedbackItems.length === 0) {
+    list.innerHTML = `<p style="color:var(--text-dim); font-size:0.9rem;">No transmissions yet.</p>`;
+    return;
+  }
+
+  list.innerHTML = feedbackItems.map(f => `
+    <div style="background:var(--glass-bg); border:1px solid var(--glass-border); padding:15px; border-radius:12px;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+        <span style="font-weight:700; color:var(--accent-primary); font-size:0.8rem;">${f.name.toUpperCase()}</span>
+        <span style="font-size:0.7rem; color:var(--text-dim);">${new Date(f.timestamp).toLocaleDateString()}</span>
+      </div>
+      <p style="font-size:0.9rem; line-height:1.4; color:var(--text-main);">${f.message}</p>
+    </div>
+  `).join('');
 }
 
 // --- PERFORMANCE TRENDS ---
