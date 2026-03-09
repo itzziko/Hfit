@@ -323,17 +323,30 @@
 
       <!-- FEEDBACK -->
       <section id="feedback" class="tab">
-        <h2 style="font-size:2.5rem; margin-bottom:30px;">Transmission Feedback</h2>
-        <div class="card" style="max-width:800px; margin:0 auto;">
-          <p style="color:var(--text-dim); margin-bottom:20px;">Your feedback is transmitted directly to our performance
-            architects. We use this data to calibrate the Hfit AI core.</p>
-          <input type="text" id="nameInput" placeholder="Your Name" style="width: 100%; margin-bottom: 15px;" />
-          <textarea id="feedbackInput" placeholder="Describe your experience or requested optimizations..."></textarea>
-          <button onclick="sendFeedback()" style="margin-top:20px;">SUBMIT FEEDBACK</button>
-          <div id="feedbackStatus" class="auth-error hidden" style="margin-top:15px;"></div>
+        <h2 style="font-size:2.5rem; margin-bottom:30px;">Feedback & Support</h2>
+        <div class="card" style="max-width:800px; margin:0 auto; text-align: center; padding: 50px 30px;">
+          <div id="feedbackFormContainer">
+            <span style="font-size: 3rem; display: block; margin-bottom: 20px;">💡</span>
+            <p style="color:var(--text-dim); margin-bottom: 30px; font-size: 1.1rem;">
+              How can we improve Hfit? Your insights go directly to our development team.
+            </p>
+            <input type="text" id="nameInput" placeholder="Your Name (Optional)"
+              style="width: 100%; margin-bottom: 15px;" />
+            <textarea id="feedbackInput" placeholder="Share your experience, bug reports, or feature requests..."
+              style="min-height: 150px; margin-bottom: 20px;"></textarea>
+            <button onclick="sendFeedback()" style="width: 100%;">TRANSMIT FEEDBACK</button>
+            <div id="feedbackStatus" class="auth-error hidden" style="margin-top:15px;"></div>
+          </div>
 
-          <h3 style="margin-top: 40px; margin-bottom: 20px;">Recent Core Updates</h3>
-          <ul id="recentFeedbackList" class="goal-list"></ul>
+          <!-- SUCCESS STATE (Hidden by default) -->
+          <div id="feedbackSuccessContainer" class="hidden">
+            <span style="font-size: 4rem; display: block; margin-bottom: 20px;">🚀</span>
+            <h3 style="color: var(--accent-primary); font-size: 1.8rem; margin-bottom: 15px;">Transmission Received</h3>
+            <p style="color: var(--text-dim); line-height: 1.6; margin-bottom: 30px;">
+              Your feedback has been successfully logged. Our architects will review this to calibrate the Hfit Core.
+            </p>
+            <button class="btn-secondary" onclick="resetFeedbackForm()">SEND ANOTHER</button>
+          </div>
         </div>
       </section>
 
