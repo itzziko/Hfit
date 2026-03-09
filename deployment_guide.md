@@ -18,8 +18,9 @@ Push all your files (`hfit-server` folder, which now contains your `public` fold
 
 ## 3. Add Environment Variables (IMPORTANT)
 On Render, go to the **"Environment"** tab for your service and add:
-- `OPENAI_API_KEY`: Paste your OpenRouter API key here (e.g., `sk-or-v1-...`). **Do not use your OpenAI key here unless you know what you are doing.** Use OpenRouter.
+- `OPENROUTER_API_KEY`: Paste your OpenRouter API key here (e.g., `sk-or-v1-...`). **Do not use your OpenAI key here unless you know what you are doing.** Use OpenRouter.
 - `JWT_SECRET`: Create a random long string (e.g., `hfit_ultra_secure_123`).
+- **After any change to environment variables, redeploy the service** (or restart the server) so the new values take effect.
 
 ## 4. Launch!
 Render will build the app and give you a URL like `https://hfit-premium.onrender.com`.
