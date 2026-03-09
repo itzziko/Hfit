@@ -80,22 +80,17 @@ app.get("/health", (req, res) => {
 /* ---------------- CHAT ---------------- */
 
 app.post("/chat", async (req, res) => {
-
     const userMessage = req.body.message;
     const initialModel = req.body.model || "google/gemini-2.0-flash-exp:free";
     const systemMessage = req.body.system || "You are a helpful health assistant.";
+    const stream = req.body.stream === true;
 
     let webData = "";
-
-    // OPTIONAL: scrape webpage with Bright Data
     if (req.body.search_url) {
-
         const pageContent = await fetchWithBrightData(req.body.search_url);
-
         if (pageContent) {
             webData = "\n\nWebsite Data:\n" + pageContent.substring(0, 4000);
         }
-
     }
 
     const models = [
@@ -107,107 +102,99 @@ app.post("/chat", async (req, res) => {
         "openrouter/auto"
     ];
 
+    const apiKey = (process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "")
+        .replace(/['\"]/g, '')
+        .trim();
+
+    if (!apiKey) {
+        return res.status(500).json({ error: "HFIT CORE CRITICAL: API key missing." });
+    }
+
+    if (stream) {
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+    }
+
     let lastError = null;
 
     for (const model of models) {
-
         try {
+            console.log(`[AI ${stream ? 'STREAM' : 'SYNC'}] Attempting with model: ${model}`);
 
-            console.log(`[AI SYNC] Attempting with model: ${model}`);
-
-            const messages = [
-                { role: "system", content: systemMessage }
-            ];
-
+            const messages = [{ role: "system", content: systemMessage }];
             const userContent = [];
 
             if (userMessage)
-                userContent.push({
-                    type: "text",
-                    text: userMessage + webData
-                });
+                userContent.push({ type: "text", text: userMessage + webData });
 
             if (req.body.image)
-                userContent.push({
-                    type: "image_url",
-                    image_url: { url: req.body.image }
-                });
+                userContent.push({ type: "image_url", image_url: { url: req.body.image } });
 
-            messages.push({
-                role: "user",
-                content: userContent
+            messages.push({ role: "user", content: userContent });
+
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://hfit.ai",
+                    "X-Title": "Hfit Health"
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: messages,
+                    stream: stream
+                }),
+                timeout: 45000
             });
 
-            const apiKey = (process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "")
-                .replace(/['\"]/g, '')
-                .trim();
-
-            if (!apiKey) {
-
-                lastError = "API key missing.";
-
-                console.error("[CRITICAL] Missing API Key");
-
-                break;
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || `Model ${model} failed with status ${response.status}`);
             }
 
-            const response = await fetch(
-                "https://openrouter.ai/api/v1/chat/completions",
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Authorization": `Bearer ${apiKey}`,
-                        "Content-Type": "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        model: model,
-                        messages: messages
-                    }),
-
-                    timeout: 30000
-                }
-            );
-
-            const data = await response.json();
-
-            if (response.status === 401) {
-
-                lastError = "API Key Authentication Failed";
-
-                console.error("[CRITICAL] Auth Failed");
-
-                break;
-            }
-
-            if (data.choices && data.choices[0]) {
-
-                console.log(`[AI SUCCESS] Response delivered via ${model}`);
-
-                return res.json({
-                    reply: data.choices[0].message.content,
-                    model_used: model
+            if (stream) {
+                const reader = response.body;
+                reader.on('data', (chunk) => {
+                    res.write(chunk);
                 });
-
+                reader.on('end', () => {
+                    res.end();
+                });
+                reader.on('error', (err) => {
+                    console.error("[STREAM ERROR]", err);
+                    res.end();
+                });
+                return; // Exit loop on success
             } else {
-
-                lastError = data.error?.message || `Model ${model} unavailable`;
-
-                console.warn(`[AI WARN] ${model} failed: ${lastError}`);
+                const data = await response.json();
+                if (data.choices && data.choices[0]) {
+                    console.log(`[AI SUCCESS] Response delivered via ${model}`);
+                    return res.json({
+                        reply: data.choices[0].message.content,
+                        model_used: model
+                    });
+                } else {
+                    lastError = data.error?.message || `Model ${model} unavailable`;
+                }
             }
-
         } catch (error) {
-
             lastError = error.message;
-
             console.error(`[AI ERROR] Request failed for ${model}:`, error.message);
+            if (stream && model === models[models.length - 1]) {
+                res.write(`data: ${JSON.stringify({ error: lastError })}\n\n`);
+                res.end();
+                return;
+            }
         }
     }
 
-    res.status(503).json({
-        error: "HFIT CORE OVERLOADED: All available nodes are busy. Details: " + lastError
-    });
+    if (!res.writableEnded) {
+        res.status(503).json({
+            error: "HFIT CORE OVERLOADED: All nodes busy. " + lastError
+        });
+    }
 });
 
 /* ---------------- SERVER START ---------------- */

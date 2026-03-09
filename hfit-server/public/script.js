@@ -401,52 +401,80 @@ async function saveCurrentUserData() {
 }
 
 
-async function askAI(message, systemPrompt = "You are a helpful health assistant.", imageBase64 = null) {
+async function askAI(message, systemPrompt = "You are a helpful health assistant.", imageBase64 = null, onChunk = null) {
   const disclaimer = "\n\nDISCLAIMER: This information is for 'good purpose' only and must be confirmed with a licensed medical professional before taking any action. Do not make medical decisions based on this AI.";
 
   const statusEl = document.getElementById("ai-status-pulse");
   if (statusEl) statusEl.textContent = "SYNCING...";
 
-  let retries = 0;
-  const maxRetries = 3;
+  try {
+    const res = await fetch(`${BACKEND_URL}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message,
+        system: systemPrompt + disclaimer,
+        model: AI_MODEL,
+        image: imageBase64,
+        stream: !!onChunk
+      })
+    });
 
-  while (retries < maxRetries) {
-    try {
-      const res = await fetch(`${BACKEND_URL}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message, system: systemPrompt + disclaimer, model: AI_MODEL, image: imageBase64 }),
-        signal: AbortSignal.timeout(30000) // 30s timeout
-      });
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || `Server Error ${res.status}`);
+    }
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || `Server Error ${res.status}: ${res.statusText}`);
+    if (onChunk) {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let fullReply = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const dataStr = line.slice(6);
+            if (dataStr === "[DONE]") break;
+            try {
+              const data = JSON.parse(dataStr);
+              const content = data.choices[0]?.delta?.content || "";
+              if (content) {
+                fullReply += content;
+                onChunk(fullReply);
+              }
+            } catch (e) {
+              // Ignore partial JSON or other stream noise
+            }
+          }
+        }
       }
 
+      if (statusEl) {
+        statusEl.textContent = "CORE READY";
+        statusEl.style.color = "var(--accent-primary)";
+      }
+      return fullReply;
+    } else {
       const data = await res.json();
-      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
-
       if (statusEl) {
         statusEl.textContent = "CONNECTED TO CORE";
         statusEl.style.color = "var(--accent-primary)";
       }
       return data.reply || "No response received.";
-    } catch (error) {
-      console.warn(`Attempt ${retries + 1} failed:`, error.message);
-      retries++;
-
-      if (retries >= maxRetries) {
-        if (statusEl) {
-          statusEl.textContent = "CORE OFFLINE";
-          statusEl.style.color = "#ef4444";
-        }
-        return `Error: ${error.message}. Potential Reasons: Server not running, Rate Limit reached, or Internet connection issues.`;
-      }
-
-      if (statusEl) statusEl.textContent = `RETRYING (${retries}/${maxRetries})...`;
-      await new Promise(resolve => setTimeout(resolve, 2000 * retries)); // Exponential backoff
     }
+  } catch (error) {
+    console.warn(`Request failed:`, error.message);
+    if (statusEl) {
+      statusEl.textContent = "CORE OFFLINE";
+      statusEl.style.color = "#ef4444";
+    }
+    return `Error: ${error.message}. Potential Reasons: Server not running or API issue.`;
   }
 }
 
@@ -479,13 +507,18 @@ async function updateDashboard() {
 
 // --- AI CHAT ---
 function formatAIResponse(text) {
-  // Basic markdown-like formatter for a "neat and organized" look
   let formatted = text
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold
-    .replace(/^\s*[-•]\s*(.*)$/gm, '<li>$1</li>')    // Bullets
-    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')      // Wrap bullet groups
-    .replace(/\n\n/g, '<br><br>')                   // Paragraphs
-    .replace(/\n/g, '<br>');                        // Line breaks
+    .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>') // Bold Italic
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')    // Bold
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')               // Italic
+    .replace(/^# (.*$)/gm, '<h1>$1</h1>')               // H1
+    .replace(/^## (.*$)/gm, '<h2>$1</h2>')              // H2
+    .replace(/^### (.*$)/gm, '<h3>$1</h3>')             // H3
+    .replace(/^\s*[-•*]\s*(.*)$/gm, '<li>$1</li>')      // Bullets
+    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')          // Wrap bullet groups
+    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>') // Links
+    .replace(/\n\n/g, '<br><br>')                       // Paragraphs
+    .replace(/\n/g, '<br>');                            // Line breaks
   return formatted;
 }
 
@@ -497,11 +530,26 @@ function renderChat() {
     if (m.image) {
       contentHtml = `<img src="${m.image}" style="max-width:100%; border-radius:12px; margin-bottom:10px; display:block;" />` + contentHtml;
     }
-    return `<div class="message ${m.role === 'user' ? 'user-msg' : 'ai-msg'}">${contentHtml}</div>`;
+
+    const avatar = m.role === 'user' ? '👤' : '🤖';
+    return `
+      <div class="message-wrapper ${m.role}-wrapper">
+        <div class="message-avatar">${avatar}</div>
+        <div class="message ${m.role === 'user' ? 'user-msg' : 'ai-msg'}">${contentHtml}</div>
+      </div>
+    `;
   }).join('');
 
   if (messages.length === 0) {
-    container.innerHTML = `<div class="message ai-msg">Welcome to Hfit Premium, ${currentUser.profile.username}. How can I optimize your performance today? I am now equipped with <strong>Medical Vision</strong>. You can upload photos of food or even skin concerns for analysis.</div>`;
+    container.innerHTML = `
+      <div class="message-wrapper assistant-wrapper">
+        <div class="message-avatar">🤖</div>
+        <div class="message ai-msg">
+          Welcome to Hfit Premium, ${currentUser.profile.username}. How can I optimize your performance today? 
+          I am now equipped with <strong>Medical Vision</strong>. You can upload photos of food or even skin concerns for analysis.
+        </div>
+      </div>
+    `;
   }
   container.scrollTop = container.scrollHeight;
 }
@@ -529,35 +577,38 @@ function clearChatImage() {
 async function sendMessage() {
   const input = document.getElementById("chatInput");
   const text = input.value.trim();
-  if (!text) return;
+  if (!text && !chatImageBase64) return;
 
   const currentImage = chatImageBase64;
   updateCurrentChatMessages({ role: "user", content: text, image: currentImage });
   renderChat();
   input.value = "";
-  clearChatImage(); // Clear preview immediately
+  clearChatImage();
   saveCurrentUserData();
 
   const container = document.getElementById("chatHistory");
-  const tempMsg = document.createElement("div");
-  tempMsg.className = "message ai-msg typing";
-  tempMsg.innerHTML = `
-    <span>Hfit AI is thinking</span>
-    <div class="typing-dot"></div>
-    <div class="typing-dot"></div>
-    <div class="typing-dot"></div>
+
+  // Create temporary wrapper for streaming
+  const wrapper = document.createElement("div");
+  wrapper.className = "message-wrapper assistant-wrapper";
+  wrapper.innerHTML = `
+    <div class="message-avatar">🤖</div>
+    <div class="message ai-msg typing-streaming"></div>
   `;
-  container.appendChild(tempMsg);
+  container.appendChild(wrapper);
+  const aiMsgBox = wrapper.querySelector(".ai-msg");
   container.scrollTop = container.scrollHeight;
 
-  container.scrollTop = container.scrollHeight;
+  const sysPrompt = `User: ${currentUser.profile.username}. Context: Expert health companion. Tone: professional, neat, elite. Focus: Medical knowledge, meds, biohacking, longevity. Formatting: Use bullet points and paragraphs. Always include a short disclaimer if giving medical advice.`;
 
-  const reply = await askAI(text, `User: ${currentUser.profile.username}. Context: Expert health companion. Tone: professional, neat, elite. Focus: Medical knowledge, meds, biohacking, longevity. Formatting: Use bullet points and paragraphs. Always include a short disclaimer if giving medical advice.`, currentImage);
+  const reply = await askAI(text, sysPrompt, currentImage, (streamedText) => {
+    aiMsgBox.innerHTML = formatAIResponse(streamedText);
+    container.scrollTop = container.scrollHeight;
+  });
 
-  container.removeChild(tempMsg);
+  aiMsgBox.classList.remove("typing-streaming");
   updateCurrentChatMessages({ role: "assistant", content: reply });
-  renderChat();
-  clearChatImage(); // Safety clear
+  saveCurrentUserData();
 
   // Asynchronously generate a topic title if this is the first exchange
   const thread = currentUser.data.chatThreads.find(t => t.id === currentUser.data.currentChatId);
@@ -573,8 +624,6 @@ async function sendMessage() {
       }
     }).catch(e => console.error("Topic generation failed", e));
   }
-
-  saveCurrentUserData();
 }
 
 // --- FOOD ANALYZER ---
