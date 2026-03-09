@@ -65,14 +65,22 @@
         <h2>Hfit</h2>
       </div>
       <nav>
-        <button id="btn-dashboard" onclick="openTab('dashboard')" class="active">📊 <span>Dashboard</span></button>
-        <button id="btn-ai" onclick="openTab('ai')">🤖 <span>AI Assistant</span></button>
-        <button id="btn-food" onclick="openTab('food')">🍎 <span>Food & Nutrition</span></button>
-        <button id="btn-sleep" onclick="openTab('sleep')">😴 <span>Sleep Tracker</span></button>
-        <button id="btn-workout" onclick="openTab('workout')">💪 <span>Fitness & Meals</span></button>
-        <button id="btn-goals" onclick="openTab('goals')">🎯 <span>My Goals</span></button>
-        <button id="btn-bruise" onclick="openTab('bruise')">🩹 <span>Bruise Identifier</span></button>
-        <button id="btn-feedback" onclick="openTab('feedback')">💬 <span>Feedback</span></button>
+        <button id="btn-dashboard" onclick="openTab('dashboard')" class="active"
+          title="View your health overview and trends">📊 <span>Overview</span></button>
+        <button id="btn-ai" onclick="openTab('ai')" title="Chat with Hfit's elite medical AI">🤖 <span>AI
+            Assistant</span></button>
+        <button id="btn-food" onclick="openTab('food')" title="Identify meals and track nutritional data">🍎 <span>Food
+            Engine</span></button>
+        <button id="btn-sleep" onclick="openTab('sleep')" title="Monitor sleep quality and recovery cycles">😴
+          <span>Sleep Data</span></button>
+        <button id="btn-workout" onclick="openTab('workout')" title="Generate AI-powered fitness and meal plans">💪
+          <span>AI Planning</span></button>
+        <button id="btn-goals" onclick="openTab('goals')" title="Set and track health milestones">🎯 <span>My
+            Goals</span></button>
+        <button id="btn-bruise" onclick="openTab('bruise')" title="Diagnostic skin concern identifier">🩹 <span>Vision
+            Scan</span></button>
+        <button id="btn-feedback" onclick="openTab('feedback')" title="Send feedback to Hfit developers">💬
+          <span>Support</span></button>
       </nav>
       <div style="padding: 15px; margin-top: auto; border-top: 1px solid var(--glass-border);">
         <button class="logout" onclick="logout()" style="width: 100%; padding: 10px; font-size: 0.8rem;">Logout
@@ -139,6 +147,14 @@
             </div>
             <p id="dash-ai-insight" class="ai-insight-text">Use our tracking tools to receive personalized wellness
               insights here.</p>
+          </div>
+
+          <!-- ONBOARDING TIP -->
+          <div class="card stat-card"
+            style="background: linear-gradient(135deg, rgba(112, 0, 255, 0.1), transparent); border: 1px dashed var(--accent-primary);">
+            <h3 style="font-size: 1rem; color: var(--accent-primary);">🚀 Pro Tip</h3>
+            <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.4;">Upload meal photos in the "Food
+              Engine" for instant calorie and macronutrient identification.</p>
           </div>
 
           <!-- PERFORMANCE TRENDS -->

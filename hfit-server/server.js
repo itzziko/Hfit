@@ -212,6 +212,18 @@ app.post("/chat", async (req, res) => {
     const systemMessage = req.body.system || "You are a helpful health assistant.";
     const stream = req.body.stream === true;
 
+    // Basic Validation
+    if (req.body.image) {
+        // Check if image is a base64 string
+        if (!req.body.image.startsWith('data:image/')) {
+            return res.status(400).json({ error: "Invalid visual data. Please upload a valid image file." });
+        }
+        // Rough size check (base64 is ~1.33x original size, aiming for ~5MB)
+        if (req.body.image.length > 7000000) {
+            return res.status(400).json({ error: "Visual data too dense. Please upload a smaller image." });
+        }
+    }
+
     let webData = "";
     if (req.body.search_url) {
         const pageContent = await fetchWithBrightData(req.body.search_url);

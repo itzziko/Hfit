@@ -599,7 +599,10 @@ async function sendMessage() {
   const aiMsgBox = wrapper.querySelector(".ai-msg");
   container.scrollTop = container.scrollHeight;
 
-  const sysPrompt = `User: ${currentUser.profile.username}. Context: Expert health companion. Tone: professional, neat, elite. Focus: Medical knowledge, meds, biohacking, longevity. Formatting: Use bullet points and paragraphs. Always include a short disclaimer if giving medical advice.`;
+  const sysPrompt = `You are Hfit AI, an elite health and mental health performance companion. 
+  CRITICAL RULE: You ONLY discuss topics related to physical health, exercise, nutrition, sleep, biohacking, and mental well-being/psychology. 
+  If the user asks about anything else (politics, general history, coding, sports trivia beyond health aspects, etc.), politely decline and steer the conversation back to their health and wellness.
+  User: ${currentUser.profile.username}. Tone: professional, neat, elite. Formatting: Use bullet points and paragraphs. Always include a short medical disclaimer.`;
 
   const reply = await askAI(text, sysPrompt, currentImage, (streamedText) => {
     aiMsgBox.innerHTML = formatAIResponse(streamedText);
@@ -646,6 +649,7 @@ function handleImageUpload(e) {
 async function analyzeFood() {
   const query = document.getElementById("foodInput").value;
   const status = document.getElementById("foodResult");
+  const btn = event?.target?.closest('button') || document.querySelector('button[onclick="analyzeFood()"]');
   const currentImage = foodImageBase64;
 
   if (!query && !currentImage) {
@@ -653,6 +657,11 @@ async function analyzeFood() {
     status.style.color = "#ef4444";
     return;
   }
+
+  // Visual Feedback
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> ANALYZING...`;
 
   status.textContent = "SYNCING WITH NUTRITION ENGINE...";
   status.style.color = "var(--accent-primary)";
@@ -722,6 +731,9 @@ async function analyzeFood() {
     console.error("ANALYSIS_ERROR:", e);
     status.textContent = "ANALYSIS FAILED. PLEASE TRY A CLEARER IMAGE OR DISCRIPTION.";
     status.style.color = "#ef4444";
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
   }
 }
 
@@ -848,6 +860,7 @@ function handleBruiseUpload(e) {
 
 async function analyzeBruise() {
   const status = document.getElementById("bruiseResult");
+  const btn = event?.target?.closest('button') || document.querySelector('button[onclick="analyzeBruise()"]');
   const currentImage = bruiseImageBase64;
 
   if (!currentImage) {
@@ -855,6 +868,11 @@ async function analyzeBruise() {
     status.innerHTML = `<span style="color:#ef4444;">SYNC ERROR: NO VISUAL DATA UPLOADED.</span>`;
     return;
   }
+
+  // Visual Feedback
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> SCANNING...`;
 
   status.classList.remove("hidden");
   status.innerHTML = `<div class="typing"><span>SCANNING DERMAL TISSUE...</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
@@ -883,6 +901,9 @@ async function analyzeBruise() {
   } catch (e) {
     console.error("BRUISE_SCAN_ERROR:", e);
     status.innerHTML = `<span style="color:#ef4444;">SCAN INTERRUPTED. SYSTEM OFFLINE OR CLEARER PHOTO REQUIRED.</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
   }
 }
 
