@@ -347,10 +347,14 @@ async function checkAiStatus() {
   statusEl.style.color = "var(--accent-primary)";
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     const res = await fetch(`${BACKEND_URL}/health`, {
       method: "GET",
-      signal: AbortSignal.timeout(15000)
+      signal: controller.signal
     });
+    clearTimeout(timeoutId);
 
     if (res.ok) {
       const data = await res.json();
