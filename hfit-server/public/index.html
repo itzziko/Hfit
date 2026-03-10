@@ -66,23 +66,23 @@
       </div>
       <nav>
         <button id="btn-dashboard" onclick="openTab('dashboard')" class="active"
-          title="View your health overview and trends">📊 <span>Overview</span></button>
-        <button id="btn-ai" onclick="openTab('ai')" title="Chat with Hfit's elite medical AI">🤖 <span>AI
-            Assistant</span></button>
-        <button id="btn-food" onclick="openTab('food')" title="Identify meals and track nutritional data">🍎 <span>Food
-            Engine</span></button>
-        <button id="btn-sleep" onclick="openTab('sleep')" title="Monitor sleep quality and recovery cycles">😴
-          <span>Sleep Data</span></button>
-        <button id="btn-workout" onclick="openTab('workout')" title="Generate AI-powered fitness and meal plans">💪
-          <span>AI Planning</span></button>
-        <button id="btn-activities" onclick="openTab('activities')" title="Log physical activities and exercises">🏃
-          <span>Activities</span></button>
-        <button id="btn-goals" onclick="openTab('goals')" title="Set and track health milestones">🎯 <span>My
-            Goals</span></button>
-        <button id="btn-bruise" onclick="openTab('bruise')" title="Diagnostic skin concern identifier">🩹 <span>Vision
-            Scan</span></button>
-        <button id="btn-feedback" onclick="openTab('feedback')" title="Send feedback to Hfit developers">💬
-          <span>Support</span></button>
+          title="View your health overview and trends"><span class="nav-icon">📊</span> <span>Overview</span></button>
+        <button id="btn-ai" onclick="openTab('ai')" title="Chat with Hfit's elite medical AI"><span
+            class="nav-icon">🤖</span> <span>AI Assistant</span></button>
+        <button id="btn-food" onclick="openTab('food')" title="Identify meals and track nutritional data"><span
+            class="nav-icon">🍎</span> <span>Food Engine</span></button>
+        <button id="btn-sleep" onclick="openTab('sleep')" title="Monitor sleep quality and recovery cycles"><span
+            class="nav-icon">😴</span> <span>Sleep Data</span></button>
+        <button id="btn-workout" onclick="openTab('workout')" title="Generate AI-powered fitness and meal plans"><span
+            class="nav-icon">💪</span> <span>AI Planning</span></button>
+        <button id="btn-activities" onclick="openTab('activities')" title="Log physical activities and exercises"><span
+            class="nav-icon">🏃</span> <span>Activities</span></button>
+        <button id="btn-goals" onclick="openTab('goals')" title="Set and track health milestones"><span
+            class="nav-icon">🎯</span> <span>My Goals</span></button>
+        <button id="btn-bruise" onclick="openTab('bruise')" title="Diagnostic skin concern identifier"><span
+            class="nav-icon">🩹</span> <span>Vision Scan</span></button>
+        <button id="btn-feedback" onclick="openTab('feedback')" title="Send feedback to Hfit developers"><span
+            class="nav-icon">💬</span> <span>Support</span></button>
       </nav>
       <div style="padding: 15px; margin-top: auto; border-top: 1px solid var(--glass-border);">
         <button class="logout" onclick="logout()" style="width: 100%; padding: 10px; font-size: 0.8rem;">Logout
@@ -150,9 +150,8 @@
           <div class="card stat-card" draggable="true" id="widget-goals">
             <span class="drag-handle">⋮⋮</span>
             <h3>Active Goals</h3>
-            <div id="dash-goals-list"
-              style="margin:20px 0; display:flex; flex-direction:column; gap:10px; min-height:80px;">
-              <p style="color:var(--text-dim); font-size:0.9rem;">No goals set.</p>
+            <div id="dash-goals-wheel" class="goal-wheel-container">
+              <!-- Goals injected here as circles -->
             </div>
             <button class="btn-secondary btn-small" onclick="openTab('goals')">MANAGE</button>
           </div>
@@ -237,7 +236,8 @@
             <div class="stat-item"><span class="stat-val" id="food-cals">0</span><span class="stat-label">CALS</span>
             </div>
             <div class="stat-item"><span class="stat-val" id="food-protein">0g</span><span
-                class="stat-label">PRTN</span></div>
+                class="stat-label">PRTN</span>
+            </div>
             <div class="stat-item"><span class="stat-val" id="food-carbs">0g</span><span class="stat-label">CARB</span>
             </div>
             <div class="stat-item"><span class="stat-val" id="food-fats">0g</span><span class="stat-label">FATS</span>
@@ -262,24 +262,16 @@
               <span id="sleepPercent" style="font-size:2rem;">0%</span>
             </div>
             <div style="display:flex; flex-direction:column; gap:15px;">
-              <p style="font-weight:700; color:var(--text-dim);">LOG LAST NIGHT'S SLEEP</p>
-              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; width:100%;">
-                <div style="display:flex; flex-direction:column; gap:5px;">
-                  <label style="font-size:0.7rem; color:var(--text-dim); font-weight:700;">BEDTIME</label>
-                  <input type="time" id="bedtimeInput" />
+              <div style="display:flex; flex-direction:column; gap:15px; width:100%;">
+                <p style="font-weight:700; color:var(--text-dim);">LOG RECOVERY HOURS</p>
+                <div style="display:flex; gap:12px; width:100%;">
+                  <input type="number" id="sleepInput" placeholder="Total Hours" min="0" max="24"
+                    onfocus="this.select()" />
+                  <button class="btn-mic" onclick="toggleVoiceInput('sleepInput')" title="Voice Log">🎙️</button>
                 </div>
-                <div style="display:flex; flex-direction:column; gap:5px;">
-                  <label style="font-size:0.7rem; color:var(--text-dim); font-weight:700;">WAKE TIME</label>
-                  <input type="time" id="waketimeInput" />
-                </div>
+                <button onclick="trackSleep()">LOG DATA</button>
+                <div id="sleepStatus" class="auth-error hidden" style="margin-top:15px;"></div>
               </div>
-              <div style="display:flex; gap:12px; width:100%;">
-                <input type="number" id="sleepInput" placeholder="Total Hours (optional)" min="0" max="24"
-                  onfocus="this.select()" />
-                <button class="btn-mic" onclick="toggleVoiceInput('sleepInput')" title="Voice Log">🎙️</button>
-              </div>
-              <button onclick="trackSleep()">LOG DATA</button>
-              <div id="sleepStatus" class="auth-error hidden" style="margin-top:15px;"></div>
             </div>
           </div>
 
@@ -335,7 +327,7 @@
           <div style="display:flex; flex-direction:column; gap:15px;">
             <div style="display:flex; gap:12px;">
               <input type="number" id="activityDuration" placeholder="Duration (min)" onfocus="this.select()" />
-              <input type="number" id="activityIntensity" placeholder="Intensity (1-10)" onfocus="this.select()" />
+              <input type="number" id="activityIntensity" placeholder="Power Level (1-10)" onfocus="this.select()" />
             </div>
             <div style="display:flex; gap:12px;">
               <input type="text" id="activityNotes" placeholder="Notes (optional)" onfocus="this.select()" />

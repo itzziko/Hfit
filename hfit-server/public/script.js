@@ -239,13 +239,15 @@ window.onload = async () => {
 // --- BIO-RHYTHM ---
 function checkBioRhythm() {
   const hour = new Date().getHours();
-  document.body.classList.remove('morning-mode', 'recovery-mode', 'midnight-mode');
+  document.body.classList.remove('morning-mode', 'afternoon-mode', 'recovery-mode', 'midnight-mode');
 
   if (hour >= 5 && hour < 12) {
     document.body.classList.add('morning-mode');
-  } else if (hour >= 20 || hour < 5) {
+  } else if (hour >= 12 && hour < 17) {
+    document.body.classList.add('afternoon-mode');
+  } else if (hour >= 17 && hour < 22) {
     document.body.classList.add('recovery-mode');
-  } else if (hour >= 0 && hour < 5) {
+  } else {
     document.body.classList.add('midnight-mode');
   }
   // Default is neutral Focus Blue (as defined in :root)
@@ -612,32 +614,7 @@ async function askAI(message, systemPrompt = "You are a helpful health assistant
   }
 }
 
-// --- DASHBOARD ---
-async function updateDashboard() {
-  // Sleep Stats
-  const lastSleep = currentUser.data.sleep[currentUser.data.sleep.length - 1];
-  if (lastSleep) {
-    document.getElementById("dash-sleep-val").textContent = `${lastSleep.percent}%`;
-    document.getElementById("dash-sleep-status").textContent = `${lastSleep.hours}h Performance`;
-    document.getElementById("dash-sleep-circle").style.borderColor = lastSleep.percent >= 80 ? "var(--accent-primary)" : "var(--glass-border)";
-  }
-
-  // Goals
-  const dashGoals = document.getElementById("dash-goals-list");
-  const activeGoals = currentUser.data.goals.filter(g => !g.done).slice(0, 3);
-  dashGoals.innerHTML = activeGoals.length > 0 ? activeGoals.map(g => `<p style="font-weight:600;">• ${g.text}</p>`).join('') : `<p style="color:var(--text-dim);">Clear for takeoff.</p>`;
-
-  // AI Insight
-  const insightBox = document.getElementById("dash-ai-insight");
-  if (lastSleep) {
-    insightBox.style.opacity = "0.5";
-    const prompt = `Based on my sleep data (${lastSleep.hours} hours, ${lastSleep.percent}% quality) and age (${currentUser.profile.age}), give me a 1-sentence health tip.`;
-    const reply = await askAI(prompt, "Provide a sharp 1-sentence health optimization based on data.");
-    insightBox.textContent = reply;
-    insightBox.style.opacity = "1";
-  }
-  renderTrends();
-}
+// Merged with final updateDashboard below
 
 // --- AI CHAT ---
 function formatAIResponse(text) {
@@ -733,10 +710,9 @@ async function sendMessage() {
   const aiMsgBox = wrapper.querySelector(".ai-msg");
   container.scrollTop = container.scrollHeight;
 
-  const sysPrompt = `You are Hfit AI, an elite health and mental health performance companion. 
-  CRITICAL RULE: You ONLY discuss topics related to physical health, exercise, nutrition, sleep, biohacking, and mental well-being/psychology. 
-  If the user asks about anything else (politics, general history, coding, sports trivia beyond health aspects, etc.), politely decline and steer the conversation back to their health and wellness.
-  User: ${currentUser.profile.username}. Tone: professional, neat, elite. Formatting: Use bullet points and paragraphs. Be concise and highly organized. Always include a short medical disclaimer.`;
+  const sysPrompt = `You are Hfit AI, an elite health companion. 
+  CRITICAL: KEEP MESSAGES BRIEF (max 2 main points). 
+  Be professional and elite. Focus ONLY on health/wellness. Use sharp formatting.`;
 
   const reply = await askAI(text, sysPrompt, currentImage, (streamedText) => {
     aiMsgBox.innerHTML = formatAIResponse(streamedText);
@@ -751,11 +727,11 @@ async function sendMessage() {
   const thread = currentUser.data.chatThreads.find(t => t.id === currentUser.data.currentChatId);
   if (thread && thread.messages.length === 2 && thread.title === "New Conversation") {
     askAI(
-      `Based on this exchange: \nUser: ${text} \nAI: ${reply} \nProvide a 2 - 4 word title.Respond with ONLY the title.`,
+      `Based on this exchange: \nUser: ${text} \nAI: ${reply} \nProvide 2 or 4 short title options (separated by |). Respond with ONLY the options.`,
       "You are a title generator. Respond with nothing but the short title."
     ).then(titleReply => {
       if (titleReply && titleReply.trim() && !titleReply.startsWith("Error")) {
-        thread.title = titleReply.replace(/["']/g, "").trim();
+        thread.title = titleReply.includes('|') ? titleReply.split('|')[0].trim() : titleReply.replace(/["']/g, "").trim();
         renderChatSidebar();
         saveCurrentUserData();
       }
@@ -783,11 +759,11 @@ function handleImageUpload(e) {
 async function analyzeFood() {
   const query = document.getElementById("foodInput").value;
   const status = document.getElementById("foodResult");
-  const btn = event?.target?.closest('button') || document.querySelector('button[onclick="analyzeFood()"]');
+  const btn = document.querySelector('button[onclick="analyzeFood()"]');
   const currentImage = foodImageBase64;
 
   if (!query && !currentImage) {
-    status.textContent = "REQUIRED: MEAL PHOTO OR TEXT.";
+    status.textContent = "REQUIRED: PHOTO OR DESCRIPTION.";
     status.style.color = "#ef4444";
     return;
   }
@@ -795,7 +771,7 @@ async function analyzeFood() {
   // Visual Feedback
   const originalHtml = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = `< div class="spinner" ></div > ANALYZING...`;
+  btn.innerHTML = `<div class="spinner"></div> ANALYZING...`;
 
   status.textContent = "SYNCING WITH NUTRITION ENGINE...";
   status.style.color = "var(--accent-primary)";
@@ -858,7 +834,7 @@ async function analyzeFood() {
     foodImageBase64 = null;
     document.getElementById("foodPreview").classList.add("hidden");
     document.getElementById("uploadPlaceholder").classList.remove("hidden");
-    document.getElementById("foodQuery").value = "";
+    document.getElementById("foodInput").value = "";
 
     updateDashboard();
   } catch (e) {
@@ -874,20 +850,11 @@ async function analyzeFood() {
 // --- SLEEP ---
 function trackSleep() {
   let hours = parseFloat(document.getElementById("sleepInput").value);
-  const bedtime = document.getElementById("bedtimeInput").value;
-  const waketime = document.getElementById("waketimeInput").value;
   const status = document.getElementById("sleepStatus");
   status.classList.add("hidden");
 
-  if (isNaN(hours) && bedtime && waketime) {
-    const start = new Date(`2000-01-01 ${bedtime}`);
-    const end = new Date(`2000-01-01 ${waketime}`);
-    if (end < start) end.setDate(end.getDate() + 1);
-    hours = (end - start) / (1000 * 60 * 60);
-  }
-
   if (isNaN(hours)) {
-    status.textContent = "Please enter sleep hours or set Bedtime/Wake time.";
+    status.textContent = "REQUIRED: TOTAL RECOVERY HOURS.";
     status.classList.remove("hidden");
     return;
   }
@@ -895,8 +862,8 @@ function trackSleep() {
   const today = new Date().toLocaleDateString();
   const alreadyTracked = currentUser.data.sleep.find(s => s.fullDate === today);
 
-  if (alreadyTracked) {
-    status.textContent = "Metrics finalized. Recovery tracking is capped at 1/day.";
+  if (alreadyTracked && alreadyTracked.hours > 0) {
+    status.textContent = "METRICS FINALIZED FOR TODAY.";
     status.classList.remove("hidden");
     return;
   }
@@ -904,14 +871,17 @@ function trackSleep() {
   const ideal = currentUser.profile.age < 18 ? 9 : 8;
   const percent = Math.min(Math.round((hours / ideal) * 100), 100);
 
-  currentUser.data.sleep.push({
-    date: new Date().toLocaleDateString('en-US', { weekday: 'short' }),
-    fullDate: today,
-    hours,
-    percent,
-    bedtime,
-    waketime
-  });
+  if (alreadyTracked) {
+    alreadyTracked.hours = hours;
+    alreadyTracked.percent = percent;
+  } else {
+    currentUser.data.sleep.push({
+      date: new Date().toLocaleDateString('en-US', { weekday: 'short' }),
+      fullDate: today,
+      hours,
+      percent
+    });
+  }
 
   if (currentUser.data.sleep.length > 7) currentUser.data.sleep.shift();
 
@@ -919,20 +889,21 @@ function trackSleep() {
   updateSleepCircle(percent);
   saveCurrentUserData();
   updateDashboard();
+  document.getElementById("sleepInput").value = "";
 }
 
 function updateSleepCircle(percent) {
   document.getElementById("sleepPercent").textContent = `${percent}% `;
-  document.getElementById("sleepCircle").style.background = `conic - gradient(var(--accent - primary) ${percent * 3.6} deg, var(--glass - border) 0deg)`;
+  document.getElementById("sleepCircle").style.background = `conic-gradient(var(--accent-primary) ${percent * 3.6}deg, var(--glass-border) 0deg)`;
 }
 
 function renderSleepWeekly() {
   const container = document.getElementById("sleepWeeklyList");
   container.innerHTML = currentUser.data.sleep.map(s => `
-    < div class="day-circle-box" >
+    <div class="day-circle-box">
       <div class="day-circle ${s.percent >= 80 ? 'score-high' : ''}">${s.percent}%</div>
       <span class="day-label">${s.date}</span>
-    </div >
+    </div>
     `).join('');
 }
 
@@ -950,14 +921,14 @@ function setPlanMode(mode) {
 async function generatePlan() {
   const resBox = document.getElementById("planResult");
   resBox.classList.remove("hidden");
-  resBox.innerHTML = `< div class="typing" ><span>ARCHITECTING STRATEGY</span><div class="typing-dot"></div><div class="typing-dot"></div></div > `;
+  resBox.innerHTML = `<div class="typing"><span>ARCHITECTING STRATEGY</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
 
   const prompt = planMode === 'workout'
     ? `Workout: ${document.getElementById("targetArea").value}, Time: ${document.getElementById("timePerWorkout").value}, Loc: ${document.getElementById("location").value}.`
     : `Meal Plan: ${document.getElementById("mealGoal").value}, Diet: ${document.getElementById("dietType").value}.`;
 
   const reply = await askAI(prompt, "Elite conditioning coach. Provide raw text outline with bold headers and bullet points. Neat and organized.");
-  const formattedReply = `< strong > ELITE ${planMode.toUpperCase()} STRATEGY:</strong > <br><br>${reply.replace(/\n/g, "<br>")}`;
+  const formattedReply = `<strong> ELITE ${planMode.toUpperCase()} STRATEGY:</strong> <br><br>${reply.replace(/\n/g, "<br>")}`;
   resBox.innerHTML = formattedReply;
 
   // Persistence
@@ -1171,7 +1142,7 @@ function setActivityType(type, icon) {
 
 function logActivity() {
   const duration = parseInt(document.getElementById("activityDuration").value);
-  const intensity = parseInt(document.getElementById("activityIntensity").value);
+  const powerLevel = parseInt(document.getElementById("activityIntensity").value);
   const notes = document.getElementById("activityNotes").value.trim();
 
   if (!duration) return;
@@ -1180,7 +1151,7 @@ function logActivity() {
     type: selectedActivityType,
     icon: selectedActivityIcon,
     duration,
-    intensity,
+    powerLevel: powerLevel || 5,
     notes,
     timestamp: new Date().toISOString(),
     displayDate: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -1214,7 +1185,7 @@ function renderActivities() {
           <span style="font-size:0.7rem; color:var(--text-dim);">${a.displayDate}</span>
         </div>
         <p style="font-size:0.85rem; margin-top:5px; color:var(--text-dim);">
-          ${a.duration} min • Intensity ${a.intensity}/10
+          ${a.duration} min • Power Level ${a.powerLevel}/10
           ${a.notes ? `<br><span style="font-style:italic;">"${a.notes}"</span>` : ''}
         </p>
       </div>
@@ -1407,7 +1378,7 @@ function renderTrends() {
         pointRadius: 4,
         pointHoverRadius: 6,
         fill: true,
-        tension: 0.4 // nice curve
+        tension: 0.5 // Maximum smoothness
       }]
     },
     options: {
@@ -1553,10 +1524,9 @@ window.addEventListener('resize', () => {
   }
 });
 
-function updateDashboard() {
+async function updateDashboard() {
   if (!currentUser) return;
 
-  // Personalized Greeting
   const hour = new Date().getHours();
   let greeting = "Good evening";
   if (hour < 12) greeting = "Good morning";
@@ -1567,7 +1537,6 @@ function updateDashboard() {
   // Update Nutrition
   const todayCals = currentUser.data.sleep && currentUser.data.sleep.length > 0 ?
     (currentUser.data.lastPlans && currentUser.data.lastPlans.meal ? "Calculated" : "Logged") : "0";
-  // Simplified for now, in a real app would sum daily food logs
 
   // Update Sleep Circle
   const lastSleep = currentUser.data.sleep[currentUser.data.sleep.length - 1];
@@ -1581,33 +1550,25 @@ function updateDashboard() {
     if (sleepCircle) sleepCircle.style.background = `conic-gradient(var(--accent-primary) ${lastSleep.percent * 3.6}deg, var(--glass-border) 0deg)`;
   }
 
-  // Update Dashboard Goals
-  const dashGoalsList = document.getElementById("dash-goals-list");
-  if (dashGoalsList) {
-    const activeGoals = currentUser.data.goals.filter(g => !g.done).slice(0, 3);
+  // Update Dashboard Goals (Wheel Layout)
+  const dashGoalsWheel = document.getElementById("dash-goals-wheel");
+  if (dashGoalsWheel) {
+    const activeGoals = currentUser.data.goals.filter(g => !g.done).slice(0, 4);
     if (activeGoals.length > 0) {
-      dashGoalsList.innerHTML = activeGoals.map(g => {
-        const progress = g.targetValue > 0 ? Math.min((g.currentValue / g.targetValue) * 100, 100) : 0;
+      dashGoalsWheel.innerHTML = activeGoals.map(g => {
+        const progress = g.targetValue > 0 ? Math.min((g.currentValue / g.targetValue) * 100, 100) : 50;
         return `
-          <div style="margin-bottom:10px;">
-            <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
-              <span>${g.text}</span>
-              <span style="color:var(--accent-primary); font-weight:700;">${g.targetValue > 0 ? `${g.currentValue}/${g.targetValue}` : 'Action Required'}</span>
-            </div>
-            ${g.targetValue > 0 ? `
-            <div style="width:100%; height:4px; background:var(--glass-border); border-radius:2px; overflow:hidden;">
-              <div style="width:${progress}%; height:100%; background:var(--accent-primary);"></div>
-            </div>
-            ` : ''}
+          <div class="goal-mini-circle" title="${g.text}" style="border-color: ${progress >= 100 ? '#22c55e' : 'var(--accent-primary)'};">
+             ${g.text[0].toUpperCase()}
           </div>
         `;
       }).join('');
     } else {
-      dashGoalsList.innerHTML = `<p style="color:var(--text-dim); font-size:0.9rem;">All milestones completed. 🎖️</p>`;
+      dashGoalsWheel.innerHTML = `<p style="color:var(--text-dim); font-size:0.8rem;">All milestones completed. 🎖️</p>`;
     }
   }
 
-  // Update AI Insights based on recent data
+  // Update AI Insights
   const insightBox = document.getElementById("dash-ai-insight");
   if (insightBox) {
     if (lastSleep && lastSleep.percent < 70) {
