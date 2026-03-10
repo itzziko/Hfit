@@ -802,6 +802,7 @@ button:disabled {
   justify-content: space-between;
   gap: 30px;
   min-height: 220px;
+  position: relative;
 }
 
 .card:hover {

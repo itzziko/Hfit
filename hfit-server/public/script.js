@@ -1,5 +1,5 @@
 const AI_MODEL = "google/gemini-2.0-flash-exp:free"; // Default to FREE model to prevent credit errors
-const BACKEND_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:") ? "http://localhost:3000" : window.location.origin;
+const BACKEND_URL = window.location.protocol === "file:" ? "http://localhost:3000" : "";
 
 let recognition = null;
 let isRecording = false;
@@ -258,7 +258,8 @@ function checkBioRhythm() {
 // --- DRAGGABLE DASHBOARD ---
 function initDraggableDashboard() {
   const grid = document.querySelector('.dashboard-grid');
-  const cards = document.querySelectorAll('.card[draggable="true"]');
+  const cards = document.querySelectorAll('.card');
+  const handles = document.querySelectorAll('.drag-handle[draggable="true"]');
 
   // Load saved order
   const savedOrder = JSON.parse(localStorage.getItem('hfit_dashboard_order') || '[]');
@@ -269,25 +270,28 @@ function initDraggableDashboard() {
     });
   }
 
-  cards.forEach(card => {
-    card.addEventListener('dragend', () => {
-      card.classList.remove('dragging');
-      saveDashboardOrder();
-    });
+  handles.forEach(handle => {
+    const card = handle.parentElement;
 
-    card.addEventListener('dragstart', (e) => {
-      // Prevent drag if a button or input is focused/clicked
-      if (e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input') {
-        e.preventDefault();
-        return;
-      }
+    handle.addEventListener('dragstart', (e) => {
       card.classList.add('dragging');
       e.dataTransfer.setData('text/plain', card.id);
+      setTimeout(() => card.style.opacity = '0.5', 0);
     });
 
+    handle.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      card.style.opacity = '1';
+      saveDashboardOrder();
+    });
+  });
+
+  cards.forEach(card => {
     card.addEventListener('dragover', (e) => {
       e.preventDefault();
       const dragging = document.querySelector('.dragging');
+      if (!dragging) return;
+
       const afterElement = getDragAfterElement(grid, e.clientY);
       if (afterElement == null) {
         grid.appendChild(dragging);
@@ -299,7 +303,7 @@ function initDraggableDashboard() {
 }
 
 function getDragAfterElement(container, y) {
-  const draggableElements = [...container.querySelectorAll('.card[draggable="true"]:not(.dragging)')];
+  const draggableElements = [...container.querySelectorAll('.card:not(.dragging)')];
 
   return draggableElements.reduce((closest, child) => {
     const box = child.getBoundingClientRect();
@@ -313,7 +317,7 @@ function getDragAfterElement(container, y) {
 }
 
 function saveDashboardOrder() {
-  const ids = [...document.querySelectorAll('.card[draggable="true"]')].map(c => c.id);
+  const ids = [...document.querySelectorAll('.dashboard-grid .card')].map(c => c.id).filter(id => id);
   localStorage.setItem('hfit_dashboard_order', JSON.stringify(ids));
 }
 
