@@ -217,13 +217,15 @@ window.onload = async () => {
       if (!currentUser) {
         document.getElementById("authScreen").classList.remove("hidden");
         document.getElementById("app").classList.add("hidden");
-        document.querySelector(".fab-ai").classList.add("hidden");
+        const fab = document.querySelector(".fab-ai");
+        if (fab) fab.classList.add("hidden");
       }
     }
   } else {
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("app").classList.add("hidden");
-    document.querySelector(".fab-ai").classList.add("hidden");
+    const fab = document.querySelector(".fab-ai");
+    if (fab) fab.classList.add("hidden");
   }
 
   const theme = localStorage.getItem("hfitTheme") || "dark-mode";
@@ -489,7 +491,8 @@ async function handleAuth(e) {
 function showApp() {
   document.getElementById("authScreen").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
-  document.querySelector(".fab-ai").classList.remove("hidden");
+  const fab = document.querySelector(".fab-ai");
+  if (fab) fab.classList.remove("hidden");
   document.getElementById("userName").textContent = currentUser.profile.username;
 
   renderChatSidebar();
