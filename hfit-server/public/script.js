@@ -502,10 +502,17 @@ function toggleTheme() {
 }
 
 function openTab(id) {
+  console.log("Hfit Nav: switching to", id);
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
   document.querySelectorAll(".sidebar button").forEach(b => b.classList.remove("active"));
 
-  document.getElementById(id).classList.add("active");
+  const target = document.getElementById(id);
+  if (!target) {
+    console.error("Hfit Error: Tab not found", id);
+    return;
+  }
+  target.classList.add("active");
+
   const btn = document.getElementById(`btn-${id}`);
   if (btn) btn.classList.add("active");
 
@@ -514,6 +521,11 @@ function openTab(id) {
     const chatHist = document.getElementById("chatHistory");
     chatHist.scrollTop = chatHist.scrollHeight;
   }, 100);
+
+  // Auto-scroll to top for better UX on mobile
+  if (window.innerWidth < 900) {
+    document.querySelector('.content').scrollTop = 0;
+  }
 }
 
 // --- DATA PERSISTENCE HELPERS ---
@@ -549,7 +561,7 @@ async function askAI(message, systemPrompt = "You are a helpful health assistant
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message,
-        system: systemPrompt + disclaimer,
+        system: fullSystemPrompt,
         model: AI_MODEL,
         image: imageBase64,
         stream: !!onChunk
@@ -618,18 +630,25 @@ async function askAI(message, systemPrompt = "You are a helpful health assistant
 
 // --- AI CHAT ---
 function formatAIResponse(text) {
+  if (!text) return "";
+  // More organized and robust formatting
   let formatted = text
-    .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>') // Bold Italic
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')    // Bold
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')               // Italic
-    .replace(/^# (.*$)/gm, '<h1>$1</h1>')               // H1
-    .replace(/^## (.*$)/gm, '<h2>$1</h2>')              // H2
-    .replace(/^### (.*$)/gm, '<h3>$1</h3>')             // H3
-    .replace(/^\s*[-•*]\s*(.*)$/gm, '<li>$1</li>')      // Bullets
-    .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')          // Wrap bullet groups
-    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>') // Links
-    .replace(/\n\n/g, '<br><br>')                       // Paragraphs
-    .replace(/\n/g, '<br>');                            // Line breaks
+    .replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/^# (.*$)/gm, '<h1 style="color:var(--accent-primary); margin-top:15px;">$1</h1>')
+    .replace(/^## (.*$)/gm, '<h2 style="color:var(--accent-primary); margin-top:12px;">$1</h2>')
+    .replace(/^### (.*$)/gm, '<h3 style="margin-top:10px;">$1</h3>')
+    .replace(/^\s*[-•*]\s*(.*)$/gm, '<li style="margin-bottom:6px;">$1</li>');
+
+  // Intelligent list wrapping
+  formatted = formatted.replace(/(<li>.*<\/li>)/gs, (match) => `<ul style="padding-left:20px; margin-top:10px; margin-bottom:15px; border-left: 2px solid var(--accent-primary); list-style:none;">${match}</ul>`);
+
+  formatted = formatted
+    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color:var(--accent-primary); text-decoration:underline;">$1</a>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n/g, '<br>');
+
   return formatted;
 }
 

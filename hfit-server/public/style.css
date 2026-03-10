@@ -27,33 +27,33 @@ body.light-mode {
   --input-outline: rgba(14, 165, 233, 0.1);
 }
 
-/* BIO-RHYTHM MODES */
+/* BIO-RHYTHM MODES - CONFORMING TO CORE BLUE THEME */
 body.morning-mode {
-  --accent-primary: #fbbf24;
-  /* Focus Gold */
-  --accent-secondary: #f59e0b;
-  --accent-glow: rgba(251, 191, 36, 0.25);
+  --accent-primary: #00e5ff;
+  /* Cyan Glaze */
+  --accent-secondary: #00b8d4;
+  --accent-glow: rgba(0, 229, 255, 0.2);
 }
 
 body.recovery-mode {
-  --accent-primary: #f87171;
-  /* Recovery Coral/Amber */
-  --accent-secondary: #b91c1c;
-  --accent-glow: rgba(248, 113, 113, 0.25);
+  --accent-primary: #26c6da;
+  /* Aqua Recovery */
+  --accent-secondary: #00acc1;
+  --accent-glow: rgba(38, 198, 218, 0.2);
 }
 
 body.midnight-mode {
-  --accent-primary: #818cf8;
+  --accent-primary: #5c6bc0;
   /* Deep Indigo */
-  --accent-secondary: #4f46e5;
-  --accent-glow: rgba(129, 140, 248, 0.25);
+  --accent-secondary: #3f51b5;
+  --accent-glow: rgba(92, 107, 192, 0.2);
 }
 
 body.afternoon-mode {
-  --accent-primary: #f97316;
-  /* Sunset Orange */
-  --accent-secondary: #ea580c;
-  --accent-glow: rgba(249, 115, 22, 0.25);
+  --accent-primary: #2979ff;
+  /* Royal Core Blue */
+  --accent-secondary: #2962ff;
+  --accent-glow: rgba(41, 121, 255, 0.2);
 }
 
 * {
@@ -449,6 +449,8 @@ button:disabled {
   filter: grayscale(0.5);
   opacity: 0.7;
   transition: 0.3s;
+  padding: 15px !important;
+  margin-bottom: 20px !important;
 }
 
 .logout:hover {
@@ -653,7 +655,12 @@ button:disabled {
   }
 
   .sidebar .logout {
-    display: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    margin: 0;
+    min-width: 50px;
   }
 
   .welcome-section h1 {
@@ -672,6 +679,36 @@ button:disabled {
   .tab {
     padding: 40px 20px;
   }
+}
+
+/* GLOBAL CLASSES FOR HEALTH MODULES */
+.activity-icon-circle {
+  width: 50px;
+  height: 50px;
+  background: var(--accent-primary);
+  color: #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  box-shadow: 0 4px 15px var(--accent-glow);
+  flex-shrink: 0;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 30px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.quick-actions button {
+  padding: 10px 18px !important;
+  font-size: 0.75rem !important;
+  gap: 6px !important;
+  white-space: nowrap;
 }
 
 @media (max-width: 480px) {
