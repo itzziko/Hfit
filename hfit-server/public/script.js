@@ -195,9 +195,17 @@ window.onload = async () => {
           profile: { username: result.user.username, age: result.user.age },
           data: result.user.data
         };
+        if (!currentUser.data.activities) currentUser.data.activities = [];
+        if (!currentUser.data.sleep) currentUser.data.sleep = [];
+        if (!currentUser.data.goals) currentUser.data.goals = [];
+
         initChatSystem();
         showApp();
         checkAiStatus();
+        checkBioRhythm();
+        initDraggableDashboard();
+        renderActivities();
+        updateDashboard();
       } else {
         throw new Error("Invalid session");
       }
@@ -218,6 +226,7 @@ window.onload = async () => {
 
   const theme = localStorage.getItem("hfitTheme") || "dark-mode";
   document.body.className = theme;
+  checkBioRhythm(); // Ensure bio-rhythm is applied on top of saved theme
 
   const recentAccounts = getRecentAccounts();
   if (recentAccounts.length > 0) {
@@ -226,6 +235,78 @@ window.onload = async () => {
   }
   setAuthMode(authMode);
 };
+
+// --- BIO-RHYTHM ---
+function checkBioRhythm() {
+  const hour = new Date().getHours();
+  document.body.classList.remove('morning-mode', 'recovery-mode', 'midnight-mode');
+
+  if (hour >= 5 && hour < 12) {
+    document.body.classList.add('morning-mode');
+  } else if (hour >= 20 || hour < 5) {
+    document.body.classList.add('recovery-mode');
+  } else if (hour >= 0 && hour < 5) {
+    document.body.classList.add('midnight-mode');
+  }
+  // Default is neutral Focus Blue (as defined in :root)
+}
+
+// --- DRAGGABLE DASHBOARD ---
+function initDraggableDashboard() {
+  const grid = document.querySelector('.dashboard-grid');
+  const cards = document.querySelectorAll('.card[draggable="true"]');
+
+  // Load saved order
+  const savedOrder = JSON.parse(localStorage.getItem('hfit_dashboard_order') || '[]');
+  if (savedOrder.length > 0) {
+    savedOrder.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) grid.appendChild(el);
+    });
+  }
+
+  cards.forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+      card.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', card.id);
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      saveDashboardOrder();
+    });
+
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      const dragging = document.querySelector('.dragging');
+      const afterElement = getDragAfterElement(grid, e.clientY);
+      if (afterElement == null) {
+        grid.appendChild(dragging);
+      } else {
+        grid.insertBefore(dragging, afterElement);
+      }
+    });
+  });
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.card[draggable="true"]:not(.dragging)')];
+
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function saveDashboardOrder() {
+  const ids = [...document.querySelectorAll('.card[draggable="true"]')].map(c => c.id);
+  localStorage.setItem('hfit_dashboard_order', JSON.stringify(ids));
+}
 
 function renderRecentAccounts() {
   const container = document.getElementById("recentAccountsContainer");
@@ -792,12 +873,21 @@ async function analyzeFood() {
 
 // --- SLEEP ---
 function trackSleep() {
-  const hours = parseFloat(document.getElementById("sleepInput").value);
+  let hours = parseFloat(document.getElementById("sleepInput").value);
+  const bedtime = document.getElementById("bedtimeInput").value;
+  const waketime = document.getElementById("waketimeInput").value;
   const status = document.getElementById("sleepStatus");
   status.classList.add("hidden");
 
+  if (isNaN(hours) && bedtime && waketime) {
+    const start = new Date(`2000-01-01 ${bedtime}`);
+    const end = new Date(`2000-01-01 ${waketime}`);
+    if (end < start) end.setDate(end.getDate() + 1);
+    hours = (end - start) / (1000 * 60 * 60);
+  }
+
   if (isNaN(hours)) {
-    status.textContent = "Please enter valid sleep hours.";
+    status.textContent = "Please enter sleep hours or set Bedtime/Wake time.";
     status.classList.remove("hidden");
     return;
   }
@@ -818,7 +908,9 @@ function trackSleep() {
     date: new Date().toLocaleDateString('en-US', { weekday: 'short' }),
     fullDate: today,
     hours,
-    percent
+    percent,
+    bedtime,
+    waketime
   });
 
   if (currentUser.data.sleep.length > 7) currentUser.data.sleep.shift();
@@ -961,10 +1053,26 @@ async function analyzeBruise() {
 // --- GOALS ---
 function addGoal() {
   const input = document.getElementById("goalInput");
+  const targetInput = document.getElementById("goalTarget");
+  const unitInput = document.getElementById("goalUnit");
+
   const text = input.value.trim();
+  const targetValue = parseFloat(targetInput.value) || 0;
+  const unit = unitInput.value.trim() || "";
+
   if (!text) return;
-  currentUser.data.goals.push({ text, done: false });
+  currentUser.data.goals.push({
+    text,
+    done: false,
+    targetValue,
+    currentValue: 0,
+    unit
+  });
+
   input.value = "";
+  targetInput.value = "";
+  unitInput.value = "";
+
   renderGoals();
   saveCurrentUserData();
   updateDashboard();
@@ -1003,13 +1111,115 @@ function deleteGoal(idx) {
 
 function renderGoals() {
   const list = document.getElementById("goalList");
-  list.innerHTML = currentUser.data.goals.map((g, i) => `
-    <li class="goal-item" style="opacity: ${g.done ? 0.5 : 1};">
-      <button class="goal-btn-check ${g.done ? 'checked' : ''}" onclick="completeGoal(${i})" title="Complete">✔</button>
-      <span style="flex-grow:1; font-weight:600; text-decoration: ${g.done ? 'line-through' : 'none'};">${g.text}</span>
-      <button class="goal-btn-cross" onclick="deleteGoal(${i})" title="Delete">✖</button>
-    </li>
-    `).join('');
+  list.innerHTML = currentUser.data.goals.map((g, i) => {
+    const progress = g.targetValue > 0 ? Math.min((g.currentValue / g.targetValue) * 100, 100) : (g.done ? 100 : 0);
+    return `
+      <li class="goal-item" style="display:flex; flex-direction:column; gap:8px; background:var(--glass-bg); padding:15px; border-radius:16px;">
+        <div style="display:flex; align-items:center; gap:12px; width:100%;">
+          <button class="goal-btn-check ${g.done ? 'checked' : ''}" onclick="completeGoal(${i})" title="Complete">✔</button>
+          <div style="flex-grow:1;">
+            <p style="font-weight:700; font-size:1rem; margin-bottom:2px; text-decoration: ${g.done ? 'line-through' : 'none'};">${g.text}</p>
+            ${g.targetValue > 0 ? `<p style="font-size:0.75rem; color:var(--text-dim);">Progress: ${g.currentValue} / ${g.targetValue} ${g.unit}</p>` : ''}
+          </div>
+          <button class="goal-btn-cross" onclick="deleteGoal(${i})" title="Delete">✖</button>
+        </div>
+        ${g.targetValue > 0 ? `
+        <div style="width:100%; height:6px; background:var(--glass-border); border-radius:3px; overflow:hidden;">
+          <div style="width:${progress}%; height:100%; background:var(--accent-primary); transition: width 0.3s ease;"></div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; margin-top:5px;">
+          <button class="btn-small btn-secondary" style="padding:4px 8px; font-size:0.65rem;" onclick="incrementGoal(${i})">+ 1 ${g.unit}</button>
+          <button class="btn-small btn-secondary" style="padding:4px 8px; font-size:0.65rem;" onclick="decrementGoal(${i})">- 1 ${g.unit}</button>
+        </div>
+        ` : ''}
+      </li>
+    `;
+  }).join('');
+}
+
+function incrementGoal(idx) {
+  currentUser.data.goals[idx].currentValue += 1;
+  if (currentUser.data.goals[idx].currentValue >= currentUser.data.goals[idx].targetValue) {
+    currentUser.data.goals[idx].done = true;
+  }
+  renderGoals();
+  saveCurrentUserData();
+  updateDashboard();
+}
+
+function decrementGoal(idx) {
+  currentUser.data.goals[idx].currentValue = Math.max(0, currentUser.data.goals[idx].currentValue - 1);
+  if (currentUser.data.goals[idx].currentValue < currentUser.data.goals[idx].targetValue) {
+    currentUser.data.goals[idx].done = false;
+  }
+  renderGoals();
+  saveCurrentUserData();
+  updateDashboard();
+}
+
+// --- ACTIVITIES ---
+let selectedActivityType = 'Run';
+let selectedActivityIcon = '🏃';
+
+function setActivityType(type, icon) {
+  selectedActivityType = type;
+  selectedActivityIcon = icon;
+  document.querySelectorAll('.activity-selector button').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.includes(type));
+  });
+}
+
+function logActivity() {
+  const duration = parseInt(document.getElementById("activityDuration").value);
+  const intensity = parseInt(document.getElementById("activityIntensity").value);
+  const notes = document.getElementById("activityNotes").value.trim();
+
+  if (!duration) return;
+
+  const activity = {
+    type: selectedActivityType,
+    icon: selectedActivityIcon,
+    duration,
+    intensity,
+    notes,
+    timestamp: new Date().toISOString(),
+    displayDate: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  };
+
+  if (!currentUser.data.activities) currentUser.data.activities = [];
+  currentUser.data.activities.unshift(activity);
+
+  // Keep only last 20 activities
+  if (currentUser.data.activities.length > 20) currentUser.data.activities.pop();
+
+  document.getElementById("activityDuration").value = "";
+  document.getElementById("activityIntensity").value = "";
+  document.getElementById("activityNotes").value = "";
+
+  renderActivities();
+  saveCurrentUserData();
+  updateDashboard();
+}
+
+function renderActivities() {
+  const container = document.getElementById("activityHistory");
+  if (!container || !currentUser.data.activities) return;
+
+  container.innerHTML = currentUser.data.activities.map(a => `
+    <div class="card stat-card" style="padding:15px; display:flex; align-items:center; gap:15px; margin:0;">
+      <div style="font-size:1.8rem;">${a.icon}</div>
+      <div style="flex-grow:1;">
+        <div style="display:flex; justify-content:space-between;">
+          <h4 style="margin:0;">${a.type}</h4>
+          <span style="font-size:0.7rem; color:var(--text-dim);">${a.displayDate}</span>
+        </div>
+        <p style="font-size:0.85rem; margin-top:5px; color:var(--text-dim);">
+          ${a.duration} min • Intensity ${a.intensity}/10
+          ${a.notes ? `<br><span style="font-style:italic;">"${a.notes}"</span>` : ''}
+        </p>
+      </div>
+    </div>
+  `).join('');
 }
 
 // --- FEEDBACK ---
@@ -1342,3 +1552,73 @@ window.addEventListener('resize', () => {
     renderTrends();
   }
 });
+
+function updateDashboard() {
+  if (!currentUser) return;
+
+  // Personalized Greeting
+  const hour = new Date().getHours();
+  let greeting = "Good evening";
+  if (hour < 12) greeting = "Good morning";
+  else if (hour < 18) greeting = "Good afternoon";
+
+  document.getElementById("welcomeText").innerHTML = `${greeting}, <span id="userName">${currentUser.profile.username}</span> 👋`;
+
+  // Update Nutrition
+  const todayCals = currentUser.data.sleep && currentUser.data.sleep.length > 0 ?
+    (currentUser.data.lastPlans && currentUser.data.lastPlans.meal ? "Calculated" : "Logged") : "0";
+  // Simplified for now, in a real app would sum daily food logs
+
+  // Update Sleep Circle
+  const lastSleep = currentUser.data.sleep[currentUser.data.sleep.length - 1];
+  const sleepVal = document.getElementById("dash-sleep-val");
+  const sleepStatus = document.getElementById("dash-sleep-status");
+  const sleepCircle = document.getElementById("dash-sleep-circle");
+
+  if (lastSleep) {
+    sleepVal.textContent = `${lastSleep.percent}%`;
+    sleepStatus.textContent = lastSleep.percent >= 80 ? "Optimized Recovery" : "Needs Improvement";
+    if (sleepCircle) sleepCircle.style.background = `conic-gradient(var(--accent-primary) ${lastSleep.percent * 3.6}deg, var(--glass-border) 0deg)`;
+  }
+
+  // Update Dashboard Goals
+  const dashGoalsList = document.getElementById("dash-goals-list");
+  if (dashGoalsList) {
+    const activeGoals = currentUser.data.goals.filter(g => !g.done).slice(0, 3);
+    if (activeGoals.length > 0) {
+      dashGoalsList.innerHTML = activeGoals.map(g => {
+        const progress = g.targetValue > 0 ? Math.min((g.currentValue / g.targetValue) * 100, 100) : 0;
+        return `
+          <div style="margin-bottom:10px;">
+            <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:4px;">
+              <span>${g.text}</span>
+              <span style="color:var(--accent-primary); font-weight:700;">${g.targetValue > 0 ? `${g.currentValue}/${g.targetValue}` : 'Action Required'}</span>
+            </div>
+            ${g.targetValue > 0 ? `
+            <div style="width:100%; height:4px; background:var(--glass-border); border-radius:2px; overflow:hidden;">
+              <div style="width:${progress}%; height:100%; background:var(--accent-primary);"></div>
+            </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    } else {
+      dashGoalsList.innerHTML = `<p style="color:var(--text-dim); font-size:0.9rem;">All milestones completed. 🎖️</p>`;
+    }
+  }
+
+  // Update AI Insights based on recent data
+  const insightBox = document.getElementById("dash-ai-insight");
+  if (insightBox) {
+    if (lastSleep && lastSleep.percent < 70) {
+      insightBox.textContent = "Sleep patterns detected below thresholds. We recommend a 15-minute cool-down session before bedtime.";
+    } else if (currentUser.data.activities && currentUser.data.activities.length > 0) {
+      const lastAct = currentUser.data.activities[0];
+      insightBox.textContent = `Excellent ${lastAct.type} session! Your metabolic rate is currently optimized. Stay hydrated.`;
+    } else {
+      insightBox.textContent = "Awaiting performance data. Log your first activity or sleep cycle for personalized intelligence.";
+    }
+  }
+
+  renderTrends();
+}

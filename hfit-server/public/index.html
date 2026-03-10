@@ -75,6 +75,8 @@
           <span>Sleep Data</span></button>
         <button id="btn-workout" onclick="openTab('workout')" title="Generate AI-powered fitness and meal plans">💪
           <span>AI Planning</span></button>
+        <button id="btn-activities" onclick="openTab('activities')" title="Log physical activities and exercises">🏃
+          <span>Activities</span></button>
         <button id="btn-goals" onclick="openTab('goals')" title="Set and track health milestones">🎯 <span>My
             Goals</span></button>
         <button id="btn-bruise" onclick="openTab('bruise')" title="Diagnostic skin concern identifier">🩹 <span>Vision
@@ -104,8 +106,21 @@
           </div>
         </div>
 
+        <div class="quick-actions"
+          style="display:flex; gap:15px; margin-bottom:30px; overflow-x:auto; padding-bottom:10px;">
+          <button class="btn-secondary btn-small" onclick="openTab('food')" style="white-space:nowrap;">🍎 Log
+            Meal</button>
+          <button class="btn-secondary btn-small" onclick="openTab('sleep')" style="white-space:nowrap;">😴 Log
+            Sleep</button>
+          <button class="btn-secondary btn-small" onclick="openTab('activities')" style="white-space:nowrap;">🏃
+            Exercise</button>
+          <button class="btn-secondary btn-small" onclick="openTab('goals')" style="white-space:nowrap;">🎯 Set
+            Goal</button>
+        </div>
+
         <div class="dashboard-grid">
-          <div class="card stat-card">
+          <div class="card stat-card" draggable="true" id="widget-nutrition">
+            <span class="drag-handle">⋮⋮</span>
             <div style="display:flex; justify-content:space-between; align-items:start;">
               <h3>Nutrition</h3>
               <span style="font-size:0.8rem; color:var(--accent-primary); font-weight:700;">LIVE</span>
@@ -117,7 +132,8 @@
             <button class="btn-secondary btn-small" onclick="openTab('food')">LOG MEAL</button>
           </div>
 
-          <div class="card stat-card">
+          <div class="card stat-card" draggable="true" id="widget-sleep">
+            <span class="drag-handle">⋮⋮</span>
             <h3>Sleep Recovery</h3>
             <div style="display:flex; align-items:center; gap:25px; margin:20px 0;">
               <div class="mini-circle" id="dash-sleep-circle">
@@ -131,7 +147,8 @@
             <button class="btn-secondary btn-small" onclick="openTab('sleep')">ADD SLEEP</button>
           </div>
 
-          <div class="card stat-card">
+          <div class="card stat-card" draggable="true" id="widget-goals">
+            <span class="drag-handle">⋮⋮</span>
             <h3>Active Goals</h3>
             <div id="dash-goals-list"
               style="margin:20px 0; display:flex; flex-direction:column; gap:10px; min-height:80px;">
@@ -140,7 +157,8 @@
             <button class="btn-secondary btn-small" onclick="openTab('goals')">MANAGE</button>
           </div>
 
-          <div class="card full-width-card" style="grid-column: 1 / -1;">
+          <div class="card full-width-card" style="grid-column: 1 / -1;" draggable="true" id="widget-ai-insight">
+            <span class="drag-handle">⋮⋮</span>
             <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
               <span style="font-size:1.5rem;">✨</span>
               <h3 style="margin-bottom:0;">AI Health Recommendation</h3>
@@ -158,7 +176,8 @@
           </div>
 
           <!-- PERFORMANCE TRENDS -->
-          <div class="card full-width-card trend-card" style="grid-column: 1 / -1;">
+          <div class="card full-width-card trend-card" style="grid-column: 1 / -1;" draggable="true" id="widget-trends">
+            <span class="drag-handle">⋮⋮</span>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
               <div style="display:flex; align-items:center; gap:15px;">
                 <span style="font-size:1.5rem;">📈</span>
@@ -244,8 +263,19 @@
             </div>
             <div style="display:flex; flex-direction:column; gap:15px;">
               <p style="font-weight:700; color:var(--text-dim);">LOG LAST NIGHT'S SLEEP</p>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; width:100%;">
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                  <label style="font-size:0.7rem; color:var(--text-dim); font-weight:700;">BEDTIME</label>
+                  <input type="time" id="bedtimeInput" />
+                </div>
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                  <label style="font-size:0.7rem; color:var(--text-dim); font-weight:700;">WAKE TIME</label>
+                  <input type="time" id="waketimeInput" />
+                </div>
+              </div>
               <div style="display:flex; gap:12px; width:100%;">
-                <input type="number" id="sleepInput" placeholder="0" min="0" max="24" onfocus="this.select()" />
+                <input type="number" id="sleepInput" placeholder="Total Hours (optional)" min="0" max="24"
+                  onfocus="this.select()" />
                 <button class="btn-mic" onclick="toggleVoiceInput('sleepInput')" title="Voice Log">🎙️</button>
               </div>
               <button onclick="trackSleep()">LOG DATA</button>
@@ -289,14 +319,53 @@
         </div>
       </section>
 
+      <!-- ACTIVITIES -->
+      <section id="activities" class="tab">
+        <h2 style="font-size:2.5rem; margin-bottom:30px;">Exercise Log</h2>
+        <div class="card" style="max-width:800px; margin:0 auto;">
+          <div class="activity-selector"
+            style="display:flex; gap:15px; margin-bottom:30px; overflow-x:auto; padding-bottom:10px;">
+            <button class="btn-secondary active" onclick="setActivityType('Run', '🏃')">🏃 Run</button>
+            <button class="btn-secondary" onclick="setActivityType('Gym', '🏋️')">🏋️ Gym</button>
+            <button class="btn-secondary" onclick="setActivityType('Yoga', '🧘')">🧘 Yoga</button>
+            <button class="btn-secondary" onclick="setActivityType('Cycle', '🚴')">🚴 Cycle</button>
+            <button class="btn-secondary" onclick="setActivityType('Walk', '🚶')">🚶 Walk</button>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:15px;">
+            <div style="display:flex; gap:12px;">
+              <input type="number" id="activityDuration" placeholder="Duration (min)" onfocus="this.select()" />
+              <input type="number" id="activityIntensity" placeholder="Intensity (1-10)" onfocus="this.select()" />
+            </div>
+            <div style="display:flex; gap:12px;">
+              <input type="text" id="activityNotes" placeholder="Notes (optional)" onfocus="this.select()" />
+              <button class="btn-mic" onclick="toggleVoiceInput('activityNotes')" title="Voice Note">🎙️</button>
+            </div>
+            <button onclick="logActivity()">LOG ACTIVITY</button>
+          </div>
+
+          <div style="margin-top:40px;">
+            <h3 style="margin-bottom:20px;">Recent Activities</h3>
+            <div id="activityHistory" style="display:flex; flex-direction:column; gap:12px;"></div>
+          </div>
+        </div>
+      </section>
+
       <!-- GOALS -->
       <section id="goals" class="tab">
         <h2 style="font-size:2.5rem; margin-bottom:30px;">Health Milestones</h2>
         <div class="card" style="max-width:800px; margin:0 auto;">
-          <div style="display:flex; gap:12px; margin-bottom:30px;">
-            <input id="goalInput" placeholder="ENTER NEW GOAL..." onfocus="this.select()" />
-            <button class="btn-mic" onclick="toggleVoiceInput('goalInput')" title="Voice Log">🎙️</button>
-            <button onclick="addGoal()" style="width:120px;">ADD</button>
+          <div style="display:flex; flex-direction:column; gap:15px; margin-bottom:30px;">
+            <div style="display:flex; gap:12px;">
+              <input id="goalInput" placeholder="ENTER NEW GOAL..." style="flex-grow:2;" onfocus="this.select()" />
+              <button class="btn-mic" onclick="toggleVoiceInput('goalInput')" title="Voice Log">🎙️</button>
+            </div>
+            <div style="display:flex; gap:12px;">
+              <input id="goalTarget" type="number" placeholder="Target Value (e.g. 100)" style="flex-grow:1;"
+                onfocus="this.select()" />
+              <input id="goalUnit" placeholder="Unit (e.g. km, cups)" style="flex-grow:1;" onfocus="this.select()" />
+              <button onclick="addGoal()" style="width:120px;">ADD</button>
+            </div>
           </div>
           <ul id="goalList" class="goal-list"></ul>
         </div>

@@ -27,6 +27,28 @@ body.light-mode {
   --input-outline: rgba(14, 165, 233, 0.1);
 }
 
+/* BIO-RHYTHM MODES */
+body.morning-mode {
+  --accent-primary: #fbbf24;
+  /* Focus Gold */
+  --accent-secondary: #f59e0b;
+  --accent-glow: rgba(251, 191, 36, 0.25);
+}
+
+body.recovery-mode {
+  --accent-primary: #f87171;
+  /* Recovery Coral/Amber */
+  --accent-secondary: #b91c1c;
+  --accent-glow: rgba(248, 113, 113, 0.25);
+}
+
+body.midnight-mode {
+  --accent-primary: #818cf8;
+  /* Deep Indigo */
+  --accent-secondary: #4f46e5;
+  --accent-glow: rgba(129, 140, 248, 0.25);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -522,6 +544,32 @@ button:disabled {
 .card:hover {
   border-color: var(--accent-primary);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.card.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+  border: 2px dashed var(--accent-primary);
+}
+
+.drag-handle {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 1.2rem;
+  cursor: grab;
+  opacity: 0.3;
+  transition: opacity 0.3s;
+  pointer-events: all;
+  z-index: 5;
+}
+
+.card:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 .stat-val {
