@@ -15,8 +15,10 @@
     "jsonwebtoken": "^9.0.2",
     "node-fetch": "^3.3.2",
     "playwright": "^1.58.2",
-    "puppeteer": "^24.39.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.39.0"
   }
 }

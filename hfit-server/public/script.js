@@ -352,12 +352,14 @@ function selectRecentAccount(email) {
   document.getElementById("password").focus();
 }
 
-async function checkAiStatus() {
+async function checkAiStatus(retries = 10) {
   const statusEl = document.getElementById("ai-status-pulse");
   if (!statusEl) return;
 
-  statusEl.textContent = "SYNCING WITH CORE...";
-  statusEl.style.color = "var(--accent-primary)";
+  if (retries === 10) {
+    statusEl.textContent = "SYNCING WITH CORE...";
+    statusEl.style.color = "var(--accent-primary)";
+  }
 
   try {
     const res = await fetch(`${BACKEND_URL}/health`);
@@ -372,12 +374,18 @@ async function checkAiStatus() {
         statusEl.style.color = "var(--accent-primary)";
       }
     } else {
-      throw new Error();
+      throw new Error("Bad response from server");
     }
   } catch (e) {
     console.warn("Core connectivity issue:", e);
-    statusEl.textContent = "CORE OFFLINE (RETRY?)";
-    statusEl.style.color = "#ef4444";
+    if (retries > 0) {
+      statusEl.textContent = `WAKING CORE... (${retries})`;
+      statusEl.style.color = "#f59e0b";
+      setTimeout(() => checkAiStatus(retries - 1), 3000);
+    } else {
+      statusEl.textContent = "CORE OFFLINE (RETRY?)";
+      statusEl.style.color = "#ef4444";
+    }
   }
 }
 

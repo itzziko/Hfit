@@ -282,14 +282,14 @@ button:disabled {
 
 /* AUTH - EXTREME POLISH */
 .auth-screen {
-  height: 100dvh;
+  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
   gap: 30px;
-  overflow-y: auto;
-  padding: 8vh 0 40px 0;
+  padding: 10vh 0 40px 0;
 }
 
 .auth-screen:not(.hidden)~.fab-ai {
@@ -658,6 +658,7 @@ button:disabled {
     min-width: 60px;
     justify-content: center;
     align-items: center;
+    flex-shrink: 0;
   }
 
   .sidebar button .nav-icon {
