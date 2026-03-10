@@ -336,16 +336,7 @@ app.post("/chat", async (req, res) => {
     }
 });
 
-app.get("/feedback", async (req, res) => {
-    try {
-        const db = await dbPromise;
-        const feedbackList = await db.all("SELECT * FROM feedback ORDER BY timestamp DESC");
-        res.json({ success: true, feedback: feedbackList });
-    } catch (e) {
-        console.error("Feedback fetch error:", e);
-        res.status(500).json({ success: false, message: "Failed to fetch feedback" });
-    }
-});
+
 
 app.post("/feedback", async (req, res) => {
     const { name, feedback } = req.body;

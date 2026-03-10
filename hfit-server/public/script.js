@@ -1,6 +1,59 @@
 const AI_MODEL = "google/gemini-2.0-flash-exp:free"; // Default to FREE model to prevent credit errors
 const BACKEND_URL = (!window.location.origin || window.location.origin === "null" || window.location.origin.includes("localhost") || window.location.protocol === "file:") ? "http://localhost:3000" : ""; // Relative path works automatically on Render
 
+let recognition = null;
+let isRecording = false;
+
+function toggleVoiceInput(targetId) {
+  const btn = event?.currentTarget || document.activeElement;
+
+  if (isRecording) {
+    if (recognition) recognition.stop();
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert("Voice Health Logger requires a modern browser (Chrome/Edge/Safari).");
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+  recognition.lang = 'en-US';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    btn.classList.add('recording');
+  };
+
+  recognition.onresult = (event) => {
+    let transcript = event.results[0][0].transcript;
+    const input = document.getElementById(targetId);
+    if (input) {
+      if (input.type === 'number') {
+        const num = parseFloat(transcript.replace(/[^0-9.]/g, ''));
+        if (!isNaN(num)) input.value = num;
+      } else {
+        input.value = transcript;
+      }
+    }
+  };
+
+  recognition.onerror = () => {
+    isRecording = false;
+    btn.classList.remove('recording');
+  };
+
+  recognition.onend = () => {
+    isRecording = false;
+    btn.classList.remove('recording');
+  };
+
+  recognition.start();
+}
+
 let currentUser = null;
 let authMode = 'signup';
 
@@ -602,7 +655,7 @@ async function sendMessage() {
   const sysPrompt = `You are Hfit AI, an elite health and mental health performance companion. 
   CRITICAL RULE: You ONLY discuss topics related to physical health, exercise, nutrition, sleep, biohacking, and mental well-being/psychology. 
   If the user asks about anything else (politics, general history, coding, sports trivia beyond health aspects, etc.), politely decline and steer the conversation back to their health and wellness.
-  User: ${currentUser.profile.username}. Tone: professional, neat, elite. Formatting: Use bullet points and paragraphs. Always include a short medical disclaimer.`;
+  User: ${currentUser.profile.username}. Tone: professional, neat, elite. Formatting: Use bullet points and paragraphs. Be concise and highly organized. Always include a short medical disclaimer.`;
 
   const reply = await askAI(text, sysPrompt, currentImage, (streamedText) => {
     aiMsgBox.innerHTML = formatAIResponse(streamedText);
@@ -617,7 +670,7 @@ async function sendMessage() {
   const thread = currentUser.data.chatThreads.find(t => t.id === currentUser.data.currentChatId);
   if (thread && thread.messages.length === 2 && thread.title === "New Conversation") {
     askAI(
-      `Based on this exchange:\nUser: ${text}\nAI: ${reply}\nProvide a 2-4 word title. Respond with ONLY the title.`,
+      `Based on this exchange: \nUser: ${text} \nAI: ${reply} \nProvide a 2 - 4 word title.Respond with ONLY the title.`,
       "You are a title generator. Respond with nothing but the short title."
     ).then(titleReply => {
       if (titleReply && titleReply.trim() && !titleReply.startsWith("Error")) {
@@ -661,12 +714,12 @@ async function analyzeFood() {
   // Visual Feedback
   const originalHtml = btn.innerHTML;
   btn.disabled = true;
-  btn.innerHTML = `<div class="spinner"></div> ANALYZING...`;
+  btn.innerHTML = `< div class="spinner" ></div > ANALYZING...`;
 
   status.textContent = "SYNCING WITH NUTRITION ENGINE...";
   status.style.color = "var(--accent-primary)";
 
-  const prompt = `Analyze this meal: ${query || "image"}. Provide calories, protein, carbs, and fats. Return ONLY a valid JSON: {"cals": 500, "protein": 30, "carbs": 40, "fats": 20, "name": "Meal Name"}`;
+  const prompt = `Analyze this meal: ${query || "image"}. Provide calories, protein, carbs, and fats.Return ONLY a valid JSON: { "cals": 500, "protein": 30, "carbs": 40, "fats": 20, "name": "Meal Name" } `;
 
   try {
     const reply = await askAI(prompt, "Nutrition expert ONLY. Return raw JSON string.", currentImage);
@@ -777,18 +830,18 @@ function trackSleep() {
 }
 
 function updateSleepCircle(percent) {
-  document.getElementById("sleepPercent").textContent = `${percent}%`;
-  document.getElementById("sleepCircle").style.background = `conic-gradient(var(--accent-primary) ${percent * 3.6}deg, var(--glass-border) 0deg)`;
+  document.getElementById("sleepPercent").textContent = `${percent}% `;
+  document.getElementById("sleepCircle").style.background = `conic - gradient(var(--accent - primary) ${percent * 3.6} deg, var(--glass - border) 0deg)`;
 }
 
 function renderSleepWeekly() {
   const container = document.getElementById("sleepWeeklyList");
   container.innerHTML = currentUser.data.sleep.map(s => `
-    <div class="day-circle-box">
+    < div class="day-circle-box" >
       <div class="day-circle ${s.percent >= 80 ? 'score-high' : ''}">${s.percent}%</div>
       <span class="day-label">${s.date}</span>
-    </div>
-  `).join('');
+    </div >
+    `).join('');
 }
 
 // --- PLANNING ---
@@ -805,14 +858,14 @@ function setPlanMode(mode) {
 async function generatePlan() {
   const resBox = document.getElementById("planResult");
   resBox.classList.remove("hidden");
-  resBox.innerHTML = `<div class="typing"><span>ARCHITECTING STRATEGY</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  resBox.innerHTML = `< div class="typing" ><span>ARCHITECTING STRATEGY</span><div class="typing-dot"></div><div class="typing-dot"></div></div > `;
 
   const prompt = planMode === 'workout'
     ? `Workout: ${document.getElementById("targetArea").value}, Time: ${document.getElementById("timePerWorkout").value}, Loc: ${document.getElementById("location").value}.`
     : `Meal Plan: ${document.getElementById("mealGoal").value}, Diet: ${document.getElementById("dietType").value}.`;
 
   const reply = await askAI(prompt, "Elite conditioning coach. Provide raw text outline with bold headers and bullet points. Neat and organized.");
-  const formattedReply = `<strong>ELITE ${planMode.toUpperCase()} STRATEGY:</strong><br><br>${reply.replace(/\n/g, "<br>")}`;
+  const formattedReply = `< strong > ELITE ${planMode.toUpperCase()} STRATEGY:</strong > <br><br>${reply.replace(/\n/g, "<br>")}`;
   resBox.innerHTML = formattedReply;
 
   // Persistence
@@ -832,12 +885,10 @@ function loadSavedPlans() {
   }
 }
 
-// Update openTab to load plans
 const originalOpenTab = openTab;
 openTab = (id) => {
   originalOpenTab(id);
   if (id === 'workout') loadSavedPlans();
-  if (id === 'feedback') loadRecentFeedback();
 };
 
 // --- BRUISE IDENTIFIER ---
@@ -888,10 +939,10 @@ async function analyzeBruise() {
     }
 
     status.innerHTML = `
-      <div style="background: rgba(0, 242, 255, 0.03); border: 1px solid var(--accent-primary); padding: 20px; border-radius: 20px;">
-        <span style="color:var(--accent-primary); font-weight:700; font-size: 1.2rem; display: block; margin-bottom: 15px;">🔍 DIAGNOSTIC COMPLETE</span>
-        <div style="line-height: 1.6;">${reply.replace(/\n/g, "<br>")}</div>
-      </div>
+    <div style="background: rgba(0, 242, 255, 0.03); border: 1px solid var(--accent-primary); padding: 20px; border-radius: 20px;">
+      <span style="color:var(--accent-primary); font-weight:700; font-size: 1.2rem; display: block; margin-bottom: 15px;">🔍 DIAGNOSTIC COMPLETE</span>
+      <div style="line-height: 1.6;">${reply.replace(/\n/g, "<br>")}</div>
+    </div>
     `;
 
     // Clear visual preview to allow for next scan
@@ -924,8 +975,14 @@ function toggleGoal(idx) {
 }
 
 function completeGoal(idx) {
+  const goalItems = document.querySelectorAll('.goal-item');
+  const targetItem = goalItems[idx];
+
+  if (targetItem) {
+    targetItem.classList.add('success-burst');
+  }
+
   currentUser.data.goals[idx].done = true;
-  renderGoals();
   saveCurrentUserData();
   updateDashboard();
 
@@ -934,7 +991,7 @@ function completeGoal(idx) {
     renderGoals();
     saveCurrentUserData();
     updateDashboard();
-  }, 1000);
+  }, 600);
 }
 
 function deleteGoal(idx) {
@@ -952,7 +1009,7 @@ function renderGoals() {
       <span style="flex-grow:1; font-weight:600; text-decoration: ${g.done ? 'line-through' : 'none'};">${g.text}</span>
       <button class="goal-btn-cross" onclick="deleteGoal(${i})" title="Delete">✖</button>
     </li>
-  `).join('');
+    `).join('');
 }
 
 // --- FEEDBACK ---
@@ -963,41 +1020,41 @@ async function loginWithGoogle() {
   // so the feature actually works and you don't get the 'invalid_client' error!
 
   const modalHtml = `
-  <div id="mockGoogleModal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; z-index:9999; backdrop-filter:blur(8px); animation: fadeIn 0.3s ease-out;">
+    <div id="mockGoogleModal" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.6); display:flex; justify-content:center; align-items:center; z-index:9999; backdrop-filter:blur(8px); animation: fadeIn 0.3s ease-out;">
       <div style="background:#fff; width:450px; border-radius:12px; padding:40px; text-align:center; color:#202124; font-family:'Roboto', sans-serif; box-shadow:0 15px 40px rgba(0,0,0,0.3); transform: translateY(0); animation: slideUp 0.4s cubic-bezier(0.23, 1, 0.32, 1);">
-          <div style="font-size:24px; font-weight:500; margin-bottom:15px;">
-              <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
+        <div style="font-size:24px; font-weight:500; margin-bottom:15px;">
+          <span style="color:#4285F4">G</span><span style="color:#EA4335">o</span><span style="color:#FBBC05">o</span><span style="color:#4285F4">g</span><span style="color:#34A853">l</span><span style="color:#EA4335">e</span>
+        </div>
+        <h2 style="font-size:22px; font-weight:500; margin-bottom:10px; color:#3c4043;">Choose an account</h2>
+        <p style="font-size:16px; margin-bottom:30px; color:#5f6368;">to continue to <strong style="color:#202124;">Hfit Premium</strong></p>
+
+        <div style="text-align:left; border:1px solid #dadce0; border-radius:8px; overflow:hidden; margin-bottom: 20px;">
+          <div class="google-acc" onclick="simulateGoogleLogin('danielrykner@gmail.com', 'Daniel Rykner')" style="padding:15px 20px; border-bottom:1px solid #dadce0; cursor:pointer; display:flex; align-items:center; transition:background 0.2s;">
+            <div style="width:36px; height:36px; background:#4285F4; color:white; border-radius:50%; display:flex; justify-content:center; align-items:center; font-weight:bold; margin-right:15px; font-size: 16px;">D</div>
+            <div>
+              <div style="font-weight:500; font-size:14px; color:#3c4043;">Daniel Rykner</div>
+              <div style="font-size:12px; color:#5f6368;">danielrykner@gmail.com</div>
+            </div>
           </div>
-          <h2 style="font-size:22px; font-weight:500; margin-bottom:10px; color:#3c4043;">Choose an account</h2>
-          <p style="font-size:16px; margin-bottom:30px; color:#5f6368;">to continue to <strong style="color:#202124;">Hfit Premium</strong></p>
-          
-          <div style="text-align:left; border:1px solid #dadce0; border-radius:8px; overflow:hidden; margin-bottom: 20px;">
-              <div class="google-acc" onclick="simulateGoogleLogin('danielrykner@gmail.com', 'Daniel Rykner')" style="padding:15px 20px; border-bottom:1px solid #dadce0; cursor:pointer; display:flex; align-items:center; transition:background 0.2s;">
-                  <div style="width:36px; height:36px; background:#4285F4; color:white; border-radius:50%; display:flex; justify-content:center; align-items:center; font-weight:bold; margin-right:15px; font-size: 16px;">D</div>
-                  <div>
-                      <div style="font-weight:500; font-size:14px; color:#3c4043;">Daniel Rykner</div>
-                      <div style="font-size:12px; color:#5f6368;">danielrykner@gmail.com</div>
-                  </div>
-              </div>
-              <div class="google-acc" onclick="simulateGoogleLogin('test@health.ai', 'Test User')" style="padding:15px 20px; cursor:pointer; display:flex; align-items:center; transition:background 0.2s;">
-                  <div style="width:36px; height:36px; background:#34A853; color:white; border-radius:50%; display:flex; justify-content:center; align-items:center; font-weight:bold; margin-right:15px; font-size: 16px;">T</div>
-                  <div>
-                      <div style="font-weight:500; font-size:14px; color:#3c4043;">Test User</div>
-                      <div style="font-size:12px; color:#5f6368;">test@health.ai</div>
-                  </div>
-              </div>
+          <div class="google-acc" onclick="simulateGoogleLogin('test@health.ai', 'Test User')" style="padding:15px 20px; cursor:pointer; display:flex; align-items:center; transition:background 0.2s;">
+            <div style="width:36px; height:36px; background:#34A853; color:white; border-radius:50%; display:flex; justify-content:center; align-items:center; font-weight:bold; margin-right:15px; font-size: 16px;">T</div>
+            <div>
+              <div style="font-weight:500; font-size:14px; color:#3c4043;">Test User</div>
+              <div style="font-size:12px; color:#5f6368;">test@health.ai</div>
+            </div>
           </div>
-          
-          <div style="margin-top:20px; text-align:right;">
-             <button onclick="document.getElementById('mockGoogleModal').remove()" style="background:none; border:none; color:#1a73e8; font-weight:500; cursor:pointer; padding:10px; text-transform: none; box-shadow: none; letter-spacing: normal;">Cancel</button>
-          </div>
-          <style>
-            .google-acc:hover { background-color: #f8f9fa !important; }
-            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-          </style>
+        </div>
+
+        <div style="margin-top:20px; text-align:right;">
+          <button onclick="document.getElementById('mockGoogleModal').remove()" style="background:none; border:none; color:#1a73e8; font-weight:500; cursor:pointer; padding:10px; text-transform: none; box-shadow: none; letter-spacing: normal;">Cancel</button>
+        </div>
+        <style>
+          .google-acc:hover {background - color: #f8f9fa !important; }
+          @keyframes fadeIn {from {opacity: 0; } to {opacity: 1; } }
+          @keyframes slideUp {from {opacity: 0; transform: translateY(20px); } to {opacity: 1; transform: translateY(0); } }
+        </style>
       </div>
-  </div>`;
+    </div>`;
 
   document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
@@ -1082,9 +1139,7 @@ function resetFeedbackForm() {
   document.getElementById('feedbackStatus').classList.add('hidden');
 }
 
-async function loadRecentFeedback() {
-  console.log("Feedback list view disabled.");
-}
+
 
 // --- PERFORMANCE TRENDS ---
 let activeTrendType = 'sleep';
@@ -1232,11 +1287,11 @@ function showNotification(title, message) {
 
   notif.innerHTML = `
     <div style="display:flex; align-items:center; gap:10px;">
-        <span style="font-size:18px;">✨</span>
-        <h4 style="margin:0; font-size:15px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#000;">${title}</h4>
+      <span style="font-size:18px;">✨</span>
+      <h4 style="margin:0; font-size:15px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:#000;">${title}</h4>
     </div>
     <p style="margin:0; font-size:14px; color:#555; line-height:1.4; font-weight:500;">${message}</p>
-  `;
+    `;
 
   document.body.appendChild(notif);
 

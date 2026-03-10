@@ -225,9 +225,10 @@
             </div>
           </div>
 
-          <div style="display:flex; gap:15px;">
+          <div style="display:flex; gap:12px;">
             <input type="text" id="foodInput" placeholder="What did you eat today?" onfocus="this.select()" />
-            <button onclick="analyzeFood()" style="width:180px;">ANALYZE</button>
+            <button class="btn-mic" onclick="toggleVoiceInput('foodInput')" title="Voice Log">🎙️</button>
+            <button onclick="analyzeFood()" style="width:160px;">ANALYZE</button>
           </div>
           <div id="foodResult" style="margin-top:20px; font-weight:600; color:var(--accent-primary);"></div>
         </div>
@@ -243,7 +244,10 @@
             </div>
             <div style="display:flex; flex-direction:column; gap:15px;">
               <p style="font-weight:700; color:var(--text-dim);">LOG LAST NIGHT'S SLEEP</p>
-              <input type="number" id="sleepInput" placeholder="0" min="0" max="24" onfocus="this.select()" />
+              <div style="display:flex; gap:12px; width:100%;">
+                <input type="number" id="sleepInput" placeholder="0" min="0" max="24" onfocus="this.select()" />
+                <button class="btn-mic" onclick="toggleVoiceInput('sleepInput')" title="Voice Log">🎙️</button>
+              </div>
               <button onclick="trackSleep()">LOG DATA</button>
               <div id="sleepStatus" class="auth-error hidden" style="margin-top:15px;"></div>
             </div>
@@ -289,9 +293,10 @@
       <section id="goals" class="tab">
         <h2 style="font-size:2.5rem; margin-bottom:30px;">Health Milestones</h2>
         <div class="card" style="max-width:800px; margin:0 auto;">
-          <div style="display:flex; gap:15px; margin-bottom:30px;">
+          <div style="display:flex; gap:12px; margin-bottom:30px;">
             <input id="goalInput" placeholder="ENTER NEW GOAL..." onfocus="this.select()" />
-            <button onclick="addGoal()" style="width:150px;">ADD</button>
+            <button class="btn-mic" onclick="toggleVoiceInput('goalInput')" title="Voice Log">🎙️</button>
+            <button onclick="addGoal()" style="width:120px;">ADD</button>
           </div>
           <ul id="goalList" class="goal-list"></ul>
         </div>
