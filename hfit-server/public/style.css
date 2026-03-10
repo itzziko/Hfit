@@ -677,9 +677,11 @@ button:disabled {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 10px;
-    margin: 0;
-    min-width: 50px;
+    padding: 10px !important;
+    margin: 0 !important;
+    min-width: 60px;
+    flex-direction: column;
+    gap: 4px;
   }
 
   .sidebar-footer {
@@ -688,6 +690,7 @@ button:disabled {
     padding: 0;
     margin: 0;
     border-top: none;
+    min-width: 60px;
   }
 
   .welcome-section h1 {
@@ -730,6 +733,11 @@ button:disabled {
   margin-bottom: 30px;
   overflow-x: auto;
   padding-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.quick-actions::-webkit-scrollbar {
+  display: none;
 }
 
 .quick-actions button {
