@@ -1,5 +1,5 @@
 const AI_MODEL = "google/gemini-2.0-flash-exp:free"; // Default to FREE model to prevent credit errors
-const BACKEND_URL = (!window.location.origin || window.location.origin === "null" || window.location.origin.includes("localhost") || window.location.protocol === "file:") ? "http://localhost:3000" : ""; // Relative path works automatically on Render
+const BACKEND_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.protocol === "file:") ? "http://localhost:3000" : window.location.origin;
 
 let recognition = null;
 let isRecording = false;
@@ -1613,8 +1613,11 @@ async function updateDashboard() {
   document.getElementById("welcomeText").innerHTML = `${greeting}, <span id="userName">${currentUser.profile.username}</span> 👋`;
 
   // Update Nutrition
-  const todayCals = currentUser.data.sleep && currentUser.data.sleep.length > 0 ?
-    (currentUser.data.lastPlans && currentUser.data.lastPlans.meal ? "Calculated" : "Logged") : "0";
+  const lastSleepData = currentUser.data.sleep[currentUser.data.sleep.length - 1];
+  const dashCals = document.getElementById("dash-cals");
+  if (dashCals) {
+    dashCals.textContent = (lastSleepData && lastSleepData.cals) ? lastSleepData.cals : "0";
+  }
 
   // Update Sleep Circle
   const lastSleep = currentUser.data.sleep[currentUser.data.sleep.length - 1];

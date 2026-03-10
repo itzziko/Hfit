@@ -571,6 +571,7 @@ button:disabled {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 30px;
+  padding-bottom: 20px;
 }
 
 .mini-circle {
@@ -1224,12 +1225,15 @@ button:disabled {
 }
 
 .goal-btn-check {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
   border-radius: 50%;
   border: 2px solid #22c55e;
   background: transparent;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   color: transparent;
@@ -1250,12 +1254,15 @@ button:disabled {
 }
 
 .goal-btn-cross {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  flex-shrink: 0;
   border-radius: 50%;
   border: 2px solid #ef4444;
   background: transparent;
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: center;
   color: #ef4444;
