@@ -217,11 +217,13 @@ window.onload = async () => {
       if (!currentUser) {
         document.getElementById("authScreen").classList.remove("hidden");
         document.getElementById("app").classList.add("hidden");
+        document.querySelector(".fab-ai").classList.add("hidden");
       }
     }
   } else {
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("app").classList.add("hidden");
+    document.querySelector(".fab-ai").classList.add("hidden");
   }
 
   const theme = localStorage.getItem("hfitTheme") || "dark-mode";
@@ -268,14 +270,19 @@ function initDraggableDashboard() {
   }
 
   cards.forEach(card => {
-    card.addEventListener('dragstart', (e) => {
-      card.classList.add('dragging');
-      e.dataTransfer.setData('text/plain', card.id);
-    });
-
     card.addEventListener('dragend', () => {
       card.classList.remove('dragging');
       saveDashboardOrder();
+    });
+
+    card.addEventListener('dragstart', (e) => {
+      // Prevent drag if a button or input is focused/clicked
+      if (e.target.tagName.toLowerCase() === 'button' || e.target.tagName.toLowerCase() === 'input') {
+        e.preventDefault();
+        return;
+      }
+      card.classList.add('dragging');
+      e.dataTransfer.setData('text/plain', card.id);
     });
 
     card.addEventListener('dragover', (e) => {
@@ -485,6 +492,7 @@ async function handleAuth(e) {
 function showApp() {
   document.getElementById("authScreen").classList.add("hidden");
   document.getElementById("app").classList.remove("hidden");
+  document.querySelector(".fab-ai").classList.remove("hidden");
   document.getElementById("userName").textContent = currentUser.profile.username;
 
   renderChatSidebar();

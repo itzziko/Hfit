@@ -151,7 +151,8 @@
               <span id="dash-cals" class="stat-val">0</span>
               <span class="stat-label">DAILY CALORIES</span>
             </div>
-            <button class="btn-secondary btn-small" onclick="openTab('food')">LOG MEAL</button>
+            <button class="btn-secondary btn-small" onclick="openTab('food')" onmousedown="event.stopPropagation()">LOG
+              MEAL</button>
           </div>
 
           <div class="card stat-card" draggable="true" id="widget-sleep">
@@ -166,7 +167,8 @@
                 <p style="font-size:0.8rem; color:var(--text-dim);">Last 24 hours</p>
               </div>
             </div>
-            <button class="btn-secondary btn-small" onclick="openTab('sleep')">ADD SLEEP</button>
+            <button class="btn-secondary btn-small" onclick="openTab('sleep')" onmousedown="event.stopPropagation()">ADD
+              SLEEP</button>
           </div>
 
           <div class="card stat-card" draggable="true" id="widget-goals">
@@ -181,7 +183,8 @@
                 <!-- Goals injected here as small indicators -->
               </div>
             </div>
-            <button class="btn-secondary btn-small" onclick="openTab('goals')">MANAGE</button>
+            <button class="btn-secondary btn-small" onclick="openTab('goals')"
+              onmousedown="event.stopPropagation()">MANAGE</button>
           </div>
 
           <div class="card full-width-card" style="grid-column: 1 / -1;" draggable="true" id="widget-ai-insight">
