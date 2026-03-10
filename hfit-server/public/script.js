@@ -349,14 +349,14 @@ async function checkAiStatus() {
   try {
     const res = await fetch(`${BACKEND_URL}/health`, {
       method: "GET",
-      signal: AbortSignal.timeout(15000) // 15s to allow for Render cold starts
+      signal: AbortSignal.timeout(15000)
     });
 
     if (res.ok) {
       const data = await res.json();
       if (data.ai_key_status === "MISSING") {
         statusEl.textContent = "AI KEY MISSING";
-        statusEl.style.color = "#f59e0b"; // Warning orange
+        statusEl.style.color = "#f59e0b";
       } else {
         statusEl.textContent = "CORE ONLINE";
         statusEl.style.color = "var(--accent-primary)";
@@ -365,7 +365,8 @@ async function checkAiStatus() {
       throw new Error();
     }
   } catch (e) {
-    statusEl.textContent = "CORE OFFLINE";
+    console.warn("Core connectivity issue:", e);
+    statusEl.textContent = "CORE OFFLINE (RETRY?)";
     statusEl.style.color = "#ef4444";
   }
 }
@@ -1104,24 +1105,24 @@ function renderGoals() {
   list.innerHTML = currentUser.data.goals.map((g, i) => {
     const progress = g.targetValue > 0 ? Math.min((g.currentValue / g.targetValue) * 100, 100) : (g.done ? 100 : 0);
     return `
-      <li class="goal-item" style="display:flex; flex-direction:column; gap:8px; background:var(--glass-bg); padding:15px; border-radius:16px;">
-        <div style="display:flex; align-items:center; gap:12px; width:100%;">
-          <button class="goal-btn-check ${g.done ? 'checked' : ''}" onclick="completeGoal(${i})" title="Complete">✔</button>
-          <div style="flex-grow:1;">
-            <p style="font-weight:700; font-size:1rem; margin-bottom:2px; text-decoration: ${g.done ? 'line-through' : 'none'};">${g.text}</p>
-            ${g.targetValue > 0 ? `<p style="font-size:0.75rem; color:var(--text-dim);">Progress: ${g.currentValue} / ${g.targetValue} ${g.unit}</p>` : ''}
+      <li class="goal-item" style="display:flex; align-items:center; gap:15px; background:var(--glass-bg); padding:20px; border-radius:24px; border:1px solid var(--glass-border);">
+        <div class="progress-circle" style="width:50px; height:50px; min-width:50px; background: conic-gradient(var(--accent-primary) ${progress * 3.6}deg, var(--glass-border) 0deg);">
+          <span style="font-size:0.7rem;">${Math.round(progress)}%</span>
+        </div>
+        <div style="flex-grow:1;">
+          <p style="font-weight:700; font-size:1.1rem; margin-bottom:2px; text-decoration: ${g.done ? 'line-through' : 'none'}; opacity: ${g.done ? 0.6 : 1};">${g.text}</p>
+          ${g.targetValue > 0 ? `<p style="font-size:0.8rem; color:var(--text-dim);">${g.currentValue} / ${g.targetValue} ${g.unit}</p>` : ''}
+          ${g.targetValue > 0 ? `
+          <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="btn-small btn-secondary" style="padding:4px 8px; font-size:0.6rem; min-height:28px;" onclick="incrementGoal(${i})">+1</button>
+            <button class="btn-small btn-secondary" style="padding:4px 8px; font-size:0.6rem; min-height:28px;" onclick="decrementGoal(${i})">-1</button>
           </div>
+          ` : ''}
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="goal-btn-check ${g.done ? 'checked' : ''}" onclick="completeGoal(${i})" title="Complete">✔</button>
           <button class="goal-btn-cross" onclick="deleteGoal(${i})" title="Delete">✖</button>
         </div>
-        ${g.targetValue > 0 ? `
-        <div style="width:100%; height:6px; background:var(--glass-border); border-radius:3px; overflow:hidden;">
-          <div style="width:${progress}%; height:100%; background:var(--accent-primary); transition: width 0.3s ease;"></div>
-        </div>
-        <div style="display:flex; gap:10px; align-items:center; margin-top:5px;">
-          <button class="btn-small btn-secondary" style="padding:4px 8px; font-size:0.65rem;" onclick="incrementGoal(${i})">+ 1 ${g.unit}</button>
-          <button class="btn-small btn-secondary" style="padding:4px 8px; font-size:0.65rem;" onclick="decrementGoal(${i})">- 1 ${g.unit}</button>
-        </div>
-        ` : ''}
       </li>
     `;
   }).join('');
@@ -1161,7 +1162,6 @@ function setActivityType(type, icon) {
 
 function logActivity() {
   const duration = parseInt(document.getElementById("activityDuration").value);
-  const powerLevel = parseInt(document.getElementById("activityIntensity").value);
   const notes = document.getElementById("activityNotes").value.trim();
 
   if (!duration) return;
@@ -1170,7 +1170,6 @@ function logActivity() {
     type: selectedActivityType,
     icon: selectedActivityIcon,
     duration,
-    powerLevel: powerLevel || 5,
     notes,
     timestamp: new Date().toISOString(),
     displayDate: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -1183,7 +1182,6 @@ function logActivity() {
   if (currentUser.data.activities.length > 20) currentUser.data.activities.pop();
 
   document.getElementById("activityDuration").value = "";
-  document.getElementById("activityIntensity").value = "";
   document.getElementById("activityNotes").value = "";
 
   renderActivities();
@@ -1204,7 +1202,7 @@ function renderActivities() {
           <span style="font-size:0.7rem; color:var(--text-dim);">${a.displayDate}</span>
         </div>
         <p style="font-size:0.85rem; margin-top:5px; color:var(--text-dim);">
-          ${a.duration} min • Power Level ${a.powerLevel}/10
+          ${a.duration} min
           ${a.notes ? `<br><span style="font-style:italic;">"${a.notes}"</span>` : ''}
         </p>
       </div>
@@ -1337,6 +1335,67 @@ function resetFeedbackForm() {
   document.getElementById('feedbackFormContainer').classList.remove('hidden');
   document.getElementById('feedbackSuccessContainer').classList.add('hidden');
   document.getElementById('feedbackStatus').classList.add('hidden');
+}
+
+// --- AUTH FEEDBACK ---
+function openFeedbackFromAuth() {
+  document.getElementById('authFeedbackModal').classList.remove('hidden');
+}
+
+function closeAuthFeedback() {
+  document.getElementById('authFeedbackModal').classList.add('hidden');
+}
+
+async function sendAuthFeedback() {
+  const name = document.getElementById("authNameInput").value || "Auth Screen Visitor";
+  const feedback = document.getElementById("authFeedbackInput").value;
+  const status = document.getElementById("authFeedbackStatus");
+  const btn = event?.target?.closest('button');
+
+  if (!feedback) {
+    status.textContent = "REQUIRED: FEEDBACK CONTENT.";
+    status.classList.remove("hidden");
+    return;
+  }
+
+  status.classList.add("hidden");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "TRANSMITTING...";
+  }
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/feedback`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, feedback })
+    });
+
+    if (res.ok) {
+      status.textContent = "SUCCESS: Feedback Sent! Closing...";
+      status.style.color = "var(--accent-primary)";
+      status.classList.remove("hidden");
+      setTimeout(() => {
+        closeAuthFeedback();
+        document.getElementById("authFeedbackInput").value = "";
+        status.classList.add("hidden");
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Transmit Feedback";
+        }
+      }, 2000);
+    } else {
+      throw new Error();
+    }
+  } catch (e) {
+    status.textContent = "CORE CONNECTION FAILED.";
+    status.style.color = "#ef4444";
+    status.classList.remove("hidden");
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Transmit Feedback";
+    }
+  }
 }
 
 
@@ -1569,21 +1628,30 @@ async function updateDashboard() {
     if (sleepCircle) sleepCircle.style.background = `conic-gradient(var(--accent-primary) ${lastSleep.percent * 3.6}deg, var(--glass-border) 0deg)`;
   }
 
-  // Update Dashboard Goals (Wheel Layout)
+  // Update Dashboard Goals (Circular + List)
   const dashGoalsWheel = document.getElementById("dash-goals-wheel");
-  if (dashGoalsWheel) {
-    const activeGoals = currentUser.data.goals.filter(g => !g.done).slice(0, 4);
+  const dashGoalsVal = document.getElementById("dash-goals-val");
+  const dashGoalsCircle = document.getElementById("dash-goals-circle");
+
+  if (dashGoalsWheel && currentUser.data.goals) {
+    const totalGoals = currentUser.data.goals.length;
+    const completedGoals = currentUser.data.goals.filter(g => g.done).length;
+    const progressPercent = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
+
+    if (dashGoalsVal) dashGoalsVal.textContent = `${progressPercent}%`;
+    if (dashGoalsCircle) dashGoalsCircle.style.background = `conic-gradient(var(--accent-primary) ${progressPercent * 3.6}deg, var(--glass-border) 0deg)`;
+
+    const activeGoals = currentUser.data.goals.filter(g => !g.done).slice(0, 3);
     if (activeGoals.length > 0) {
       dashGoalsWheel.innerHTML = activeGoals.map(g => {
-        const progress = g.targetValue > 0 ? Math.min((g.currentValue / g.targetValue) * 100, 100) : 50;
         return `
-          <div class="goal-mini-circle" title="${g.text}" style="border-color: ${progress >= 100 ? '#22c55e' : 'var(--accent-primary)'};">
+          <div class="goal-mini-circle" title="${g.text}">
              ${g.text[0].toUpperCase()}
           </div>
         `;
       }).join('');
     } else {
-      dashGoalsWheel.innerHTML = `<p style="color:var(--text-dim); font-size:0.8rem;">All milestones completed. 🎖️</p>`;
+      dashGoalsWheel.innerHTML = `<p style="color:var(--text-dim); font-size:0.8rem;">${totalGoals > 0 ? "All completed! 🎖️" : "No goals set."}</p>`;
     }
   }
 

@@ -53,7 +53,29 @@
       <button type="submit" id="authSubmitBtn">Initialize Health AI</button>
 
       <div id="authError" class="auth-error hidden"></div>
+
+      <div style="margin-top: 20px; text-align: center;">
+        <button type="button" class="btn-secondary btn-small" onclick="openFeedbackFromAuth()"
+          style="text-transform: none; opacity: 0.8;">💡 Have feedback or trouble signing in?</button>
+      </div>
     </form>
+  </div>
+
+  <!-- AUTH FEEDBACK MODAL (hidden) -->
+  <div id="authFeedbackModal" class="hidden"
+    style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:10000; backdrop-filter:blur(10px);">
+    <div class="card" style="max-width:500px; width:90%; position:relative;">
+      <button onclick="closeAuthFeedback()"
+        style="position:absolute; top:20px; right:20px; background:none; box-shadow:none; color:var(--text-dim);">✖</button>
+      <h3 style="margin-bottom:10px;">Support & Feedback</h3>
+      <p style="color:var(--text-dim); margin-bottom:20px; font-size:0.9rem;">Share your thoughts or issues directly
+        with the developers.</p>
+      <input type="text" id="authNameInput" placeholder="Your Name (Optional)" style="margin-bottom:10px;" />
+      <textarea id="authFeedbackInput" placeholder="How can we help?"
+        style="min-height:120px; margin-bottom:15px;"></textarea>
+      <button onclick="sendAuthFeedback()">Transmit Feedback</button>
+      <div id="authFeedbackStatus" class="auth-error hidden" style="margin-top:10px;"></div>
+    </div>
   </div>
 
   <!-- APP -->
@@ -99,7 +121,8 @@
             <h1 id="welcomeText">Hi, <span id="userName">User</span></h1>
             <p class="subtitle">Your health performance overview.</p>
           </div>
-          <div class="status-badge">
+          <div class="status-badge" onclick="checkAiStatus()" style="cursor:pointer;"
+            title="Click to refresh core status">
             <span class="pulse-dot"></span>
             <span id="ai-status-pulse">INITIALIZING...</span>
           </div>
@@ -149,8 +172,14 @@
           <div class="card stat-card" draggable="true" id="widget-goals">
             <span class="drag-handle">⋮⋮</span>
             <h3>Active Goals</h3>
-            <div id="dash-goals-wheel" class="goal-wheel-container">
-              <!-- Goals injected here as circles -->
+            <div style="display:flex; align-items:center; gap:25px; margin:20px 0;">
+              <div class="progress-circle" id="dash-goals-circle" style="width:80px; height:80px; min-width:80px;">
+                <span id="dash-goals-val">0%</span>
+              </div>
+              <div id="dash-goals-wheel" class="goal-wheel-container"
+                style="margin:0; flex-grow:1; justify-content:flex-start;">
+                <!-- Goals injected here as small indicators -->
+              </div>
             </div>
             <button class="btn-secondary btn-small" onclick="openTab('goals')">MANAGE</button>
           </div>
@@ -326,7 +355,6 @@
           <div style="display:flex; flex-direction:column; gap:15px;">
             <div style="display:flex; gap:12px;">
               <input type="number" id="activityDuration" placeholder="Duration (min)" onfocus="this.select()" />
-              <input type="number" id="activityIntensity" placeholder="Power Level (1-10)" onfocus="this.select()" />
             </div>
             <div style="display:flex; gap:12px;">
               <input type="text" id="activityNotes" placeholder="Notes (optional)" onfocus="this.select()" />
