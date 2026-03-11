@@ -258,10 +258,8 @@
               <!-- Chat messages injected here -->
             </div>
             <div class="chat-input-area">
-              <label for="chatImage" class="chat-upload-btn" title="Upload Image">📷</label>
-              <input type="file" id="chatImage" accept="image/*" class="hidden" onchange="handleChatImage(event)" />
-              <input id="chatInput" placeholder="Message Hfit AI (ask about health, meds, or upload a photo)..."
-                onkeyup="if(event.key==='Enter') sendMessage()" />
+              <input id="chatInput" placeholder="Message Hfit AI (ask about health, meds)..."
+                onkeyup="if(event.key==='Enter') sendMessage()" style="padding-left:15px;"/>
               <button onclick="sendMessage()" style="padding: 10px 20px;">Send</button>
             </div>
             <div id="chatImagePreviewContainer" class="hidden">

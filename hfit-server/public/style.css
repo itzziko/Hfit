@@ -75,6 +75,7 @@ body {
 }
 
 /* HIDE GOOGLE TRANSLATE POPUPS */
+html { top: 0 !important; }
 body { top: 0px !important; }
 .goog-te-banner-frame { display: none !important; }
 #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
@@ -298,6 +299,7 @@ button:disabled {
   align-items: center;
   gap: 30px;
   padding: 10vh 0 40px 0;
+  overflow-y: auto;
 }
 
 .auth-screen:not(.hidden)~.fab-ai {
@@ -1564,13 +1566,13 @@ button:disabled {
 
 .splash-h {
   display: inline-block;
-  animation: dropH 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  animation: dropH 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
   transform: translateY(-150vh);
 }
 
 .splash-fit {
   display: inline-block;
-  animation: slideFit 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.4s;
+  animation: slideFit 1.8s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.8s;
   transform: translateX(150vw);
   opacity: 0;
 }
@@ -1581,7 +1583,7 @@ button:disabled {
   color: var(--text-dim);
   margin-top: 10px;
   opacity: 0;
-  animation: fadeInTagline 1s ease forwards 1s;
+  animation: fadeInTagline 1s ease forwards 2s;
 }
 
 @keyframes dropH {
@@ -1629,7 +1631,7 @@ button:disabled {
   overflow: hidden;
   position: relative;
   opacity: 0;
-  animation: fadeInTagline 1s ease forwards 1.2s;
+  animation: fadeInTagline 1s ease forwards 2.5s;
 }
 
 .splash-loader::after {

@@ -187,7 +187,7 @@ window.onload = async () => {
   }
   setAuthMode(authMode);
 
-  // Hide Splash Screen
+  // Hide Splash Screen Setup
   setTimeout(() => {
     const splash = document.getElementById("splashScreen");
     if (splash) {
@@ -195,7 +195,7 @@ window.onload = async () => {
       splash.style.visibility = 'hidden';
       setTimeout(() => splash.remove(), 800);
     }
-  }, 3500);
+  }, 4800);
 };
 
 // --- BIO-RHYTHM ---
@@ -663,36 +663,14 @@ function renderChat() {
   container.scrollTop = container.scrollHeight;
 }
 
-// --- CHAT IMAGE HANDLING ---
-let chatImageBase64 = null;
-function handleChatImage(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    chatImageBase64 = ev.target.result;
-    document.getElementById("chatImagePreview").src = chatImageBase64;
-    document.getElementById("chatImagePreviewContainer").classList.remove("hidden");
-  };
-  reader.readAsDataURL(file);
-}
-
-function clearChatImage() {
-  chatImageBase64 = null;
-  document.getElementById("chatImagePreviewContainer").classList.add("hidden");
-  document.getElementById("chatImage").value = "";
-}
-
-async function sendMessage() {
+function sendMessage() {
   const input = document.getElementById("chatInput");
   const text = input.value.trim();
-  if (!text && !chatImageBase64) return;
+  if (!text) return;
 
-  const currentImage = chatImageBase64;
-  updateCurrentChatMessages({ role: "user", content: text, image: currentImage });
+  updateCurrentChatMessages({ role: "user", content: text });
   renderChat();
   input.value = "";
-  clearChatImage();
   saveCurrentUserData();
 
   const container = document.getElementById("chatHistory");
@@ -712,29 +690,53 @@ async function sendMessage() {
   CRITICAL: KEEP MESSAGES BRIEF (max 2 main points). 
   Be professional and elite. Focus ONLY on health/wellness. Use sharp formatting.`;
 
-  const reply = await askAI(text, sysPrompt, currentImage, (streamedText) => {
+  const reply = askAI(text, sysPrompt, null, (streamedText) => {
     aiMsgBox.innerHTML = formatAIResponse(streamedText);
     container.scrollTop = container.scrollHeight;
+  }).then(finalReply => {
+    aiMsgBox.classList.remove("typing-streaming");
+    updateCurrentChatMessages({ role: "assistant", content: finalReply });
+    saveCurrentUserData();
+
+    // Asynchronously generate a topic title if this is the first exchange
+    const thread = currentUser.data.chatThreads.find(t => t.id === currentUser.data.currentChatId);
+    if (thread && thread.messages.length === 2 && thread.title === "New Conversation") {
+      askAI(
+        `Based on this exchange: \nUser: ${text} \nAI: ${finalReply} \nProvide 2 or 4 short title options (separated by |). Respond with ONLY the options.`,
+        "You are a title generator. Respond with nothing but the short title."
+      ).then(titleReply => {
+        if (titleReply && titleReply.trim() && !titleReply.startsWith("Error")) {
+          thread.title = titleReply.includes('|') ? titleReply.split('|')[0].trim() : titleReply.replace(/["']/g, "").trim();
+          renderChatSidebar();
+          saveCurrentUserData();
+        }
+      }).catch(e => console.error("Topic generation failed", e));
+    }
   });
+}
 
-  aiMsgBox.classList.remove("typing-streaming");
-  updateCurrentChatMessages({ role: "assistant", content: reply });
-  saveCurrentUserData();
-
-  // Asynchronously generate a topic title if this is the first exchange
-  const thread = currentUser.data.chatThreads.find(t => t.id === currentUser.data.currentChatId);
-  if (thread && thread.messages.length === 2 && thread.title === "New Conversation") {
-    askAI(
-      `Based on this exchange: \nUser: ${text} \nAI: ${reply} \nProvide 2 or 4 short title options (separated by |). Respond with ONLY the options.`,
-      "You are a title generator. Respond with nothing but the short title."
-    ).then(titleReply => {
-      if (titleReply && titleReply.trim() && !titleReply.startsWith("Error")) {
-        thread.title = titleReply.includes('|') ? titleReply.split('|')[0].trim() : titleReply.replace(/["']/g, "").trim();
-        renderChatSidebar();
-        saveCurrentUserData();
+// --- IMAGE REDUCER UTILS ---
+function resizeImage(file, maxWidth, maxHeight, callback) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      if (width > height) {
+        if (width > maxWidth) { height = Math.round((height *= maxWidth / width)); width = maxWidth; }
+      } else {
+        if (height > maxHeight) { width = Math.round((width *= maxHeight / height)); height = maxHeight; }
       }
-    }).catch(e => console.error("Topic generation failed", e));
-  }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      callback(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
 }
 
 // --- FOOD ANALYZER ---
@@ -742,16 +744,14 @@ let foodImageBase64 = null;
 function handleImageUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    foodImageBase64 = ev.target.result;
+  resizeImage(file, 800, 800, (resizedBase64) => {
+    foodImageBase64 = resizedBase64;
     const prev = document.getElementById("foodPreview");
     prev.src = foodImageBase64;
     prev.classList.remove("hidden");
     document.getElementById("uploadPlaceholder").classList.add("hidden");
     document.getElementById("foodResult").textContent = ""; // Clear previous result
-  };
-  reader.readAsDataURL(file);
+  });
 }
 
 async function analyzeFood() {
@@ -957,17 +957,15 @@ let bruiseImageBase64 = null;
 function handleBruiseUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    bruiseImageBase64 = ev.target.result;
+  resizeImage(file, 800, 800, (resizedBase64) => {
+    bruiseImageBase64 = resizedBase64;
     const prev = document.getElementById("bruisePreview");
     prev.src = bruiseImageBase64;
     prev.classList.remove("hidden");
     document.getElementById("bruisePlaceholder").classList.add("hidden");
     document.getElementById("bruiseResult").classList.add("hidden"); // Hide previous result
     document.getElementById("bruiseResult").innerHTML = "";
-  };
-  reader.readAsDataURL(file);
+  });
 }
 
 async function analyzeBruise() {
