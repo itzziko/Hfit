@@ -977,7 +977,7 @@ async function analyzeBruise() {
 
   if (!currentImage) {
     status.classList.remove("hidden");
-    status.innerHTML = `<span style="color:#ef4444;">SYNC ERROR: NO VISUAL DATA UPLOADED.</span>`;
+    status.innerHTML = `<span style="color:#ef4444;">SYNC ERROR: NO VISUAL DATA UPLOADED.<br><br><strong>HOW TO FIX:</strong> Please click the icon above or drag an image to upload a clear photo of your concern before starting the classification.</span>`;
     return;
   }
 
@@ -1082,17 +1082,20 @@ function renderGoals() {
   const list = document.getElementById("goalList");
   list.innerHTML = currentUser.data.goals.map((g, i) => {
     const progress = g.targetValue > 0 ? Math.min((g.currentValue / g.targetValue) * 100, 100) : (g.done ? 100 : 0);
+    const circleContent = g.targetValue > 0 ? Math.round(progress) + '%' : (g.done ? '✔' : '📌');
+    const circleSize = g.targetValue > 0 ? '0.7rem' : '1.2rem';
+    
     return `
       <li class="goal-item" style="display:flex; align-items:center; gap:15px; background:var(--glass-bg); padding:20px; border-radius:24px; border:1px solid var(--glass-border);">
         <div class="progress-circle" style="width:50px; height:50px; min-width:50px; background: conic-gradient(var(--accent-primary) ${progress * 3.6}deg, var(--glass-border) 0deg);">
-          <span style="font-size:0.7rem;">${Math.round(progress)}%</span>
+          <span style="font-size:${circleSize};">${circleContent}</span>
         </div>
         <div style="flex-grow:1;">
           <p style="font-weight:700; font-size:1.1rem; margin-bottom:2px; text-decoration: ${g.done ? 'line-through' : 'none'}; opacity: ${g.done ? 0.6 : 1};">${g.text}</p>
           ${g.targetValue > 0 ? `<p style="font-size:0.8rem; color:var(--text-dim);">${g.currentValue} / ${g.targetValue} ${g.unit}</p>` : ''}
           ${g.targetValue > 0 ? `
           <div style="display:flex; gap:8px; margin-top:8px;">
-            <button class="btn-small btn-secondary" style="padding:4px 12px; font-size:0.75rem; min-height:28px;" onclick="adjustGoalAmount(${i})">Modify Amount</button>
+            <button class="btn-small btn-secondary" style="padding:4px 12px; font-size:0.75rem; min-height:28px;" onclick="adjustGoalAmount(${i})">Adjust</button>
           </div>
           ` : ''}
         </div>
@@ -1268,7 +1271,7 @@ async function sendFeedback() {
   const btn = event?.target?.closest('button') || document.querySelector('button[onclick="sendFeedback()"]');
 
   if (!feedback) {
-    status.textContent = "REQUIRED: FEEDBACK CONTENT.";
+    status.textContent = "Please provide your feedback or issue details first.";
     status.classList.remove("hidden");
     status.style.color = "#ef4444";
     return;
@@ -1327,7 +1330,7 @@ async function sendAuthFeedback() {
   const btn = event?.target?.closest('button');
 
   if (!feedback) {
-    status.textContent = "REQUIRED: FEEDBACK CONTENT.";
+    status.textContent = "Please provide your feedback or issue details first.";
     status.classList.remove("hidden");
     return;
   }
@@ -1647,3 +1650,25 @@ async function updateDashboard() {
 
   renderTrends();
 }
+
+// --- LANGUAGE TOGGLE ---
+window.setLanguage = function(lang) {
+  const selectField = document.querySelector("select.goog-te-combo");
+  if (selectField) {
+    selectField.value = lang;
+    selectField.dispatchEvent(new Event('change'));
+  }
+  
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.remove('active');
+    btn.style.background = 'transparent';
+    btn.style.color = 'var(--text-dim)';
+  });
+  
+  const activeBtn = document.getElementById('lang-' + lang);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.style.background = 'var(--accent-primary)';
+    activeBtn.style.color = '#000';
+  }
+};

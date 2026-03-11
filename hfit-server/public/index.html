@@ -24,23 +24,23 @@
     <div class="splash-loader"></div>
   </div>
 
-  <!-- THEME TOGGLE -->
-  <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Light/Dark Mode">🌓</button>
-
-  <!-- LANGUAGE TOGGLE via Google Translate -->
-  <div id="google_translate_element" class="lang-toggle-container"
-    style="position:fixed; top:20px; right:80px; z-index:100; margin:0; padding:5px 15px; background:var(--glass-bg); border-radius:20px; border:1px solid var(--glass-border);">
+  <!-- CUSTOM TRANSLATE BUTTONS -->
+  <div class="lang-toggle-container"
+    style="position:fixed; top:20px; right:80px; z-index:100; display:flex; gap:10px; background:var(--glass-bg); padding:6px; border-radius:30px; border:1px solid var(--glass-border);">
+    <button id="lang-en" class="btn-small lang-btn active" onclick="setLanguage('en')" style="margin:0; min-height:30px; padding:5px 15px; font-weight:800; font-size:0.85rem; background:var(--accent-primary); color:#000; border-radius:20px;">EN</button>
+    <button id="lang-iw" class="btn-small lang-btn" onclick="setLanguage('iw')" style="margin:0; min-height:30px; padding:5px 15px; font-weight:800; font-size:0.85rem; background:transparent; color:var(--text-dim); border-radius:20px; box-shadow:none;">HE</button>
   </div>
+  <div id="google_translate_element" style="display:none;"></div>
   <script type="text/javascript">
     function googleTranslateElementInit() {
       new google.translate.TranslateElement({
         pageLanguage: 'en',
         includedLanguages: 'en,iw',
-        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+        autoDisplay: false
       }, 'google_translate_element');
     }
   </script>
-  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
   <!-- AUTH SCREEN -->
   <div id="authScreen" class="auth-screen">
@@ -176,9 +176,11 @@
 
           <div class="card stat-card" id="widget-sleep">
             <span class="drag-handle" draggable="true">⋮⋮</span>
-            <h3>Sleep Recovery</h3>
+            <div style="display:flex; justify-content:space-between; align-items:start;">
+              <h3>Sleep Recovery</h3>
+            </div>
             <div style="display:flex; align-items:center; gap:25px; margin:20px 0;">
-              <div class="mini-circle" id="dash-sleep-circle">
+              <div class="progress-circle" id="dash-sleep-circle" style="width:80px; height:80px; min-width:80px; border-radius:50%;">
                 <span id="dash-sleep-val">0%</span>
               </div>
               <div>
@@ -414,9 +416,10 @@
       <section id="bruise" class="tab">
         <h2 style="font-size:2.5rem; margin-bottom:30px;">Hfit Vision: Medical Identifier</h2>
         <div class="card" style="max-width:800px; margin:0 auto;">
-          <p style="color:var(--text-dim); margin-bottom:20px; font-weight:500;">Upload an image of a bruise, rash, or
-            skin concern for an AI-powered diagnostic analysis. <br><strong>DISCLAIMER: For informational purposes only.
-              Consult a doctor for any health decisions.</strong></p>
+          <p style="color:var(--text-dim); margin-bottom:20px; font-weight:500;">
+            Upload an image of a bruise, rash, or skin concern for an AI-powered diagnostic analysis. (Ensure the photo is clear and under 5MB).
+            <br><strong>DISCLAIMER: For informational purposes only. Consult a doctor for any health decisions.</strong>
+          </p>
 
           <div class="upload-zone" id="bruiseUploadZone" onclick="document.getElementById('bruiseImage').click()">
             <img id="bruisePreview" src="" class="hidden" />
@@ -444,9 +447,9 @@
               How can we improve Hfit? Your insights go directly to our development team.
             </p>
             <input type="text" id="nameInput" placeholder="Your Name (Optional)"
-              style="width: 100%; margin-bottom: 15px;" />
-            <textarea id="feedbackInput" placeholder="Share your experience, bug reports, or feature requests..."
-              style="min-height: 150px; margin-bottom: 20px;"></textarea>
+              style="width: 100%; margin-bottom: 15px; font-weight: 700; background: rgba(0,0,0,0.2);" />
+            <textarea id="feedbackInput" placeholder="Encountered an issue? Describe it here..."
+              style="min-height: 150px; margin-bottom: 20px; font-weight: 600; background: rgba(0,0,0,0.2);"></textarea>
             <button onclick="sendFeedback()" style="width: 100%;">TRANSMIT FEEDBACK</button>
             <div id="feedbackStatus" class="auth-error hidden" style="margin-top:15px;"></div>
           </div>
