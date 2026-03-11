@@ -69,7 +69,7 @@ body {
   background: var(--bg-color);
   color: var(--text-main);
   min-height: 100dvh;
-  overflow: hidden;
+  overflow-y: auto;
   transition: background 0.6s var(--transition);
 }
 
@@ -482,13 +482,13 @@ button:disabled {
   flex: 1;
   overflow-y: auto;
   padding: 0;
-  height: 100%;
+  min-height: 100%;
   position: relative;
 }
 
 .tab {
   display: none;
-  height: 100%;
+  min-height: 100%;
   width: 100%;
   padding: 60px 80px;
   box-sizing: border-box;
@@ -704,7 +704,7 @@ button:disabled {
   }
 
   .content {
-    padding-bottom: 120px;
+    padding-bottom: 160px;
     /* Extra space for the floating bottom sidebar */
   }
 
@@ -922,7 +922,8 @@ button:disabled {
 #ai.active {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  min-height: 600px;
 }
 
 .chat-sidebar {
@@ -1580,6 +1581,34 @@ button:disabled {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.splash-loader {
+  width: 200px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  margin-top: 25px;
+  overflow: hidden;
+  position: relative;
+  opacity: 0;
+  animation: fadeInTagline 1s ease forwards 1.2s;
+}
+
+.splash-loader::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+  animation: loadProgress 1.5s infinite ease-in-out;
+}
+
+@keyframes loadProgress {
+  0% { left: -50%; }
+  100% { left: 100%; }
 }
 
 /* Fix AI Chat line-height */

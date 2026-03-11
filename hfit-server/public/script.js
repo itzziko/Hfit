@@ -247,7 +247,7 @@ window.onload = async () => {
       splash.style.visibility = 'hidden';
       setTimeout(() => splash.remove(), 800);
     }
-  }, 2500);
+  }, 3500);
 };
 
 // --- BIO-RHYTHM ---
