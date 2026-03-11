@@ -208,7 +208,7 @@ app.post("/google-auth", async (req, res) => {
 
 app.post("/chat", async (req, res) => {
     const userMessage = req.body.message;
-    const initialModel = req.body.model || "google/gemini-2.0-flash-exp:free";
+    const initialModel = req.body.model || "google/gemma-3-27b-it:free";
     const systemMessage = req.body.system || "You are a helpful health assistant.";
     const stream = req.body.stream === true;
 
@@ -234,11 +234,10 @@ app.post("/chat", async (req, res) => {
 
     const models = [
         initialModel,
-        "google/gemini-2.0-flash-exp:free",
-        "google/gemini-2.0-flash-lite-preview-02-05:free",
+        "google/gemma-3-27b-it:free",
+        "qwen/qwen-2-vl-7b-instruct:free",
         "mistralai/mistral-7b-instruct:free",
-        "google/gemini-pro-1.5-exp:free",
-        "openrouter/auto"
+        "openrouter/free"
     ];
 
     const apiKey = (process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "")

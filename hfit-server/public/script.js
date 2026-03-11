@@ -1,4 +1,4 @@
-const AI_MODEL = "google/gemini-2.0-flash-exp:free"; // Default to FREE model to prevent credit errors
+const AI_MODEL = "google/gemma-3-27b-it:free"; // Default to FREE model to prevent credit errors
 const BACKEND_URL = window.location.protocol === "file:" ? "http://localhost:3000" : "";
 
 
