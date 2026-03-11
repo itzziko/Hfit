@@ -238,6 +238,16 @@ window.onload = async () => {
     renderRecentAccounts();
   }
   setAuthMode(authMode);
+
+  // Hide Splash Screen
+  setTimeout(() => {
+    const splash = document.getElementById("splashScreen");
+    if (splash) {
+      splash.style.opacity = '0';
+      splash.style.visibility = 'hidden';
+      setTimeout(() => splash.remove(), 800);
+    }
+  }, 2500);
 };
 
 // --- BIO-RHYTHM ---

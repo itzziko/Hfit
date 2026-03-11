@@ -585,7 +585,7 @@ button:disabled {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 30px;
   padding-bottom: 20px;
 }
@@ -1495,4 +1495,109 @@ button:disabled {
 .g-signin2 .abcRioButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* SPLASH SCREEN */
+.splash-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-color);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.8s ease, visibility 0.8s ease;
+}
+
+.splash-logo {
+  font-size: 6rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  overflow: hidden;
+}
+
+.splash-h {
+  display: inline-block;
+  animation: dropH 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+  transform: translateY(-150vh);
+}
+
+.splash-fit {
+  display: inline-block;
+  animation: slideFit 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards 0.4s;
+  transform: translateX(150vw);
+  opacity: 0;
+}
+
+.splash-tagline {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-top: 10px;
+  opacity: 0;
+  animation: fadeInTagline 1s ease forwards 1s;
+}
+
+@keyframes dropH {
+  0% {
+    transform: translateY(-150vh);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideFit {
+  0% {
+    transform: translateX(100vw);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInTagline {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fix AI Chat line-height */
+.ai-msg {
+  line-height: 1.4 !important;
+}
+
+/* Fix plan-type-toggle and activity-selector colors */
+.plan-type-toggle button,
+.activity-selector button {
+  opacity: 0.5;
+  transition: var(--transition);
+}
+
+.plan-type-toggle button.active,
+.activity-selector button.active {
+  opacity: 1;
+  background: var(--accent-primary);
+  color: var(--bg-color);
+  border-color: var(--accent-primary);
 }
