@@ -11,14 +11,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="translations.js"></script>
 </head>
 
 <body class="dark-mode">
 
   <!-- SPLASH SCREEN -->
   <div id="splashScreen" class="splash-screen">
-    <div class="splash-logo">
-      <span class="splash-h">H</span><span class="splash-fit">fit</span>
+    <div class="logo-container">
+      <div class="logo-hex">
+        <div class="splash-logo">
+          <span class="splash-h">H</span><span class="splash-fit">fit</span>
+        </div>
+      </div>
     </div>
     <p class="splash-tagline">"your new you"</p>
     <div class="splash-loader"></div>
@@ -26,21 +31,10 @@
 
   <!-- CUSTOM TRANSLATE BUTTONS -->
   <div class="lang-toggle-container"
-    style="position:fixed; top:20px; right:80px; z-index:100; display:flex; gap:10px; background:var(--glass-bg); padding:6px; border-radius:30px; border:1px solid var(--glass-border);">
-    <button id="lang-en" class="btn-small lang-btn active" onclick="setLanguage('en')" style="margin:0; min-height:30px; padding:5px 15px; font-weight:800; font-size:0.85rem; background:var(--accent-primary); color:#000; border-radius:20px;">EN</button>
-    <button id="lang-iw" class="btn-small lang-btn" onclick="setLanguage('iw')" style="margin:0; min-height:30px; padding:5px 15px; font-weight:800; font-size:0.85rem; background:transparent; color:var(--text-dim); border-radius:20px; box-shadow:none;">HE</button>
+    style="position:fixed; top:20px; right:80px; z-index:100; display:flex; gap:10px; background:var(--glass-bg); padding:10px; border-radius:30px; border:1px solid var(--glass-border); backdrop-filter:blur(10px);">
+    <button id="lang-en" class="btn-small lang-btn active" onclick="setLanguage('en')" style="margin:0; min-height:30px; padding:5px 15px; font-weight:800; font-size:0.85rem; border-radius:20px; background:var(--accent-primary); color:#000;">EN</button>
+    <button id="lang-iw" class="btn-small lang-btn" onclick="setLanguage('iw')" style="margin:0; min-height:30px; padding:5px 15px; font-weight:800; font-size:0.85rem; border-radius:20px; background:transparent; color:var(--text-dim);">עב</button>
   </div>
-  <div id="google_translate_element" style="display:none;"></div>
-  <script type="text/javascript">
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({
-        pageLanguage: 'en',
-        includedLanguages: 'en,iw',
-        autoDisplay: false
-      }, 'google_translate_element');
-    }
-  </script>
-  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
   <!-- AUTH SCREEN -->
   <div id="authScreen" class="auth-screen">
@@ -56,9 +50,8 @@
 
     <form id="authForm" class="auth-container" onsubmit="handleAuth(event)">
       <div id="authTypeSelector" style="display:flex; gap:12px; margin-bottom:5px;">
-        <button type="button" id="btn-mode-signup" class="btn-small active" onclick="setAuthMode('signup')">Sign
-          Up</button>
-        <button type="button" id="btn-mode-signin" class="btn-small" onclick="setAuthMode('signin')">Sign In</button>
+        <button type="button" id="btn-mode-signup" class="btn-small active" onclick="setAuthMode('signup')" data-t="signup">Sign Up</button>
+        <button type="button" id="btn-mode-signin" class="btn-small" onclick="setAuthMode('signin')" data-t="signin">Sign In</button>
       </div>
 
       <!-- For Google Password Manager -->
@@ -74,7 +67,7 @@
         </div>
       </div>
 
-      <button type="submit" id="authSubmitBtn">Initialize Health AI</button>
+      <button type="submit" id="authSubmitBtn" data-t="initialize-ai">Initialize Health AI</button>
 
       <div id="authError" class="auth-error hidden"></div>
 
@@ -112,29 +105,29 @@
       </div>
       <nav>
         <button id="btn-dashboard" onclick="openTab('dashboard')" class="active"
-          title="View your health overview and trends"><span class="nav-icon">📊</span> <span>Overview</span></button>
+          title="View your health overview and trends"><span class="nav-icon">📊</span> <span data-t="overview">Overview</span></button>
         <button id="btn-ai" onclick="openTab('ai')" title="Chat with Hfit's elite medical AI"
           style="border: 1px solid var(--accent-primary); background: rgba(0, 242, 255, 0.05);"><span class="nav-icon"
             style="background: var(--accent-primary); color: #000;">🤖</span> <span
-            style="font-weight: 800; color: var(--accent-primary);">AI Assistant</span></button>
+            style="font-weight: 800; color: var(--accent-primary);" data-t="ai-assistant">AI Assistant</span></button>
         <button id="btn-food" onclick="openTab('food')" title="Identify meals and track nutritional data"><span
-            class="nav-icon">🍎</span> <span>Food Engine</span></button>
+            class="nav-icon">🍎</span> <span data-t="food-engine">Food Engine</span></button>
         <button id="btn-sleep" onclick="openTab('sleep')" title="Monitor sleep quality and recovery cycles"><span
-            class="nav-icon">😴</span> <span>Sleep Data</span></button>
+            class="nav-icon">😴</span> <span data-t="sleep-data">Sleep Data</span></button>
         <button id="btn-workout" onclick="openTab('workout')" title="Generate AI-powered fitness and meal plans"><span
-            class="nav-icon">💪</span> <span>AI Planning</span></button>
+            class="nav-icon">💪</span> <span data-t="ai-planning">AI Planning</span></button>
         <button id="btn-activities" onclick="openTab('activities')" title="Log physical activities and exercises"><span
-            class="nav-icon">🏃</span> <span>Activities</span></button>
+            class="nav-icon">🏃</span> <span data-t="activities">Activities</span></button>
         <button id="btn-goals" onclick="openTab('goals')" title="Set and track health milestones"><span
-            class="nav-icon">🎯</span> <span>My Goals</span></button>
+            class="nav-icon">🎯</span> <span data-t="my-goals">My Goals</span></button>
         <button id="btn-bruise" onclick="openTab('bruise')" title="Diagnostic skin concern identifier"><span
-            class="nav-icon">🩹</span> <span>Vision Scan (AI)</span></button>
+            class="nav-icon">🩹</span> <span data-t="vision-scan">Vision Scan (AI)</span></button>
         <button id="btn-feedback" onclick="openTab('feedback')" title="Send feedback to Hfit developers"><span
-            class="nav-icon">💬</span> <span>Support</span></button>
+            class="nav-icon">💬</span> <span data-t="support">Support</span></button>
       </nav>
       <div class="sidebar-footer">
         <button class="logout" onclick="logout()"><span class="nav-icon"
-            style="background: rgba(255, 0, 0, 0.1); color: #ff5555;">🚪</span> <span>Logout</span></button>
+            style="background: rgba(255, 0, 0, 0.1); color: #ff5555;">🚪</span> <span data-t="logout">Logout</span></button>
       </div>
     </aside>
 
@@ -145,13 +138,13 @@
       <section id="dashboard" class="tab active">
         <div class="welcome-section">
           <div>
-            <h1 id="welcomeText">Hi, <span id="userName">User</span></h1>
-            <p class="subtitle">Your health performance overview.</p>
+            <h1 id="welcomeText"><span data-t="welcome-message">Hi</span>, <span id="userName">User</span></h1>
+            <p class="subtitle" data-t="subtitle">Your health performance overview.</p>
           </div>
           <div class="status-badge" onclick="checkAiStatus()" style="cursor:pointer;"
             title="Click to refresh core status">
             <span class="pulse-dot"></span>
-            <span id="ai-status-pulse">INITIALIZING...</span>
+            <span id="ai-status-pulse" data-t="initializing">INITIALIZING...</span>
           </div>
         </div>
 
@@ -161,16 +154,16 @@
           <div class="card stat-card" id="widget-nutrition">
             <span class="drag-handle" draggable="true">⋮⋮</span>
             <div style="display:flex; justify-content:space-between; align-items:start;">
-              <h3>Nutrition</h3>
+              <h3 data-t="nutrition">Nutrition</h3>
               <span style="font-size:0.8rem; color:var(--accent-primary); font-weight:700;"
-                title="Live data indicates daily values automatically sync in real-time.">LIVE DATA</span>
+                title="Live data indicates daily values automatically sync in real-time." data-t="live-data">LIVE DATA</span>
             </div>
             <div style="margin:20px 0;">
               <span id="dash-cals" class="stat-val">0</span>
-              <span class="stat-label">DAILY CALORIES</span>
+              <span class="stat-label" data-t="daily-calories">DAILY CALORIES</span>
             </div>
             <button class="btn-secondary btn-small" onclick="openTab('food')" onmousedown="event.stopPropagation()"
-              ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()">LOG
+              ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()" data-t="log-meal">LOG
               MEAL</button>
           </div>
 
@@ -193,27 +186,21 @@
               SLEEP</button>
           </div>
 
-          <div class="card stat-card" id="widget-goals">
-            <span class="drag-handle" draggable="true">⋮⋮</span>
-            <h3>Active Goals</h3>
-            <div style="display:flex; align-items:center; gap:25px; margin:20px 0;">
-              <div class="progress-circle" id="dash-goals-circle" style="width:80px; height:80px; min-width:80px;">
-                <span id="dash-goals-val">0%</span>
-              </div>
-              <div id="dash-goals-wheel" class="goal-wheel-container"
-                style="margin:0; flex-grow:1; justify-content:flex-start;">
-                <!-- Goals injected here as small indicators -->
-              </div>
-            </div>
-            <button class="btn-secondary btn-small" onclick="openTab('goals')" onmousedown="event.stopPropagation()"
-              ontouchstart="event.stopPropagation()" ontouchend="event.stopPropagation()">MANAGE</button>
+          <div class="card stat-card" id="widget-vision" onclick="openTab('bruise')" style="cursor:pointer; background: linear-gradient(135deg, rgba(0, 242, 255, 0.05), transparent);">
+             <span class="drag-handle" draggable="true">⋮⋮</span>
+             <h3 data-t="vision-scan">Vision Scan (AI)</h3>
+             <div style="margin:20px 0; display:flex; align-items:center; gap:15px;">
+               <span style="font-size:2.5rem;">🔍</span>
+               <p style="font-size:0.9rem; color:var(--text-dim);" data-t="upload-photo">UPLOAD PHOTO FOR ANALYSIS</p>
+             </div>
+             <button class="btn-secondary btn-small" data-t="analyze">ANALYZE</button>
           </div>
 
           <div class="card full-width-card" style="grid-column: 1 / -1;" id="widget-ai-insight">
             <span class="drag-handle" draggable="true">⋮⋮</span>
             <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
               <span style="font-size:1.5rem;">✨</span>
-              <h3 style="margin-bottom:0;">AI Health Recommendation</h3>
+              <h3 style="margin-bottom:0;" data-t="ai-recommendation">AI Health Recommendation</h3>
             </div>
             <p id="dash-ai-insight" class="ai-insight-text">Use our tracking tools to receive personalized wellness
               insights here.</p>
@@ -248,7 +235,7 @@
         <div style="display:flex; width: 100%; height: 100%; gap: 20px;">
           <!-- Chat History Sidebar -->
           <div class="chat-sidebar" id="chatSidebar">
-            <button class="new-chat-btn" onclick="startNewChat()">+ New Chat</button>
+            <button class="new-chat-btn" onclick="startNewChat()" data-t="new-chat">+ New Chat</button>
             <div id="chatHistoryList" class="chat-history-list"></div>
           </div>
 
@@ -258,9 +245,9 @@
               <!-- Chat messages injected here -->
             </div>
             <div class="chat-input-area">
-              <input id="chatInput" placeholder="Message Hfit AI (ask about health, meds)..."
+              <input id="chatInput" placeholder="Message Hfit AI (ask about health, meds)..." data-t-placeholder="message-placeholder"
                 onkeyup="if(event.key==='Enter') sendMessage()" style="padding-left:15px;"/>
-              <button onclick="sendMessage()" style="padding: 10px 20px;">Send</button>
+              <button onclick="sendMessage()" style="padding: 10px 20px;" data-t="send">Send</button>
             </div>
             <div id="chatImagePreviewContainer" class="hidden">
               <img id="chatImagePreview" src="" />
@@ -278,7 +265,7 @@
             <img id="foodPreview" src="" class="hidden" />
             <div id="uploadPlaceholder">
               <span style="font-size:3.5rem; display:block; margin-bottom:15px;">📸</span>
-              <p style="font-weight:600; color:var(--text-dim);">TOSS IN A PHOTO OF YOUR MEAL</p>
+              <p style="font-weight:600; color:var(--text-dim);" data-t="upload-meal">TOSS IN A PHOTO OF YOUR MEAL</p>
             </div>
             <input type="file" id="foodImage" accept="image/*" class="hidden" onchange="handleImageUpload(event)" />
           </div>
@@ -297,7 +284,7 @@
 
           <div style="display:flex; gap:12px;">
             <input type="text" id="foodInput" placeholder="What did you eat today?" onfocus="this.select()" />
-            <button onclick="analyzeFood()" style="width:160px;">ANALYZE</button>
+            <button onclick="analyzeFood()" style="width:160px;" data-t="analyze">ANALYZE</button>
           </div>
           <div id="foodResult" style="margin-top:20px; font-weight:600; color:var(--accent-primary);"></div>
         </div>
@@ -305,7 +292,7 @@
 
       <!-- SLEEP -->
       <section id="sleep" class="tab">
-        <h2 style="font-size:2.5rem; margin-bottom:30px;">Sleep Performance</h2>
+        <h2 style="font-size:2.5rem; margin-bottom:30px;" data-t="sleep-performance">Sleep Performance</h2>
         <div class="card" style="max-width:800px; margin:0 auto;">
           <div style="display:flex; align-items:center; justify-content:space-around; margin-bottom:40px;">
             <div class="progress-circle" id="sleepCircle" style="width:180px; height:180px;">
@@ -313,19 +300,19 @@
             </div>
             <div style="display:flex; flex-direction:column; gap:15px;">
               <div style="display:flex; flex-direction:column; gap:15px; width:100%;">
-                <p style="font-weight:700; color:var(--text-dim);">LOG RECOVERY HOURS</p>
+                <p style="font-weight:700; color:var(--text-dim);" data-t="log-recovery">LOG RECOVERY HOURS</p>
                 <div style="display:flex; gap:12px; width:100%;">
-                  <input type="number" id="sleepInput" placeholder="Total Sleep Amount (Number)" min="0" max="24"
+                  <input type="number" id="sleepInput" placeholder="Total Sleep Amount (Number)" min="0" max="24" data-t-placeholder="total-sleep"
                     onfocus="this.select()" />
                 </div>
-                <button onclick="trackSleep()">LOG DATA</button>
+                <button onclick="trackSleep()" data-t="log-data">LOG DATA</button>
                 <div id="sleepStatus" class="auth-error hidden" style="margin-top:15px;"></div>
               </div>
             </div>
           </div>
 
           <div>
-            <h3 style="margin-bottom:20px;">7-Day History</h3>
+            <h3 style="margin-bottom:20px;" data-t="seven-day-history">7-Day History</h3>
             <div id="sleepWeeklyList" class="weekly-row"></div>
           </div>
         </div>
@@ -333,11 +320,11 @@
 
       <!-- FITNESS -->
       <section id="workout" class="tab">
-        <h2 style="font-size:2.5rem; margin-bottom:30px;">Professional Planning</h2>
+        <h2 style="font-size:2.5rem; margin-bottom:30px;" data-t="pro-planning">Professional Planning</h2>
         <div class="card" style="max-width:800px; margin:0 auto;">
           <div class="plan-type-toggle">
-            <button id="btn-mode-workout" class="active" onclick="setPlanMode('workout')">WORKOUT GENERATOR</button>
-            <button id="btn-mode-meal" onclick="setPlanMode('meal')">MEAL PREP ENGINE</button>
+            <button id="btn-mode-workout" class="active" onclick="setPlanMode('workout')" data-t="workout-gen">WORKOUT GENERATOR</button>
+            <button id="btn-mode-meal" onclick="setPlanMode('meal')" data-t="meal-prep">MEAL PREP ENGINE</button>
           </div>
 
           <div id="workoutInputs" style="display:flex; flex-direction:column; gap:15px;">
@@ -362,7 +349,7 @@
 
       <!-- ACTIVITIES -->
       <section id="activities" class="tab">
-        <h2 style="font-size:2.5rem; margin-bottom:30px;">Exercise Log</h2>
+        <h2 style="font-size:2.5rem; margin-bottom:30px;" data-t="activities">Exercise Log</h2>
         <div class="card" style="max-width:800px; margin:0 auto;">
           <div class="activity-selector"
             style="display:flex; gap:15px; margin-bottom:30px; overflow-x:auto; padding-bottom:10px;">
@@ -378,13 +365,13 @@
               <input type="number" id="activityDuration" placeholder="Duration (min)" onfocus="this.select()" />
             </div>
             <div style="display:flex; gap:12px;">
-              <input type="text" id="activityNotes" placeholder="Notes (optional)" onfocus="this.select()" />
+              <input type="text" id="activityNotes" placeholder="Notes (optional)" data-t-placeholder="notes" onfocus="this.select()" />
             </div>
-            <button onclick="logActivity()">LOG ACTIVITY</button>
+            <button onclick="logActivity()" data-t="log-activity">LOG ACTIVITY</button>
           </div>
 
           <div style="margin-top:40px;">
-            <h3 style="margin-bottom:20px;">Recent Activities</h3>
+            <h3 style="margin-bottom:20px;" data-t="recent-activities">Recent Activities</h3>
             <div id="activityHistory" style="display:flex; flex-direction:column; gap:12px;"></div>
           </div>
         </div>
@@ -392,18 +379,18 @@
 
       <!-- GOALS -->
       <section id="goals" class="tab">
-        <h2 style="font-size:2.5rem; margin-bottom:30px;">Health Milestones</h2>
+        <h2 style="font-size:2.5rem; margin-bottom:30px;" data-t="health-milestones">Health Milestones</h2>
         <div class="card" style="max-width:800px; margin:0 auto;">
           <div style="display:flex; flex-direction:column; gap:15px; margin-bottom:30px;">
             <div style="display:flex; gap:12px;">
-              <input id="goalInput" placeholder="ENTER NEW GOAL..." style="flex-grow:2;" onfocus="this.select()" />
+              <input id="goalInput" placeholder="ENTER NEW GOAL..." style="flex-grow:2;" data-t-placeholder="new-goal-placeholder" onfocus="this.select()" />
             </div>
             <div style="display:flex; gap:12px;">
               <input id="goalTarget" type="number" placeholder="Amount (e.g. 100)" style="flex-grow:1;"
                 onfocus="this.select()" />
               <input id="goalUnit" placeholder="Measurement Unit (e.g. km)" style="flex-grow:1;"
                 onfocus="this.select()" />
-              <button onclick="addGoal()" style="width:120px;">ADD</button>
+              <button onclick="addGoal()" style="width:120px;" data-t="add">ADD</button>
             </div>
           </div>
           <ul id="goalList" class="goal-list"></ul>
@@ -412,9 +399,9 @@
 
       <!-- BRUISE IDENTIFIER -->
       <section id="bruise" class="tab">
-        <h2 style="font-size:2.5rem; margin-bottom:30px;">Hfit Vision: Medical Identifier</h2>
+        <h2 style="font-size:2.5rem; margin-bottom:30px;" data-t="medical-identifier">Hfit Vision: Medical Identifier</h2>
         <div class="card" style="max-width:800px; margin:0 auto;">
-          <p style="color:var(--text-dim); margin-bottom:20px; font-weight:500;">
+          <p style="color:var(--text-dim); margin-bottom:20px; font-weight:500;" data-t="vision-disclaimer">
             Upload an image of a bruise, rash, or skin concern for an AI-powered diagnostic analysis. (Ensure the photo is clear and under 5MB).
             <br><strong>DISCLAIMER: For informational purposes only. Consult a doctor for any health decisions.</strong>
           </p>
@@ -423,12 +410,12 @@
             <img id="bruisePreview" src="" class="hidden" />
             <div id="bruisePlaceholder">
               <span style="font-size:3.5rem; display:block; margin-bottom:15px;">🔍</span>
-              <p style="font-weight:600; color:var(--text-dim);">UPLOAD PHOTO FOR ANALYSIS</p>
+              <p style="font-weight:600; color:var(--text-dim);" data-t="upload-photo">UPLOAD PHOTO FOR ANALYSIS</p>
             </div>
             <input type="file" id="bruiseImage" accept="image/*" class="hidden" onchange="handleBruiseUpload(event)" />
           </div>
 
-          <button onclick="analyzeBruise()" style="width:100%; margin-top:20px;">START CLASSIFICATION</button>
+          <button onclick="analyzeBruise()" style="width:100%; margin-top:20px;" data-t="start-classification">START CLASSIFICATION</button>
 
           <div id="bruiseResult" class="ai-msg hidden"
             style="margin-top:25px; padding:30px; border-radius:24px; border: 1px solid var(--accent-primary);"></div>
@@ -437,29 +424,29 @@
 
       <!-- FEEDBACK -->
       <section id="feedback" class="tab">
-        <h2 style="font-size:2.5rem; margin-bottom:30px;">Feedback & Support</h2>
+        <h2 style="font-size:2.5rem; margin-bottom:30px;" data-t="feedback-support">Feedback & Support</h2>
         <div class="card" style="max-width:800px; margin:0 auto; text-align: center; padding: 50px 30px;">
           <div id="feedbackFormContainer">
             <span style="font-size: 3rem; display: block; margin-bottom: 20px;">💡</span>
-            <p style="color:var(--text-dim); margin-bottom: 30px; font-size: 1.1rem;">
+            <p style="color:var(--text-dim); margin-bottom: 30px; font-size: 1.1rem;" data-t="how-improve">
               How can we improve Hfit? Your insights go directly to our development team.
             </p>
             <input type="text" id="nameInput" placeholder="Your Name (Optional)"
               style="width: 100%; margin-bottom: 15px; font-weight: 700; background: rgba(0,0,0,0.2);" />
             <textarea id="feedbackInput" placeholder="Encountered an issue? Describe it here..."
               style="min-height: 150px; margin-bottom: 20px; font-weight: 600; background: rgba(0,0,0,0.2);"></textarea>
-            <button onclick="sendFeedback()" style="width: 100%;">TRANSMIT FEEDBACK</button>
+            <button onclick="sendFeedback()" style="width: 100%;" data-t="transmit-feedback">TRANSMIT FEEDBACK</button>
             <div id="feedbackStatus" class="auth-error hidden" style="margin-top:15px;"></div>
           </div>
 
           <!-- SUCCESS STATE (Hidden by default) -->
           <div id="feedbackSuccessContainer" class="hidden">
             <span style="font-size: 4rem; display: block; margin-bottom: 20px;">🚀</span>
-            <h3 style="color: var(--accent-primary); font-size: 1.8rem; margin-bottom: 15px;">Transmission Received</h3>
-            <p style="color: var(--text-dim); line-height: 1.6; margin-bottom: 30px;">
+            <h3 style="color: var(--accent-primary); font-size: 1.8rem; margin-bottom: 15px;" data-t="transmission-received">Transmission Received</h3>
+            <p style="color: var(--text-dim); line-height: 1.6; margin-bottom: 30px;" data-t="feedback-success">
               Your feedback has been successfully logged. Our architects will review this to calibrate the Hfit Core.
             </p>
-            <button class="btn-secondary" onclick="resetFeedbackForm()">SEND ANOTHER</button>
+            <button class="btn-secondary" onclick="resetFeedbackForm()" data-t="send-another">SEND ANOTHER</button>
           </div>
         </div>
       </section>

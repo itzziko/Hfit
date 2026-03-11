@@ -1107,11 +1107,12 @@ function renderGoals() {
 }
 
 function adjustGoalAmount(idx) {
-  let val = prompt("Enter amount to add or remove (e.g., 5 or -2):");
-  if (!val) return;
+  const goal = currentUser.data.goals[idx];
+  let val = prompt(`Enter NEW TOTAL for "${goal.text}" (Current: ${goal.currentValue} ${goal.unit}):`);
+  if (val === null) return;
   let num = parseFloat(val);
   if (!isNaN(num)) {
-    currentUser.data.goals[idx].currentValue = Math.max(0, currentUser.data.goals[idx].currentValue + num);
+    currentUser.data.goals[idx].currentValue = Math.max(0, num);
     if (currentUser.data.goals[idx].currentValue >= currentUser.data.goals[idx].targetValue) {
       currentUser.data.goals[idx].done = true;
     } else {
@@ -1649,13 +1650,37 @@ async function updateDashboard() {
   renderTrends();
 }
 
-// --- LANGUAGE TOGGLE ---
-window.setLanguage = function(lang) {
-  const selectField = document.querySelector("select.goog-te-combo");
-  if (selectField) {
-    selectField.value = lang;
-    selectField.dispatchEvent(new Event('change'));
+// --- LANGUAGE TOGGLE (LOCAL) ---
+function translatePage() {
+  const lang = document.documentElement.lang || 'en';
+  const dict = translations[lang] || translations['en'];
+  
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    if (dict[key]) {
+      el.innerHTML = dict[key];
+    }
+  });
+  
+  document.querySelectorAll('[data-t-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-t-placeholder');
+    if (dict[key]) {
+      el.placeholder = dict[key];
+    }
+  });
+
+  // Special cases for dynamics
+  if (currentUser) {
+    const welcomeKey = dict['welcome-message'] || 'Hi';
+    document.getElementById("welcomeText").innerHTML = `${welcomeKey}, <span id="userName">${currentUser.profile.username}</span> 👋`;
   }
+}
+
+window.setLanguage = function(lang) {
+  document.documentElement.lang = lang;
+  localStorage.setItem('hfit_lang', lang);
+  
+  translatePage();
   
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.remove('active');
@@ -1670,3 +1695,8 @@ window.setLanguage = function(lang) {
     activeBtn.style.color = '#000';
   }
 };
+
+// Auto-detect language on load
+const savedLang = localStorage.getItem('hfit_lang') || 'en';
+setTimeout(() => setLanguage(savedLang), 100);
+

@@ -7,6 +7,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import fs from "fs";
 import dbPromise, { initDb } from "./db.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -342,7 +343,13 @@ app.post("/feedback", async (req, res) => {
     try {
         const db = await dbPromise;
         await db.run("INSERT INTO feedback (name, message) VALUES (?, ?)", [name || 'Anonymous', feedback]);
-        console.log(`[FEEDBACK SAVED] from ${name || 'Anonymous'}`);
+        const timestamp = new Date().toLocaleString();
+        const logEntry = `\n--- FEEDBACK ENTRY ---\nTime: ${timestamp}\nName: ${name || 'Anonymous'}\nResponse: ${feedback}\nStatus: Sent to Hfit Developers\n----------------------\n`;
+
+        // Local Log File
+        const localLogPath = path.join(__dirname, "..", "feedback-logs.txt");
+        fs.appendFileSync(localLogPath, logEntry);
+        console.log(`[LOCAL LOG] Feedback saved to ${localLogPath}`);
 
         const ghToken = process.env.GITHUB_TOKEN;
         if (ghToken) {

@@ -77,6 +77,47 @@ body {
 /* HIDE GOOGLE TRANSLATE POPUPS */
 html { top: 0 !important; }
 body { top: 0px !important; }
+
+/* RTL SUPPORT */
+[lang="iw"] {
+  direction: rtl;
+  text-align: right;
+}
+
+[lang="iw"] .sidebar {
+  border-right: none;
+  border-left: 1px solid var(--glass-border);
+}
+
+[lang="iw"] .sidebar button {
+  text-align: right;
+  flex-direction: row-reverse;
+}
+
+[lang="iw"] .sidebar button:hover {
+  transform: translateX(-5px);
+}
+
+[lang="iw"] .welcome-section {
+  flex-direction: row-reverse;
+}
+
+[lang="iw"] .status-badge {
+    flex-direction: row-reverse;
+}
+
+[lang="iw"] .progress-circle span {
+    direction: ltr; /* numbers should stay LTR */
+}
+
+[lang="iw"] .stat-val {
+    direction: ltr;
+}
+
+[lang="iw"] .chat-input-area {
+    flex-direction: row-reverse;
+}
+
 .goog-te-banner-frame { display: none !important; }
 #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
 .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; }
@@ -1554,15 +1595,45 @@ button:disabled {
 
 .splash-logo {
   font-size: 6rem;
-  font-weight: 900;
+  font-weight: 950;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+  background: linear-gradient(135deg, #fff, var(--accent-primary));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  overflow: hidden;
+  overflow: visible;
+  filter: drop-shadow(0 0 20px var(--accent-glow));
+}
+
+.logo-container {
+  perspective: 1000px;
+  margin-bottom: 20px;
+}
+
+.logo-hex {
+    width: 280px;
+    height: 280px;
+    background: rgba(0, 242, 255, 0.03);
+    border: 2px solid var(--accent-primary);
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: hexRotate 10s infinite linear, hexPulse 2s infinite ease-in-out;
+    box-shadow: 0 0 50px var(--accent-glow);
+    backdrop-filter: blur(10px);
+}
+
+@keyframes hexRotate {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(360deg); }
+}
+
+@keyframes hexPulse {
+    0%, 100% { border-color: var(--accent-primary); box-shadow: 0 0 30px var(--accent-glow); }
+    50% { border-color: var(--accent-secondary); box-shadow: 0 0 60px rgba(112, 0, 255, 0.3); }
 }
 
 .splash-h {
