@@ -38,6 +38,8 @@ async function createAccount(email, password, username, age) {
       body: JSON.stringify({ email, password, username, age })
     });
     const result = await res.json();
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
     if (result.success) {
       setSession(result.token, email);
       currentUser = {
@@ -47,10 +49,12 @@ async function createAccount(email, password, username, age) {
       };
       return { success: true };
     }
-    return { success: false, message: result.message || "Signup failed." };
+    return { success: false, message: result.message || (dict["signup-failed"] || "Signup failed.") };
   } catch (e) {
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
     console.error("Transmission Error:", e);
-    return { success: false, message: `Hfit Core Connection Failed at: ${BACKEND_URL}. Check if the server is live.` };
+    return { success: false, message: dict["core-failed"] || "Hfit Core Connection Failed." };
   }
 }
 
@@ -62,6 +66,8 @@ async function login(email, password) {
       body: JSON.stringify({ email, password })
     });
     const result = await res.json();
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
     if (result.success) {
       setSession(result.token, email);
       currentUser = {
@@ -71,10 +77,12 @@ async function login(email, password) {
       };
       return { success: true };
     }
-    return { success: false, message: result.message || "Login failed." };
+    return { success: false, message: result.message || (dict["login-failed"] || "Login failed.") };
   } catch (e) {
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
     console.error("Transmission Error:", e);
-    return { success: false, message: `Hfit Core Connection Failed at: ${BACKEND_URL}. Check if the server is live.` };
+    return { success: false, message: dict["core-failed"] || "Hfit Core Connection Failed." };
   }
 }
 
@@ -793,9 +801,11 @@ async function analyzeFood() {
       console.warn("JSON parse failed, checking for text fallbacks...", parseErr);
       const calsMatch = reply.match(/(\d+)\s*cals/i) || reply.match(/calories:\s*(\d+)/i);
       if (calsMatch) {
+        const lang = document.documentElement.lang || 'en';
+        const dict = translations[lang] || translations['en'];
         result = {
           cals: parseInt(calsMatch[1]),
-          name: "IDENTIFIED MEAL"
+          name: dict["identified-meal"] || "IDENTIFIED MEAL"
         };
       }
     }
@@ -836,8 +846,10 @@ async function analyzeFood() {
 
     updateDashboard();
   } catch (e) {
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
     console.error("ANALYSIS_ERROR:", e);
-    status.textContent = "ANALYSIS FAILED. PLEASE TRY A CLEARER IMAGE OR DISCRIPTION.";
+    status.textContent = dict["analysis-failed"] || "ANALYSIS FAILED.";
     status.style.color = "#ef4444";
   } finally {
     btn.disabled = false;
@@ -852,7 +864,9 @@ function trackSleep() {
   status.classList.add("hidden");
 
   if (isNaN(hours)) {
-    status.textContent = "REQUIRED: TOTAL RECOVERY HOURS.";
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
+    status.textContent = dict["hours-required"] || "REQUIRED: HOURS.";
     status.classList.remove("hidden");
     return;
   }
@@ -861,7 +875,9 @@ function trackSleep() {
   const alreadyTracked = currentUser.data.sleep.find(s => s.fullDate === today);
 
   if (alreadyTracked && alreadyTracked.hours > 0) {
-    status.textContent = "METRICS FINALIZED FOR TODAY.";
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
+    status.textContent = dict["metrics-finalized"] || "FINALIZED.";
     status.classList.remove("hidden");
     return;
   }
@@ -917,16 +933,19 @@ function setPlanMode(mode) {
 }
 
 async function generatePlan() {
+  const lang = document.documentElement.lang || 'en';
+  const dict = translations[lang] || translations['en'];
   const resBox = document.getElementById("planResult");
   resBox.classList.remove("hidden");
-  resBox.innerHTML = `<div class="typing"><span>ARCHITECTING STRATEGY</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  resBox.innerHTML = `<div class="typing"><span>${dict["architecting"] || "ARCHITECTING"}</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
 
   const prompt = planMode === 'workout'
     ? `Workout: ${document.getElementById("targetArea").value}, Time: ${document.getElementById("timePerWorkout").value}, Loc: ${document.getElementById("location").value}.`
     : `Meal Plan: ${document.getElementById("mealGoal").value}, Diet: ${document.getElementById("dietType").value}.`;
 
   const reply = await askAI(prompt, "Elite conditioning coach. Provide raw text outline with bold headers and bullet points. Neat and organized.");
-  const formattedReply = `<strong> ELITE ${planMode.toUpperCase()} STRATEGY:</strong> <br><br>${reply.replace(/\n/g, "<br>")}`;
+  const title = dict["elite-strategy"] || "ELITE STRATEGY";
+  const formattedReply = `<strong> ${title} (${planMode.toUpperCase()}):</strong> <br><br>${reply.replace(/\n/g, "<br>")}`;
   resBox.innerHTML = formattedReply;
 
   // Persistence
@@ -1581,10 +1600,15 @@ window.addEventListener('resize', () => {
 async function updateDashboard() {
   if (!currentUser) return;
 
+  const lang = document.documentElement.lang || 'en';
+  const dict = translations[lang] || translations['en'];
+
   const hour = new Date().getHours();
-  let greeting = "Good evening";
-  if (hour < 12) greeting = "Good morning";
-  else if (hour < 18) greeting = "Good afternoon";
+  let greetingKey = "good-evening";
+  if (hour < 12) greetingKey = "good-morning";
+  else if (hour < 18) greetingKey = "good-afternoon";
+  
+  const greeting = dict[greetingKey] || "Hi";
 
   document.getElementById("welcomeText").innerHTML = `${greeting}, <span id="userName">${currentUser.profile.username}</span> 👋`;
 
@@ -1603,7 +1627,7 @@ async function updateDashboard() {
 
   if (lastSleep) {
     sleepVal.textContent = `${lastSleep.percent}%`;
-    sleepStatus.textContent = lastSleep.percent >= 80 ? "Optimized Recovery" : "Needs Improvement";
+    sleepStatus.textContent = lastSleep.percent >= 80 ? (dict["optimized-recovery"] || "Optimized") : (dict["needs-improvement"] || "Needs Improvement");
     if (sleepCircle) sleepCircle.style.background = `conic-gradient(var(--accent-primary) ${lastSleep.percent * 3.6}deg, var(--glass-border) 0deg)`;
   }
 
@@ -1630,9 +1654,12 @@ async function updateDashboard() {
         `;
       }).join('');
     } else {
-      dashGoalsWheel.innerHTML = `<p style="color:var(--text-dim); font-size:0.8rem;">${totalGoals > 0 ? "All completed! 🎖️" : "No goals set."}</p>`;
+      dashGoalsWheel.innerHTML = `<p style="color:var(--text-dim); font-size:0.8rem;">${totalGoals > 0 ? (dict["all-completed"] || "Done!") : (dict["no-goals"] || "None")}</p>`;
     }
   }
+
+  // Ensure all static text is translated
+  translatePage();
 
   // Update AI Insights
   const insightBox = document.getElementById("dash-ai-insight");
@@ -1671,8 +1698,14 @@ function translatePage() {
 
   // Special cases for dynamics
   if (currentUser) {
-    const welcomeKey = dict['welcome-message'] || 'Hi';
-    document.getElementById("welcomeText").innerHTML = `${welcomeKey}, <span id="userName">${currentUser.profile.username}</span> 👋`;
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
+    const hour = new Date().getHours();
+    let greetingKey = "good-evening";
+    if (hour < 12) greetingKey = "good-morning";
+    else if (hour < 18) greetingKey = "good-afternoon";
+    const greeting = dict[greetingKey] || "Hi";
+    document.getElementById("welcomeText").innerHTML = `${greeting}, <span id="userName">${currentUser.profile.username}</span> 👋`;
   }
 }
 
@@ -1684,15 +1717,11 @@ window.setLanguage = function(lang) {
   
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.remove('active');
-    btn.style.background = 'transparent';
-    btn.style.color = 'var(--text-dim)';
   });
   
   const activeBtn = document.getElementById('lang-' + lang);
   if (activeBtn) {
     activeBtn.classList.add('active');
-    activeBtn.style.background = 'var(--accent-primary)';
-    activeBtn.style.color = '#000';
   }
 };
 

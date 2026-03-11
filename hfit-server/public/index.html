@@ -25,25 +25,24 @@
         </div>
       </div>
     </div>
-    <p class="splash-tagline">"your new you"</p>
+    <p class="splash-tagline" data-t="splash-tagline">"your new you"</p>
     <div class="splash-loader"></div>
   </div>
 
   <!-- CUSTOM TRANSLATE BUTTONS -->
-  <div class="lang-toggle-container"
-    style="position:fixed; top:20px; right:80px; z-index:100; display:flex; gap:10px; background:var(--glass-bg); padding:10px; border-radius:30px; border:1px solid var(--glass-border); backdrop-filter:blur(10px);">
-    <button id="lang-en" class="btn-small lang-btn active" onclick="setLanguage('en')" style="margin:0; min-height:30px; padding:5px 15px; font-weight:800; font-size:0.85rem; border-radius:20px; background:var(--accent-primary); color:#000;">EN</button>
-    <button id="lang-iw" class="btn-small lang-btn" onclick="setLanguage('iw')" style="margin:0; min-height:30px; padding:5px 15px; font-weight:800; font-size:0.85rem; border-radius:20px; background:transparent; color:var(--text-dim);">עב</button>
+  <div class="lang-toggle-container">
+    <button id="lang-en" class="btn-small lang-btn active" onclick="setLanguage('en')">EN</button>
+    <button id="lang-iw" class="btn-small lang-btn" onclick="setLanguage('iw')">עב</button>
   </div>
 
   <!-- AUTH SCREEN -->
   <div id="authScreen" class="auth-screen">
-    <h1>Hfit</h1>
-    <p style="color:var(--text-dim); font-weight:500;">Premium AI Health Companion</p>
+    <h1 data-t="hfit">Hfit</h1>
+    <p style="color:var(--text-dim); font-weight:500;" data-t="premium-companion">Premium AI Health Companion</p>
 
     <div id="recentAccountsContainer" class="hidden" style="margin-bottom: 20px; width: 100%; max-width: 400px;">
       <p
-        style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+        style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;" data-t="recent-accounts">
         Recent Accounts</p>
       <div id="recentAccountsList" style="display: flex; flex-direction: column; gap: 10px;"></div>
     </div>
@@ -56,14 +55,14 @@
 
       <!-- For Google Password Manager -->
       <div style="display:flex; flex-direction:column; gap:15px;">
-        <input id="email" name="email" type="email" autocomplete="username email" placeholder="Email Address"
+        <input id="email" name="email" type="email" autocomplete="username email" placeholder="Email Address" data-t-placeholder="email-placeholder"
           required />
-        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Password"
+        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Password" data-t-placeholder="password-placeholder"
           required />
 
         <div id="signupFields" style="display:contents;">
-          <input id="firstName" name="given-name" autocomplete="given-name" placeholder="First Name" />
-          <input id="ageInput" name="age" type="number" placeholder="Age" />
+          <input id="firstName" name="given-name" autocomplete="given-name" placeholder="First Name" data-t-placeholder="firstname-placeholder" />
+          <input id="ageInput" name="age" type="number" placeholder="Age" data-t-placeholder="age-placeholder" />
         </div>
       </div>
 
@@ -73,7 +72,7 @@
 
       <div style="margin-top: 20px; text-align: center;">
         <button type="button" class="btn-secondary btn-small" onclick="openFeedbackFromAuth()"
-          style="text-transform: none; opacity: 0.8;">💡 Have feedback or trouble signing in?</button>
+          style="text-transform: none; opacity: 0.8;" data-t="login-support">💡 Have feedback or trouble signing in?</button>
       </div>
     </form>
   </div>
@@ -84,13 +83,13 @@
     <div class="card" style="max-width:500px; width:90%; position:relative;">
       <button onclick="closeAuthFeedback()"
         style="position:absolute; top:20px; right:20px; background:none; box-shadow:none; color:var(--text-dim);">✖</button>
-      <h3 style="margin-bottom:10px;">Support & Feedback</h3>
-      <p style="color:var(--text-dim); margin-bottom:20px; font-size:0.9rem;">Share your thoughts or issues directly
+      <h3 style="margin-bottom:10px;" data-t="support-title">Support & Feedback</h3>
+      <p style="color:var(--text-dim); margin-bottom:20px; font-size:0.9rem;" data-t="support-desc">Share your thoughts or issues directly
         with the developers.</p>
-      <input type="text" id="authNameInput" placeholder="Your Name (Optional)" style="margin-bottom:10px;" />
-      <textarea id="authFeedbackInput" placeholder="How can we help?"
+      <input type="text" id="authNameInput" placeholder="Your Name (Optional)" style="margin-bottom:10px;" data-t-placeholder="support-name" />
+      <textarea id="authFeedbackInput" placeholder="How can we help?" data-t-placeholder="support-msg"
         style="min-height:120px; margin-bottom:15px;"></textarea>
-      <button onclick="sendAuthFeedback()">Transmit Feedback</button>
+      <button onclick="sendAuthFeedback()" data-t="support-send">Transmit Feedback</button>
       <div id="authFeedbackStatus" class="auth-error hidden" style="margin-top:10px;"></div>
     </div>
   </div>
@@ -271,19 +270,14 @@
           </div>
 
           <div class="food-stats">
-            <div class="stat-item"><span class="stat-val" id="food-cals">0</span><span class="stat-label">CALS</span>
-            </div>
-            <div class="stat-item"><span class="stat-val" id="food-protein">0g</span><span
-                class="stat-label">PRTN</span>
-            </div>
-            <div class="stat-item"><span class="stat-val" id="food-carbs">0g</span><span class="stat-label">CARB</span>
-            </div>
-            <div class="stat-item"><span class="stat-val" id="food-fats">0g</span><span class="stat-label">FATS</span>
-            </div>
+            <div class="stat-item"><span class="stat-val" id="food-cals">0</span><span class="stat-label" data-t="calories">CALORIES</span></div>
+            <div class="stat-item"><span class="stat-val" id="food-protein">0g</span><span class="stat-label" data-t="protein">PROTEIN</span></div>
+            <div class="stat-item"><span class="stat-val" id="food-carbs">0g</span><span class="stat-label" data-t="carbs">CARBS</span></div>
+            <div class="stat-item"><span class="stat-val" id="food-fats">0g</span><span class="stat-label" data-t="fats">FATS</span></div>
           </div>
 
           <div style="display:flex; gap:12px;">
-            <input type="text" id="foodInput" placeholder="What did you eat today?" onfocus="this.select()" />
+            <input type="text" id="foodInput" placeholder="What did you eat today?" data-t-placeholder="food-question" onfocus="this.select()" />
             <button onclick="analyzeFood()" style="width:160px;" data-t="analyze">ANALYZE</button>
           </div>
           <div id="foodResult" style="margin-top:20px; font-weight:600; color:var(--accent-primary);"></div>
@@ -328,18 +322,14 @@
           </div>
 
           <div id="workoutInputs" style="display:flex; flex-direction:column; gap:15px;">
-            <input id="targetArea" placeholder="TARGET MUSCLES" onfocus="this.select()" />
-            <input id="timePerWorkout" placeholder="SESSION DURATION (MIN)" onfocus="this.select()" />
-            <select id="location">
-              <option value="Gym">FULLY EQUIPPED GYM</option>
-              <option value="Home">HOME / NO EQUIPMENT</option>
-              <option value="Outdoor">OUTDOOR PERFORMANCE</option>
-            </select>
+            <input type="text" id="targetArea" placeholder="Focus Area (e.g. Abs, Full Body)" data-t-placeholder="focus-area" onfocus="this.select()" />
+            <input type="text" id="timePerWorkout" placeholder="Available Time (e.g. 30 min)" data-t-placeholder="available-time" onfocus="this.select()" />
+            <input type="text" id="location" placeholder="Location (Gym, Home)" data-t-placeholder="location-placeholder" onfocus="this.select()" />
           </div>
 
           <div id="mealInputs" class="hidden" style="display:flex; flex-direction:column; gap:15px;">
-            <input id="mealGoal" placeholder="PHYSIQUE GOAL" onfocus="this.select()" />
-            <input id="dietType" placeholder="DIETARY RESTRICTIONS" onfocus="this.select()" />
+            <input type="text" id="mealGoal" placeholder="Goal (e.g. Bulk, Shred)" data-t-placeholder="meal-goal" onfocus="this.select()" />
+            <input type="text" id="dietType" placeholder="Dietary Pref (e.g. Keto, Vegan)" data-t-placeholder="diet-pref" onfocus="this.select()" />
           </div>
 
           <button onclick="generatePlan()" style="margin-top:30px;">GENERATE AI STRATEGY</button>
@@ -362,7 +352,7 @@
 
           <div style="display:flex; flex-direction:column; gap:15px;">
             <div style="display:flex; gap:12px;">
-              <input type="number" id="activityDuration" placeholder="Duration (min)" onfocus="this.select()" />
+              <input type="number" id="activityDuration" placeholder="Duration (min)" data-t-placeholder="duration-placeholder" onfocus="this.select()" />
             </div>
             <div style="display:flex; gap:12px;">
               <input type="text" id="activityNotes" placeholder="Notes (optional)" data-t-placeholder="notes" onfocus="this.select()" />
@@ -386,9 +376,9 @@
               <input id="goalInput" placeholder="ENTER NEW GOAL..." style="flex-grow:2;" data-t-placeholder="new-goal-placeholder" onfocus="this.select()" />
             </div>
             <div style="display:flex; gap:12px;">
-              <input id="goalTarget" type="number" placeholder="Amount (e.g. 100)" style="flex-grow:1;"
+              <input id="goalTarget" type="number" placeholder="Amount (e.g. 100)" style="flex-grow:1;" data-t-placeholder="goal-amount-placeholder"
                 onfocus="this.select()" />
-              <input id="goalUnit" placeholder="Measurement Unit (e.g. km)" style="flex-grow:1;"
+              <input id="goalUnit" placeholder="Measurement Unit (e.g. km)" style="flex-grow:1;" data-t-placeholder="goal-unit-placeholder"
                 onfocus="this.select()" />
               <button onclick="addGoal()" style="width:120px;" data-t="add">ADD</button>
             </div>

@@ -82,11 +82,27 @@ body { top: 0px !important; }
 [lang="iw"] {
   direction: rtl;
   text-align: right;
+  font-family: 'Inter', sans-serif;
+}
+
+[lang="iw"] * {
+    font-weight: 700; /* Heavier on Hebrew for better readability */
+}
+
+[lang="iw"] h1, [lang="iw"] h2, [lang="iw"] h3 {
+    font-weight: 900;
 }
 
 [lang="iw"] .sidebar {
   border-right: none;
   border-left: 1px solid var(--glass-border);
+  left: auto;
+  right: 0;
+}
+
+[lang="iw"] .main-content {
+    margin-left: 0;
+    margin-right: 280px;
 }
 
 [lang="iw"] .sidebar button {
@@ -118,10 +134,63 @@ body { top: 0px !important; }
     flex-direction: row-reverse;
 }
 
+[lang="iw"] .lang-toggle-container {
+    right: auto;
+    left: 25px;
+}
+
+/* Mobile RTL */
+@media (max-width: 768px) {
+    [lang="iw"] .main-content {
+        margin-right: 0;
+    }
+    [lang="iw"] .sidebar {
+        transform: translateX(100%);
+    }
+    [lang="iw"] .sidebar.open {
+        transform: translateX(0);
+    }
+}
+
 .goog-te-banner-frame { display: none !important; }
 #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
 .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; }
 .goog-te-gadget { color: transparent !important; display: none; }
+
+.lang-toggle-container {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    z-index: 99999;
+    display: flex;
+    gap: 10px;
+    background: var(--glass-bg);
+    padding: 10px;
+    border-radius: 30px;
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    pointer-events: auto;
+    transition: var(--transition);
+}
+
+.lang-btn {
+    margin: 0;
+    min-height: 30px;
+    padding: 5px 15px;
+    font-weight: 800;
+    font-size: 0.85rem;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-dim);
+    transition: var(--transition);
+}
+
+.lang-btn.active {
+    background: var(--accent-primary);
+    color: #000;
+}
 
 /* HIGH-END MESH GRADIENT BACKGROUND */
 body::before {
