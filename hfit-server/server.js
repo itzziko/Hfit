@@ -233,20 +233,28 @@ app.post("/chat", async (req, res) => {
         }
     }
 
-    const models = [
-        initialModel,
-        "google/gemma-3-27b-it:free",
-        "qwen/qwen-2-vl-7b-instruct:free",
-        "mistralai/mistral-7b-instruct:free",
-        "openrouter/free"
-    ];
-
     const apiKey = (process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "")
         .replace(/['\"]/g, '')
         .trim();
 
     if (!apiKey) {
         return res.status(500).json({ error: "HFIT CORE CRITICAL: API key missing." });
+    }
+
+    let searchModels = [
+        initialModel,
+        "google/gemma-3-27b-it:free",
+        "qwen/qwen-2-vl-7b-instruct:free",
+        "google/gemini-2.0-flash-exp:free"
+    ];
+
+    if (req.body.image) {
+        // Prioritize Vision models
+        searchModels = [
+            "google/gemini-2.0-flash-exp:free",
+            "qwen/qwen-2-vl-7b-instruct:free",
+            "google/gemini-2.0-pro-exp-02-05:free"
+        ];
     }
 
     if (stream) {
@@ -257,7 +265,7 @@ app.post("/chat", async (req, res) => {
 
     let lastError = null;
 
-    for (const model of models) {
+    for (const model of searchModels) {
         try {
             console.log(`[AI ${stream ? 'STREAM' : 'SYNC'}] Attempting with model: ${model}`);
 
@@ -414,7 +422,15 @@ app.use((err, req, res, next) => {
 
 initDb().then(() => {
     const PORT = process.env.PORT || 3000;
-    app.get("/feedback-logs", async (req, res) => {
+    app.get("/architect-portal", (req, res) => {
+    const key = req.query.key;
+    if (key !== "hfit_architect_2026") {
+        return res.status(403).send("ACCESS DENIED: HFIT CORE SECRET KEY REQUIRED");
+    }
+    res.sendFile(path.join(__dirname, "public", "feedback.html"));
+});
+
+app.get("/feedback-logs", async (req, res) => {
     try {
         const db = await dbPromise;
         const logs = await db.all("SELECT id, name, message as feedback FROM feedback ORDER BY id DESC LIMIT 15");

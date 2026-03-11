@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hfit Architect Hub | Feedback Logs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030303;
+            --accent: #00f2ff;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #ffffff;
+            --text-dim: #94a3b8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            padding: 50px; 
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 50% 50%, rgba(0, 242, 255, 0.05) 0%, transparent 70%);
+        }
+
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+        }
+
+        h1 { font-size: 2.5rem; font-weight: 950; letter-spacing: 2px; color: var(--accent); }
+        .badge { background: var(--accent); color: #000; padding: 5px 15px; border-radius: 20px; font-weight: 800; font-size: 0.8rem; }
+
+        .logs-container { max-width: 1200px; margin: 0 auto; display: grid; gap: 20px; }
+
+        .log-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 25px;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            transition: 0.3s ease;
+        }
+
+        .log-card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 242, 255, 0.1); }
+
+        .meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.9rem; font-weight: 700; color: var(--accent); }
+        .msg { font-size: 1.1rem; line-height: 1.6; color: var(--text); background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; }
+        
+        #status { text-align: center; font-weight: 700; color: var(--text-dim); margin-top: 50px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .log-card { animation: fadeIn 0.5s ease backwards; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>HFIT ARCHITECT HUB</h1>
+        <div class="badge">LOGS DECRYPTED</div>
+    </div>
+
+    <div id="logs" class="logs-container">
+        <!-- Logs injected here -->
+    </div>
+
+    <div id="status">INITIALIZING ENCRYPTED CONNECTION...</div>
+
+    <script>
+        async function fetchLogs() {
+            const status = document.getElementById('status');
+            const container = document.getElementById('logs');
+            try {
+                const res = await fetch('/feedback-logs');
+                const data = await res.json();
+                if (data.success && data.logs) {
+                    status.style.display = 'none';
+                    container.innerHTML = data.logs.map((log, i) => `
+                        <div class="log-card" style="animation-delay: ${i * 0.1}s">
+                            <div class="meta">
+                                <span>ARCHITECT LOG: ${log.name || 'Anonymous'}</span>
+                                <span>ENTRY ID: #${log.id}</span>
+                            </div>
+                            <div class="msg">${log.feedback}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    status.textContent = "DECRYPTION FAILED. SYSTEM OFFLINE.";
+                }
+            } catch (e) {
+                status.textContent = "CORE CONNECTION LOST.";
+            }
+        }
+        fetchLogs();
+    </script>
+</body>
+</html>

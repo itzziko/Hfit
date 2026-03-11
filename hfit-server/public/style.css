@@ -157,6 +157,23 @@ body { top: 0px !important; }
 .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; }
 .goog-te-gadget { color: transparent !important; display: none; }
 
+.sidebar-logo {
+    color: var(--accent-primary) !important;
+    font-size: 2.2rem;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 30px;
+    cursor: pointer;
+    transition: var(--transition);
+    text-shadow: 0 0 20px var(--accent-glow);
+}
+
+.sidebar-logo:active {
+    transform: scale(0.95);
+    opacity: 0.8;
+}
+
 /* VISION SCAN ANIMATION */
 .scanner-view {
     position: relative;

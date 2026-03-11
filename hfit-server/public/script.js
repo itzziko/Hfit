@@ -503,19 +503,14 @@ function openTab(id) {
   const btn = document.getElementById(`btn-${id}`);
   if (btn) btn.classList.add("active");
 
-  // Secret Admin Hub Trigger
+  // Secret Architect Hub Redirect - 15 LOGO CLICKS + OVERVIEW CLICK
   if (id === 'dashboard' && logoClickCount >= 15) {
-      const hub = document.querySelector('.feedback-hub');
-      if (hub) {
-          hub.classList.toggle('hidden');
-          if (!hub.classList.contains('hidden')) {
-              loadFeedbackHub();
-              alert("Hfit Architect Mode: Feedback Feed Decrypted.");
-          }
-      }
-      logoClickCount = 0; // Reset after trigger
+      logoClickCount = 0; // Reset
+      window.open(`${BACKEND_URL}/architect-portal?key=hfit_architect_2026`, '_blank');
+      alert("Hfit Architect Hub: Encrypted Feed Unlocked in Separate Module.");
+      return;
   }
-
+  
   if (id === 'dashboard') updateDashboard();
   if (id === 'ai') setTimeout(() => {
     const chatHist = document.getElementById("chatHistory");
