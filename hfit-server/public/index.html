@@ -19,10 +19,8 @@
   <!-- SPLASH SCREEN -->
   <div id="splashScreen" class="splash-screen">
     <div class="logo-container">
-      <div class="logo-hex">
-        <div class="splash-logo">
-          <span class="splash-h">H</span><span class="splash-fit">fit</span>
-        </div>
+      <div class="splash-logo">
+        <span class="splash-h">H</span><span class="splash-fit">fit</span>
       </div>
     </div>
     <p class="splash-tagline" data-t="splash-tagline">"your new you"</p>
@@ -278,7 +276,7 @@
 
           <div style="display:flex; gap:12px;">
             <input type="text" id="foodInput" placeholder="What did you eat today?" data-t-placeholder="food-question" onfocus="this.select()" />
-            <button onclick="analyzeFood()" style="width:160px;" data-t="analyze">ANALYZE</button>
+            <button onclick="analyzeFood(event)" style="width:160px;" data-t="analyze">ANALYZE</button>
           </div>
           <div id="foodResult" style="margin-top:20px; font-weight:600; color:var(--accent-primary);"></div>
         </div>
@@ -409,7 +407,7 @@
             <input type="file" id="bruiseImage" accept="image/*" class="hidden" onchange="handleBruiseUpload(event)" />
           </div>
 
-          <button onclick="analyzeBruise()" style="width:100%; margin-top:20px;" data-t="start-classification">START CLASSIFICATION</button>
+          <button onclick="analyzeBruise(event)" style="width:100%; margin-top:20px;" data-t="start-classification">START CLASSIFICATION</button>
 
           <div id="bruiseResult" class="ai-msg hidden"
             style="margin-top:25px; padding:30px; border-radius:24px; border: 1px solid var(--accent-primary);"></div>
@@ -433,7 +431,7 @@
             <div id="feedbackStatus" class="auth-error hidden" style="margin-top:15px;"></div>
           </div>
 
-          <div class="feedback-hub">
+          <div class="feedback-hub hidden">
             <h3 class="feedback-hub-title" data-t="feedback-logs">Hfit System Feedback Logs</h3>
             <div id="feedbackList" class="feedback-list">
               <!-- Dynamically populated -->

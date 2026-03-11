@@ -494,10 +494,7 @@ function openTab(id) {
   document.querySelectorAll(".sidebar button").forEach(b => b.classList.remove("active"));
 
   const target = document.getElementById(id);
-  if (!target) {
-    console.error("Hfit Error: Tab not found", id);
-    return;
-  }
+  if (!target) return;
   target.classList.add("active");
 
   const btn = document.getElementById(`btn-${id}`);
@@ -508,13 +505,41 @@ function openTab(id) {
     const chatHist = document.getElementById("chatHistory");
     chatHist.scrollTop = chatHist.scrollHeight;
   }, 100);
-  if (id === 'feedback') loadFeedbackHub();
+  
+  if (id === 'feedback') {
+    const hub = document.querySelector('.feedback-hub');
+    if (hub && !hub.classList.contains('hidden')) {
+      loadFeedbackHub();
+    }
+  }
 
   // Auto-scroll to top for better UX on mobile
   if (window.innerWidth < 900) {
-    document.querySelector('.content').scrollTop = 0;
+    const content = document.querySelector('.main-content');
+    if (content) content.scrollTop = 0;
   }
 }
+
+// Secret Dev Reveal - Double Click Hfit Logo in Sidebar
+document.addEventListener('DOMContentLoaded', () => {
+    // Add listener after a short delay to ensure logo is rendered
+    setTimeout(() => {
+        const logo = document.querySelector('.sidebar-logo');
+        if (logo) {
+            logo.style.cursor = 'crosshair';
+            logo.addEventListener('dblclick', () => {
+                const hub = document.querySelector('.feedback-hub');
+                if (hub) {
+                    hub.classList.toggle('hidden');
+                    if (!hub.classList.contains('hidden')) {
+                        loadFeedbackHub();
+                        alert("Hfit Architect Mode: Feedback Feed Decrypted.");
+                    }
+                }
+            });
+        }
+    }, 1000);
+});
 
 // --- DATA PERSISTENCE HELPERS ---
 async function saveCurrentUserData() {
@@ -763,10 +788,10 @@ function handleImageUpload(e) {
   });
 }
 
-async function analyzeFood() {
+async function analyzeFood(e) {
   const query = document.getElementById("foodInput").value;
   const status = document.getElementById("foodResult");
-  const btn = document.querySelector('button[onclick="analyzeFood()"]');
+  const btn = e?.target?.closest('button') || document.querySelector('button[onclick*="analyzeFood"]');
   const currentImage = foodImageBase64;
 
   if (!query && !currentImage) {
@@ -806,6 +831,7 @@ async function analyzeFood() {
         const dict = translations[lang] || translations['en'];
         result = {
           cals: parseInt(calsMatch[1]),
+          protein: 0, carbs: 0, fats: 0,
           name: dict["identified-meal"] || "IDENTIFIED MEAL"
         };
       }
@@ -815,11 +841,17 @@ async function analyzeFood() {
       throw new Error("Could not parse nutrition data.");
     }
 
-    document.getElementById("food-cals").textContent = result.cals || 0;
-    document.getElementById("food-protein").textContent = (result.protein || 0) + "g";
-    document.getElementById("food-carbs").textContent = (result.carbs || 0) + "g";
-    document.getElementById("food-fats").textContent = (result.fats || 0) + "g";
-    document.getElementById("dash-cals").textContent = result.cals || 0;
+    // Normalize keys
+    const cals = result.cals || result.calories || 0;
+    const protein = result.protein || 0;
+    const carbs = result.carbs || 0;
+    const fats = result.fats || result.fat || 0;
+
+    document.getElementById("food-cals").textContent = cals;
+    document.getElementById("food-protein").textContent = protein + "g";
+    document.getElementById("food-carbs").textContent = carbs + "g";
+    document.getElementById("food-fats").textContent = fats + "g";
+    document.getElementById("dash-cals").textContent = cals;
 
     // Save calorie data to today's history for trends
     const today = new Date().toLocaleDateString();
@@ -988,9 +1020,9 @@ function handleBruiseUpload(e) {
   });
 }
 
-async function analyzeBruise() {
+async function analyzeBruise(e) {
   const status = document.getElementById("bruiseResult");
-  const btn = event?.target?.closest('button') || document.querySelector('button[onclick="analyzeBruise()"]');
+  const btn = e?.target?.closest('button') || document.querySelector('button[onclick*="analyzeBruise"]');
   const currentImage = bruiseImageBase64;
 
   if (!currentImage) {
@@ -1029,6 +1061,7 @@ async function analyzeBruise() {
     document.getElementById("scannerContainer").classList.remove("active-scan");
     document.getElementById("scannerContainer").classList.add("hidden");
     document.getElementById("bruisePlaceholder").classList.remove("hidden");
+    bruiseImageBase64 = null;
   } catch (e) {
     console.error("BRUISE_SCAN_ERROR:", e);
     document.getElementById("scannerContainer").classList.remove("active-scan");
