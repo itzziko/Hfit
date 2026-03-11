@@ -508,6 +508,7 @@ function openTab(id) {
     const chatHist = document.getElementById("chatHistory");
     chatHist.scrollTop = chatHist.scrollHeight;
   }, 100);
+  if (id === 'feedback') loadFeedbackHub();
 
   // Auto-scroll to top for better UX on mobile
   if (window.innerWidth < 900) {
@@ -980,9 +981,9 @@ function handleBruiseUpload(e) {
     bruiseImageBase64 = resizedBase64;
     const prev = document.getElementById("bruisePreview");
     prev.src = bruiseImageBase64;
-    prev.classList.remove("hidden");
+    document.getElementById("scannerContainer").classList.remove("hidden");
     document.getElementById("bruisePlaceholder").classList.add("hidden");
-    document.getElementById("bruiseResult").classList.add("hidden"); // Hide previous result
+    document.getElementById("bruiseResult").classList.add("hidden");
     document.getElementById("bruiseResult").innerHTML = "";
   });
 }
@@ -1003,6 +1004,7 @@ async function analyzeBruise() {
   btn.disabled = true;
   btn.innerHTML = `<div class="spinner"></div> SCANNING...`;
 
+  document.getElementById("scannerContainer").classList.add("active-scan");
   status.classList.remove("hidden");
   status.innerHTML = `<div class="typing"><span>SCANNING DERMAL TISSUE...</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
 
@@ -1024,11 +1026,12 @@ async function analyzeBruise() {
     `;
 
     // Clear visual preview to allow for next scan
-    bruiseImageBase64 = null;
-    document.getElementById("bruisePreview").classList.add("hidden");
+    document.getElementById("scannerContainer").classList.remove("active-scan");
+    document.getElementById("scannerContainer").classList.add("hidden");
     document.getElementById("bruisePlaceholder").classList.remove("hidden");
   } catch (e) {
     console.error("BRUISE_SCAN_ERROR:", e);
+    document.getElementById("scannerContainer").classList.remove("active-scan");
     status.innerHTML = `<span style="color:#ef4444;">SCAN INTERRUPTED. SYSTEM OFFLINE OR CLEARER PHOTO REQUIRED.</span>`;
   } finally {
     btn.disabled = false;
@@ -1206,6 +1209,43 @@ function renderActivities() {
 }
 
 // --- FEEDBACK ---
+// New function to load feedback logs
+async function loadFeedbackHub() {
+  const container = document.getElementById("feedbackList");
+  if (!container) return;
+
+  const lang = document.documentElement.lang || 'en';
+  const dict = translations[lang] || translations['en'];
+
+  container.innerHTML = `<p style="text-align:center; color:var(--text-dim);">${dict["loading-logs"] || "Retrieving logs..."}</p>`;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/feedback-logs`);
+    const data = await res.json();
+    if (data.success && data.logs) {
+      if (data.logs.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color:var(--text-dim);">No logs found in the core buffer.</p>`;
+        return;
+      }
+      
+      container.innerHTML = data.logs.map((log, i) => `
+        <div class="feedback-card" style="animation-delay: ${i * 0.1}s">
+          <div class="feedback-meta">
+            <span>USER: ${log.name || 'Anonymous'}</span>
+            <span>ID: #${log.id}</span>
+          </div>
+          <div class="feedback-text">${log.feedback}</div>
+        </div>
+      `).join('');
+    } else {
+      container.innerHTML = `<p style="color:#ef4444; text-align:center;">Encryption error. Could not retrieve logs.</p>`;
+    }
+  } catch (e) {
+    console.error("Failed to load feedback logs:", e);
+    container.innerHTML = `<p style="color:#ef4444; text-align:center;">Connection lost to Feedback Core.</p>`;
+  }
+}
+
 // --- GOOGLE AUTH ---
 async function loginWithGoogle() {
   // --- MOCK GOOGLE AUTHENTICATION POPUP ---
@@ -1310,9 +1350,15 @@ async function sendFeedback() {
     });
 
     if (res.ok) {
-      document.getElementById('feedbackFormContainer').classList.add('hidden');
-      document.getElementById('feedbackSuccessContainer').classList.remove('hidden');
+      status.textContent = "TRANSMISSION SUCCESSFUL. CORE UPDATED.";
+      status.style.color = "var(--accent-primary)";
+      status.classList.remove("hidden");
+      document.getElementById("nameInput").value = "";
       document.getElementById("feedbackInput").value = "";
+      loadFeedbackHub(); // Refresh the feedback hub
+      setTimeout(() => {
+        status.classList.add("hidden");
+      }, 3000);
     } else {
       throw new Error();
     }

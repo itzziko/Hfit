@@ -414,6 +414,16 @@ app.use((err, req, res, next) => {
 
 initDb().then(() => {
     const PORT = process.env.PORT || 3000;
+    app.get("/feedback-logs", async (req, res) => {
+    try {
+        const db = await dbPromise;
+        const logs = await db.all("SELECT id, name, message as feedback FROM feedback ORDER BY id DESC LIMIT 15");
+        res.json({ success: true, logs });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
     app.listen(PORT, () =>
         console.log(`✅ Hfit server running on port ${PORT}`)
     );

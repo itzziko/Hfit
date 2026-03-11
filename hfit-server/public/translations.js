@@ -105,7 +105,10 @@ const translations = {
     "metrics-finalized": "METRICS FINALIZED FOR TODAY.",
     "hours-required": "REQUIRED: TOTAL RECOVERY HOURS.",
     "splash-tagline": "\"your new you\"",
-    "identified-meal": "IDENTIFIED MEAL"
+    "identified-meal": "IDENTIFIED MEAL",
+    "feedback-logs": "Hfit System Feedback Logs",
+    "loading-logs": "Retrieving encrypted logs...",
+    "vision-icon": "🔍"
   },
   iw: {
     "welcome-message": "שלום,",
@@ -213,7 +216,10 @@ const translations = {
     "metrics-finalized": "הנתונים סופיים להיום.",
     "hours-required": "חובה: סה\"כ שעות התאוששות.",
     "splash-tagline": "\"האני החדש שלך\"",
-    "identified-meal": "ארוחה זוהתה"
+    "identified-meal": "ארוחה זוהתה",
+    "feedback-logs": "יומני משוב מערכת Hfit",
+    "loading-logs": "מאחזר יומנים מוצפנים...",
+    "vision-icon": "🔍"
   }
 };
 

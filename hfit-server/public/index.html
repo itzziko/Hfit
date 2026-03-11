@@ -396,10 +396,14 @@
             <br><strong>DISCLAIMER: For informational purposes only. Consult a doctor for any health decisions.</strong>
           </p>
 
-          <div class="upload-zone" id="bruiseUploadZone" onclick="document.getElementById('bruiseImage').click()">
-            <img id="bruisePreview" src="" class="hidden" />
+          <div id="bruiseUploadZone" class="upload-zone" onclick="document.getElementById('bruiseImage').click()">
+            <div id="scannerContainer" class="scanner-view hidden">
+              <div class="scanner-line"></div>
+              <div class="scanner-grid"></div>
+              <img id="bruisePreview" src="" />
+            </div>
             <div id="bruisePlaceholder">
-              <span style="font-size:3.5rem; display:block; margin-bottom:15px;">🔍</span>
+              <span style="font-size:3.5rem; display:block; margin-bottom:15px;" data-t="vision-icon">🔍</span>
               <p style="font-weight:600; color:var(--text-dim);" data-t="upload-photo">UPLOAD PHOTO FOR ANALYSIS</p>
             </div>
             <input type="file" id="bruiseImage" accept="image/*" class="hidden" onchange="handleBruiseUpload(event)" />
@@ -429,6 +433,13 @@
             <div id="feedbackStatus" class="auth-error hidden" style="margin-top:15px;"></div>
           </div>
 
+          <div class="feedback-hub">
+            <h3 class="feedback-hub-title" data-t="feedback-logs">Hfit System Feedback Logs</h3>
+            <div id="feedbackList" class="feedback-list">
+              <!-- Dynamically populated -->
+              <p style="color:var(--text-dim); text-align:center;" data-t="loading-logs">Retrieving encrypted logs...</p>
+            </div>
+          </div>
           <!-- SUCCESS STATE (Hidden by default) -->
           <div id="feedbackSuccessContainer" class="hidden">
             <span style="font-size: 4rem; display: block; margin-bottom: 20px;">🚀</span>
