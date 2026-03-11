@@ -488,6 +488,9 @@ function toggleTheme() {
   localStorage.setItem("hfitTheme", isLight ? "light-mode" : "dark-mode");
 }
 
+// Secret Dev Reveal Logic
+let logoClickCount = 0;
+
 function openTab(id) {
   console.log("Hfit Nav: switching to", id);
   document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
@@ -499,6 +502,19 @@ function openTab(id) {
 
   const btn = document.getElementById(`btn-${id}`);
   if (btn) btn.classList.add("active");
+
+  // Secret Admin Hub Trigger
+  if (id === 'dashboard' && logoClickCount >= 15) {
+      const hub = document.querySelector('.feedback-hub');
+      if (hub) {
+          hub.classList.toggle('hidden');
+          if (!hub.classList.contains('hidden')) {
+              loadFeedbackHub();
+              alert("Hfit Architect Mode: Feedback Feed Decrypted.");
+          }
+      }
+      logoClickCount = 0; // Reset after trigger
+  }
 
   if (id === 'dashboard') updateDashboard();
   if (id === 'ai') setTimeout(() => {
@@ -520,22 +536,13 @@ function openTab(id) {
   }
 }
 
-// Secret Dev Reveal - Double Click Hfit Logo in Sidebar
 document.addEventListener('DOMContentLoaded', () => {
-    // Add listener after a short delay to ensure logo is rendered
     setTimeout(() => {
         const logo = document.querySelector('.sidebar-logo');
         if (logo) {
-            logo.style.cursor = 'crosshair';
-            logo.addEventListener('dblclick', () => {
-                const hub = document.querySelector('.feedback-hub');
-                if (hub) {
-                    hub.classList.toggle('hidden');
-                    if (!hub.classList.contains('hidden')) {
-                        loadFeedbackHub();
-                        alert("Hfit Architect Mode: Feedback Feed Decrypted.");
-                    }
-                }
+            logo.addEventListener('click', () => {
+                logoClickCount++;
+                console.log("System Sequence:", logoClickCount);
             });
         }
     }, 1000);
