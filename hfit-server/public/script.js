@@ -1,58 +1,6 @@
 const AI_MODEL = "google/gemini-2.0-flash-exp:free"; // Default to FREE model to prevent credit errors
 const BACKEND_URL = window.location.protocol === "file:" ? "http://localhost:3000" : "";
 
-let recognition = null;
-let isRecording = false;
-
-function toggleVoiceInput(targetId) {
-  const btn = event?.currentTarget || document.activeElement;
-
-  if (isRecording) {
-    if (recognition) recognition.stop();
-    return;
-  }
-
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert("Voice Health Logger requires a modern browser (Chrome/Edge/Safari).");
-    return;
-  }
-
-  recognition = new SpeechRecognition();
-  recognition.lang = 'en-US';
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-
-  recognition.onstart = () => {
-    isRecording = true;
-    btn.classList.add('recording');
-  };
-
-  recognition.onresult = (event) => {
-    let transcript = event.results[0][0].transcript;
-    const input = document.getElementById(targetId);
-    if (input) {
-      if (input.type === 'number') {
-        const num = parseFloat(transcript.replace(/[^0-9.]/g, ''));
-        if (!isNaN(num)) input.value = num;
-      } else {
-        input.value = transcript;
-      }
-    }
-  };
-
-  recognition.onerror = () => {
-    isRecording = false;
-    btn.classList.remove('recording');
-  };
-
-  recognition.onend = () => {
-    isRecording = false;
-    btn.classList.remove('recording');
-  };
-
-  recognition.start();
-}
 
 let currentUser = null;
 let authMode = 'signup';
@@ -592,7 +540,7 @@ async function askAI(message, systemPrompt = "You are a helpful health assistant
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message,
-        system: fullSystemPrompt,
+        system: systemPrompt,
         model: AI_MODEL,
         image: imageBase64,
         stream: !!onChunk
@@ -1144,8 +1092,7 @@ function renderGoals() {
           ${g.targetValue > 0 ? `<p style="font-size:0.8rem; color:var(--text-dim);">${g.currentValue} / ${g.targetValue} ${g.unit}</p>` : ''}
           ${g.targetValue > 0 ? `
           <div style="display:flex; gap:8px; margin-top:8px;">
-            <button class="btn-small btn-secondary" style="padding:4px 8px; font-size:0.6rem; min-height:28px;" onclick="incrementGoal(${i})">+1</button>
-            <button class="btn-small btn-secondary" style="padding:4px 8px; font-size:0.6rem; min-height:28px;" onclick="decrementGoal(${i})">-1</button>
+            <button class="btn-small btn-secondary" style="padding:4px 12px; font-size:0.75rem; min-height:28px;" onclick="adjustGoalAmount(${i})">Modify Amount</button>
           </div>
           ` : ''}
         </div>
@@ -1158,24 +1105,21 @@ function renderGoals() {
   }).join('');
 }
 
-function incrementGoal(idx) {
-  currentUser.data.goals[idx].currentValue += 1;
-  if (currentUser.data.goals[idx].currentValue >= currentUser.data.goals[idx].targetValue) {
-    currentUser.data.goals[idx].done = true;
+function adjustGoalAmount(idx) {
+  let val = prompt("Enter amount to add or remove (e.g., 5 or -2):");
+  if (!val) return;
+  let num = parseFloat(val);
+  if (!isNaN(num)) {
+    currentUser.data.goals[idx].currentValue = Math.max(0, currentUser.data.goals[idx].currentValue + num);
+    if (currentUser.data.goals[idx].currentValue >= currentUser.data.goals[idx].targetValue) {
+      currentUser.data.goals[idx].done = true;
+    } else {
+      currentUser.data.goals[idx].done = false;
+    }
+    renderGoals();
+    saveCurrentUserData();
+    updateDashboard();
   }
-  renderGoals();
-  saveCurrentUserData();
-  updateDashboard();
-}
-
-function decrementGoal(idx) {
-  currentUser.data.goals[idx].currentValue = Math.max(0, currentUser.data.goals[idx].currentValue - 1);
-  if (currentUser.data.goals[idx].currentValue < currentUser.data.goals[idx].targetValue) {
-    currentUser.data.goals[idx].done = false;
-  }
-  renderGoals();
-  saveCurrentUserData();
-  updateDashboard();
 }
 
 // --- ACTIVITIES ---
@@ -1224,16 +1168,16 @@ function renderActivities() {
   if (!container || !currentUser.data.activities) return;
 
   container.innerHTML = currentUser.data.activities.map(a => `
-    <div class="card stat-card" style="padding:15px; display:flex; align-items:center; gap:15px; margin:0;">
-      <div style="font-size:1.8rem;">${a.icon}</div>
+    <div style="display:flex; align-items:center; gap:15px; background:var(--glass-bg); padding:20px; border-radius:30px; border:1px solid var(--glass-border); transition:var(--transition); margin-bottom: 2px;">
+      <div style="width:50px; height:50px; min-width:50px; background:var(--accent-primary); color:#000; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.5rem;">${a.icon}</div>
       <div style="flex-grow:1;">
-        <div style="display:flex; justify-content:space-between;">
-          <h4 style="margin:0;">${a.type}</h4>
-          <span style="font-size:0.7rem; color:var(--text-dim);">${a.displayDate}</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+           <h4 style="margin:0; font-size:1.1rem; color:var(--text-main);">${a.type}</h4>
+           <span style="font-size:0.8rem; color:var(--accent-primary); font-weight:700;">${a.displayDate}</span>
         </div>
-        <p style="font-size:0.85rem; margin-top:5px; color:var(--text-dim);">
-          ${a.duration} min
-          ${a.notes ? `<br><span style="font-style:italic;">"${a.notes}"</span>` : ''}
+        <p style="margin:0; font-size:0.9rem; color:var(--text-dim);">
+           ${a.duration} minutes of performance
+           ${a.notes ? `<br><span style="font-style:italic; opacity:0.8;">"${a.notes}"</span>` : ''}
         </p>
       </div>
     </div>

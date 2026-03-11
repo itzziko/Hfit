@@ -27,12 +27,20 @@
   <!-- THEME TOGGLE -->
   <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Light/Dark Mode">🌓</button>
 
-  <!-- LANGUAGE TOGGLE -->
-  <div class="lang-toggle-container"
-    style="position:fixed; top:20px; right:80px; z-index:100; display:flex; align-items:center; gap:8px; background:var(--glass-bg); padding:8px 15px; border-radius:20px; border:1px solid var(--glass-border); cursor:pointer;">
-    <span style="font-size:0.85rem; font-weight:700; color:var(--text-dim);">Language</span>
-    <span style="font-size:1rem;">🇺🇸/🇮🇱</span>
+  <!-- LANGUAGE TOGGLE via Google Translate -->
+  <div id="google_translate_element" class="lang-toggle-container"
+    style="position:fixed; top:20px; right:80px; z-index:100; margin:0; padding:5px 15px; background:var(--glass-bg); border-radius:20px; border:1px solid var(--glass-border);">
   </div>
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,iw',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+  </script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
   <!-- AUTH SCREEN -->
   <div id="authScreen" class="auth-screen">
@@ -147,17 +155,7 @@
           </div>
         </div>
 
-        <div class="quick-actions"
-          style="display:flex; gap:15px; margin-bottom:30px; overflow-x:auto; padding-bottom:10px;">
-          <button class="btn-secondary btn-small" onclick="openTab('food')" style="white-space:nowrap;">🍎 Log
-            Meal</button>
-          <button class="btn-secondary btn-small" onclick="openTab('sleep')" style="white-space:nowrap;">😴 Log
-            Sleep</button>
-          <button class="btn-secondary btn-small" onclick="openTab('activities')" style="white-space:nowrap;">🏃
-            Exercise</button>
-          <button class="btn-secondary btn-small" onclick="openTab('goals')" style="white-space:nowrap;">🎯 Set
-            Goal</button>
-        </div>
+
 
         <div class="dashboard-grid">
           <div class="card stat-card" id="widget-nutrition">
@@ -299,7 +297,6 @@
 
           <div style="display:flex; gap:12px;">
             <input type="text" id="foodInput" placeholder="What did you eat today?" onfocus="this.select()" />
-            <button class="btn-mic" onclick="toggleVoiceInput('foodInput')" title="Voice Log">🎙️</button>
             <button onclick="analyzeFood()" style="width:160px;">ANALYZE</button>
           </div>
           <div id="foodResult" style="margin-top:20px; font-weight:600; color:var(--accent-primary);"></div>
@@ -320,7 +317,6 @@
                 <div style="display:flex; gap:12px; width:100%;">
                   <input type="number" id="sleepInput" placeholder="Total Sleep Amount (Number)" min="0" max="24"
                     onfocus="this.select()" />
-                  <button class="btn-mic" onclick="toggleVoiceInput('sleepInput')" title="Voice Log">🎙️</button>
                 </div>
                 <button onclick="trackSleep()">LOG DATA</button>
                 <div id="sleepStatus" class="auth-error hidden" style="margin-top:15px;"></div>
@@ -383,7 +379,6 @@
             </div>
             <div style="display:flex; gap:12px;">
               <input type="text" id="activityNotes" placeholder="Notes (optional)" onfocus="this.select()" />
-              <button class="btn-mic" onclick="toggleVoiceInput('activityNotes')" title="Voice Note">🎙️</button>
             </div>
             <button onclick="logActivity()">LOG ACTIVITY</button>
           </div>
@@ -402,7 +397,6 @@
           <div style="display:flex; flex-direction:column; gap:15px; margin-bottom:30px;">
             <div style="display:flex; gap:12px;">
               <input id="goalInput" placeholder="ENTER NEW GOAL..." style="flex-grow:2;" onfocus="this.select()" />
-              <button class="btn-mic" onclick="toggleVoiceInput('goalInput')" title="Voice Log">🎙️</button>
             </div>
             <div style="display:flex; gap:12px;">
               <input id="goalTarget" type="number" placeholder="Amount (e.g. 100)" style="flex-grow:1;"
