@@ -332,6 +332,7 @@ async function checkAiStatus(retries = 10) {
 
     if (res.ok) {
       const data = await res.json();
+      // Relaxed check: if we got success:true, core is at least partially online
       if (data.ai_key_status === "MISSING") {
         statusEl.textContent = "AI KEY MISSING";
         statusEl.style.color = "#f59e0b";
@@ -346,11 +347,11 @@ async function checkAiStatus(retries = 10) {
     console.warn("Core connectivity issue:", e);
     if (retries > 0) {
       const dots = ".".repeat(3 - (retries % 3));
-      statusEl.textContent = `WAKING CORE${dots} (${retries})`;
+      statusEl.textContent = `WAKING CORE${dots}`;
       statusEl.style.color = "#f59e0b";
       setTimeout(() => checkAiStatus(retries - 1), 3000);
     } else {
-      statusEl.textContent = "CORE OFFLINE (RETRY?)";
+      statusEl.textContent = "CORE OFFLINE";
       statusEl.style.color = "#ef4444";
     }
   }
@@ -531,22 +532,8 @@ function openTab(id) {
   if (id === 'feedback') {
     const hub = document.querySelector('.feedback-hub');
     const form = document.getElementById('feedbackFormContainer');
-    const lang = document.documentElement.lang || 'en';
-    const dict = translations[lang] || translations['en'];
-
-    if (hub && hub.classList.contains('hidden')) {
-      const auth = prompt(dict["architect-prompt"] || "HFIT ARCHITECT IDENTIFICATION REQUIRED:");
-      if (auth === "2026") {
-          hub.classList.remove('hidden');
-          if (form) form.classList.add('hidden');
-          loadFeedbackHub();
-      } else if (auth !== null) {
-          alert(dict["access-denied"] || "ACCESS DENIED.");
-          openTab('dashboard');
-      }
-    } else if (hub) {
-      loadFeedbackHub();
-    }
+    if (hub) hub.classList.add('hidden'); // Always hide logs for regular support
+    if (form) form.classList.remove('hidden'); // Always show form
   }
 
   // Auto-scroll to top for better UX on mobile

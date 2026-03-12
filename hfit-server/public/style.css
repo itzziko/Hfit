@@ -1853,12 +1853,13 @@ button:disabled {
   position: relative;
   z-index: 100;
   animation: dropH 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards;
-  background: linear-gradient(135deg, #fff, var(--accent-primary));
+  background: linear-gradient(135deg, #e0f2fe, #7dd3fc);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
+
 
 .splash-fit {
   display: inline-block;
@@ -1866,10 +1867,13 @@ button:disabled {
   position: relative;
   z-index: 100;
   animation: slideFit 1s cubic-bezier(0.17, 0.67, 0.83, 0.67) forwards 0.3s;
-  color: #ffffff;
-  -webkit-text-fill-color: #ffffff;
-  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  background: linear-gradient(135deg, #7dd3fc, #38bdf8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }
+
 
 .splash-tagline {
   font-size: 1.5rem;
