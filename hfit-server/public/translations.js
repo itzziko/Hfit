@@ -106,9 +106,13 @@ const translations = {
     "hours-required": "REQUIRED: TOTAL RECOVERY HOURS.",
     "splash-tagline": "\"your new you\"",
     "identified-meal": "IDENTIFIED MEAL",
-    "feedback-logs": "Hfit System Feedback Logs",
     "loading-logs": "Retrieving encrypted logs...",
-    "vision-icon": "🔍"
+    "vision-icon": "🔍",
+    "vision-error": "SYNC ERROR: NO VISUAL DATA UPLOADED.<br><br><strong>HOW TO FIX:</strong> Please click the icon above or drag an image to upload a clear photo of your concern before starting the classification.",
+    "scan-interrupted": "SCAN INTERRUPTED. SYSTEM OFFLINE OR CLEARER PHOTO REQUIRED.",
+    "architect-prompt": "HFIT ARCHITECT IDENTIFICATION REQUIRED:",
+    "architect-success": "Hfit Architect Hub: Encrypted Feed Unlocked.",
+    "access-denied": "ACCESS DENIED: INVALID ARCHITECT KEY."
   },
   iw: {
     "welcome-message": "שלום,",
@@ -217,9 +221,13 @@ const translations = {
     "hours-required": "חובה: סה\"כ שעות התאוששות.",
     "splash-tagline": "\"האני החדש שלך\"",
     "identified-meal": "ארוחה זוהתה",
-    "feedback-logs": "יומני משוב מערכת Hfit",
     "loading-logs": "מאחזר יומנים מוצפנים...",
-    "vision-icon": "🔍"
+    "vision-icon": "🔍",
+    "vision-error": "שגיאת סנכרון: לא הועלו נתונים חזותיים.<br><br><strong>כיצד לתקן:</strong> אנא לחץ על האייקון למעלה או גרור תמונה כדי להעלות צילום ברור של הבעיה לפני תחילת הסיווג.",
+    "scan-interrupted": "הסריקה הופסקה. המערכת לא מקוונת או שנדרשת תמונה ברורה יותר.",
+    "architect-prompt": "נדרש זיהוי אדריכל HFIT:",
+    "architect-success": "מרכז האדריכלים Hfit: העדכון המוצפן נפתח.",
+    "access-denied": "גישה נדחתה: מפתח אדריכל לא חוקי."
   }
 };
 

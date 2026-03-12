@@ -182,6 +182,8 @@ window.onload = async () => {
     document.getElementById("app").classList.add("hidden");
     const fab = document.querySelector(".fab-ai");
     if (fab) fab.classList.add("hidden");
+    const mobileHeader = document.querySelector(".mobile-header");
+    if (mobileHeader) mobileHeader.classList.add("hidden");
   }
 
   const theme = localStorage.getItem("hfitTheme") || "dark-mode";
@@ -467,6 +469,8 @@ function showApp() {
   document.getElementById("app").classList.remove("hidden");
   const fab = document.querySelector(".fab-ai");
   if (fab) fab.classList.remove("hidden");
+  const mobileHeader = document.querySelector(".mobile-header");
+  if (mobileHeader) mobileHeader.classList.remove("hidden");
   document.getElementById("userName").textContent = currentUser.profile.username;
 
   renderChatSidebar();
@@ -505,9 +509,17 @@ function openTab(id) {
 
   // Secret Architect Hub Redirect - 15 LOGO CLICKS + OVERVIEW CLICK
   if (id === 'dashboard' && logoClickCount >= 15) {
-      logoClickCount = 0; // Reset
-      window.open(`${BACKEND_URL}/architect-portal?key=hfit_architect_2026`, '_blank');
-      alert("Hfit Architect Hub: Encrypted Feed Unlocked in Separate Module.");
+      const lang = document.documentElement.lang || 'en';
+      const dict = translations[lang] || translations['en'];
+      const auth = prompt(dict["architect-prompt"] || "HFIT ARCHITECT IDENTIFICATION REQUIRED:");
+      if (auth === "2026") {
+          logoClickCount = 0; // Reset
+          window.open(`${BACKEND_URL}/architect-portal?key=hfit_architect_2026`, '_blank');
+          alert(dict["architect-success"] || "Hfit Architect Hub: Encrypted Feed Unlocked.");
+      } else {
+          alert(dict["access-denied"] || "ACCESS DENIED: INVALID ARCHITECT KEY.");
+          logoClickCount = 0;
+      }
       return;
   }
   
@@ -571,12 +583,16 @@ async function askAI(message, systemPrompt = "You are a helpful health assistant
   if (statusEl) statusEl.textContent = "SYNCING...";
 
   try {
+    const langCode = document.documentElement.lang || 'en';
+    const langName = langCode === 'iw' ? 'Hebrew (עברית)' : 'English';
+    const languageDirective = `\n\nCRITICAL: Respond ONLY in ${langName}. Do not use any other language. Ensure all medical and health information is accurate and professional.`;
+
     const res = await fetch(`${BACKEND_URL}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message,
-        system: systemPrompt,
+        system: systemPrompt + languageDirective,
         model: AI_MODEL,
         image: imageBase64,
         stream: !!onChunk
@@ -723,8 +739,11 @@ function sendMessage() {
   container.scrollTop = container.scrollHeight;
 
   const sysPrompt = `You are Hfit AI, an elite health companion. 
-  CRITICAL: KEEP MESSAGES BRIEF (max 2 main points). 
-  Be professional and elite. Focus ONLY on health/wellness. Use sharp formatting.`;
+  Your primary objective is to provide precise, accurate, and scientifically-validated health/performance information.
+  NEVER guess. If unsure, advise the user to consult a professional.
+  Focus ONLY on wellness, fitness, nutrition, and health inquiry.
+  Respond in a professional, elite tone.
+  CRITICAL: Use sharp, clean formatting.`;
 
   const reply = askAI(text, sysPrompt, null, (streamedText) => {
     aiMsgBox.innerHTML = formatAIResponse(streamedText);
@@ -1028,8 +1047,10 @@ async function analyzeBruise(e) {
   const currentImage = bruiseImageBase64;
 
   if (!currentImage) {
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
     status.classList.remove("hidden");
-    status.innerHTML = `<span style="color:#ef4444;">SYNC ERROR: NO VISUAL DATA UPLOADED.<br><br><strong>HOW TO FIX:</strong> Please click the icon above or drag an image to upload a clear photo of your concern before starting the classification.</span>`;
+    status.innerHTML = `<span style="color:#ef4444;">${dict["vision-error"] || "SYNC ERROR: NO VISUAL DATA UPLOADED."}</span>`;
     return;
   }
 
@@ -1065,9 +1086,11 @@ async function analyzeBruise(e) {
     document.getElementById("bruisePlaceholder").classList.remove("hidden");
     bruiseImageBase64 = null;
   } catch (e) {
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
     console.error("BRUISE_SCAN_ERROR:", e);
     document.getElementById("scannerContainer").classList.remove("active-scan");
-    status.innerHTML = `<span style="color:#ef4444;">SCAN INTERRUPTED. SYSTEM OFFLINE OR CLEARER PHOTO REQUIRED.</span>`;
+    status.innerHTML = `<span style="color:#ef4444;">${dict["scan-interrupted"] || "SCAN INTERRUPTED."}</span>`;
   } finally {
     btn.disabled = false;
     btn.innerHTML = originalHtml;
@@ -1246,11 +1269,18 @@ function renderActivities() {
 // --- FEEDBACK ---
 // New function to load feedback logs
 async function loadFeedbackHub() {
-  const container = document.getElementById("feedbackList");
-  if (!container) return;
-
   const lang = document.documentElement.lang || 'en';
   const dict = translations[lang] || translations['en'];
+
+  const auth = prompt(dict["architect-prompt"] || "HFIT ARCHITECT IDENTIFICATION REQUIRED:");
+  if (auth !== "2026") {
+    alert(dict["access-denied"] || "ACCESS DENIED.");
+    openTab('dashboard');
+    return;
+  }
+
+  const container = document.getElementById("feedbackList");
+  if (!container) return;
 
   container.innerHTML = `<p style="text-align:center; color:var(--text-dim);">${dict["loading-logs"] || "Retrieving logs..."}</p>`;
 

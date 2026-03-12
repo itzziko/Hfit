@@ -329,7 +329,7 @@ app.post("/chat", async (req, res) => {
         } catch (error) {
             lastError = error.message;
             console.error(`[AI ERROR] Request failed for ${model}:`, error.message);
-            if (stream && model === models[models.length - 1]) {
+            if (stream && model === searchModels[searchModels.length - 1]) {
                 res.write(`data: ${JSON.stringify({ error: lastError })}\n\n`);
                 res.end();
                 return;
