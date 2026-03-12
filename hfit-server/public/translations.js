@@ -110,9 +110,9 @@ const translations = {
     "vision-icon": "🔍",
     "vision-error": "SYNC ERROR: NO VISUAL DATA UPLOADED.<br><br><strong>HOW TO FIX:</strong> Please click the icon above or drag an image to upload a clear photo of your concern before starting the classification.",
     "scan-interrupted": "SCAN INTERRUPTED. SYSTEM OFFLINE OR CLEARER PHOTO REQUIRED.",
-    "architect-prompt": "HFIT ARCHITECT IDENTIFICATION REQUIRED:",
+    "architect-prompt": "HFIT CORE ACCESS CODE REQUIRED:",
     "architect-success": "Hfit Architect Hub: Encrypted Feed Unlocked.",
-    "access-denied": "ACCESS DENIED: INVALID ARCHITECT KEY."
+    "access-denied": "ACCESS DENIED: INVALID CODE."
   },
   iw: {
     "welcome-message": "שלום,",
@@ -225,9 +225,9 @@ const translations = {
     "vision-icon": "🔍",
     "vision-error": "שגיאת סנכרון: לא הועלו נתונים חזותיים.<br><br><strong>כיצד לתקן:</strong> אנא לחץ על האייקון למעלה או גרור תמונה כדי להעלות צילום ברור של הבעיה לפני תחילת הסיווג.",
     "scan-interrupted": "הסריקה הופסקה. המערכת לא מקוונת או שנדרשת תמונה ברורה יותר.",
-    "architect-prompt": "נדרש זיהוי אדריכל HFIT:",
-    "architect-success": "מרכז האדריכלים Hfit: העדכון המוצפן נפתח.",
-    "access-denied": "גישה נדחתה: מפתח אדריכל לא חוקי."
+    "architect-prompt": "נדרש קוד גישה לליבת המערכת:",
+    "architect-success": "מרכז הארכיטקט נפתח: השידור המוצפן זמין.",
+    "access-denied": "גישה נדחתה: קוד שגוי."
   }
 };
 

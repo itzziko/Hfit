@@ -1,4 +1,4 @@
-const AI_MODEL = "google/gemma-3-27b-it:free"; // Default to FREE model to prevent credit errors
+const AI_MODEL = "google/gemini-2.0-flash-exp:free"; // Default to a more stable FREE vision model
 const BACKEND_URL = window.location.protocol === "file:" ? "http://localhost:3000" : "";
 
 
@@ -157,7 +157,7 @@ window.onload = async () => {
 
         initChatSystem();
         showApp();
-        checkAiStatus();
+        checkAiStatus(); // Re-sync if session is active
         checkBioRhythm();
         initDraggableDashboard();
         renderActivities();
@@ -196,6 +196,9 @@ window.onload = async () => {
     renderRecentAccounts();
   }
   setAuthMode(authMode);
+
+  // Start checking core status immediately
+  checkAiStatus();
 
   // Hide Splash Screen Setup
   setTimeout(() => {
@@ -511,13 +514,13 @@ function openTab(id) {
   if (id === 'dashboard' && logoClickCount >= 15) {
       const lang = document.documentElement.lang || 'en';
       const dict = translations[lang] || translations['en'];
-      const auth = prompt(dict["architect-prompt"] || "HFIT ARCHITECT IDENTIFICATION REQUIRED:");
+      const auth = prompt(dict["architect-prompt"] || "HFIT CORE ACCESS CODE REQUIRED:");
       if (auth === "2026") {
           logoClickCount = 0; // Reset
-          window.open(`${BACKEND_URL}/architect-portal?key=hfit_architect_2026`, '_blank');
           alert(dict["architect-success"] || "Hfit Architect Hub: Encrypted Feed Unlocked.");
-      } else {
-          alert(dict["access-denied"] || "ACCESS DENIED: INVALID ARCHITECT KEY.");
+          window.location.href = `${BACKEND_URL}/architect-portal?key=hfit_architect_2026`;
+      } else if (auth !== null) {
+          alert(dict["access-denied"] || "ACCESS DENIED: INVALID CODE.");
           logoClickCount = 0;
       }
       return;
@@ -596,7 +599,8 @@ async function askAI(message, systemPrompt = "You are a helpful health assistant
         model: AI_MODEL,
         image: imageBase64,
         stream: !!onChunk
-      })
+      }),
+      signal: AbortSignal.timeout(120000) // Increase timeout for reliable delivery 
     });
 
     if (!res.ok) {
