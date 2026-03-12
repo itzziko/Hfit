@@ -69,12 +69,14 @@ const authenticateToken = (req, res, next) => {
 };
 
 app.get("/health", (req, res) => {
-    const hasKey = !!process.env.OPENAI_API_KEY || !!process.env.OPENROUTER_API_KEY;
-
+    const hasKey = !!process.env.OPENROUTER_API_KEY || !!process.env.OPENAI_API_KEY;
+    console.log(`[HEALTH CHECK] AI Core Status: ${hasKey ? 'READY' : 'MISSING'}`);
     res.json({
+        success: true,
         status: "ok",
-        message: "Hfit Core is active.",
-        ai_key_status: hasKey ? "Detected" : "MISSING"
+        ai_key_status: hasKey ? "READY" : "MISSING",
+        version: "2.1.2",
+        owner_key: process.env.OWNER_KEY ? "CONFIGURED" : "DEFAULT"
     });
 });
 
@@ -268,6 +270,7 @@ app.post("/chat", async (req, res) => {
     for (const model of searchModels) {
         try {
             console.log(`[AI ${stream ? 'STREAM' : 'SYNC'}] Attempting with model: ${model}`);
+            if (req.body.image) console.log("[AI VISION] Visual data detected.");
 
             const messages = [{ role: "system", content: systemMessage }];
             const userContent = [];
@@ -422,7 +425,9 @@ app.use((err, req, res, next) => {
 
 initDb().then(() => {
     const PORT = process.env.PORT || 3000;
-    app.get("/architect-portal", (req, res) => {
+
+
+app.get("/architect-portal", (req, res) => {
     const key = req.query.key;
     if (key !== "hfit_architect_2026") {
         return res.status(403).send("ACCESS DENIED: HFIT CORE SECRET KEY REQUIRED");

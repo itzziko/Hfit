@@ -324,10 +324,8 @@ async function checkAiStatus(retries = 10) {
   const statusEl = document.getElementById("ai-status-pulse");
   if (!statusEl) return;
 
-  if (retries === 10) {
-    statusEl.textContent = "SYNCING WITH CORE...";
-    statusEl.style.color = "var(--accent-primary)";
-  }
+  statusEl.textContent = "SYNCING WITH CORE...";
+  statusEl.style.color = "var(--accent-primary)";
 
   try {
     const res = await fetch(`${BACKEND_URL}/health`);
@@ -342,12 +340,13 @@ async function checkAiStatus(retries = 10) {
         statusEl.style.color = "var(--accent-primary)";
       }
     } else {
-      throw new Error("Bad response from server");
+      throw new Error(`Server status ${res.status}`);
     }
   } catch (e) {
     console.warn("Core connectivity issue:", e);
     if (retries > 0) {
-      statusEl.textContent = `WAKING CORE... (${retries})`;
+      const dots = ".".repeat(3 - (retries % 3));
+      statusEl.textContent = `WAKING CORE${dots} (${retries})`;
       statusEl.style.color = "#f59e0b";
       setTimeout(() => checkAiStatus(retries - 1), 3000);
     } else {
@@ -531,7 +530,21 @@ function openTab(id) {
   
   if (id === 'feedback') {
     const hub = document.querySelector('.feedback-hub');
-    if (hub && !hub.classList.contains('hidden')) {
+    const form = document.getElementById('feedbackFormContainer');
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
+
+    if (hub && hub.classList.contains('hidden')) {
+      const auth = prompt(dict["architect-prompt"] || "HFIT ARCHITECT IDENTIFICATION REQUIRED:");
+      if (auth === "2026") {
+          hub.classList.remove('hidden');
+          if (form) form.classList.add('hidden');
+          loadFeedbackHub();
+      } else if (auth !== null) {
+          alert(dict["access-denied"] || "ACCESS DENIED.");
+          openTab('dashboard');
+      }
+    } else if (hub) {
       loadFeedbackHub();
     }
   }
@@ -1269,20 +1282,14 @@ function renderActivities() {
 // --- FEEDBACK ---
 // New function to load feedback logs
 async function loadFeedbackHub() {
-  const lang = document.documentElement.lang || 'en';
-  const dict = translations[lang] || translations['en'];
-
-  const auth = prompt(dict["architect-prompt"] || "HFIT ARCHITECT IDENTIFICATION REQUIRED:");
-  if (auth !== "2026") {
-    alert(dict["access-denied"] || "ACCESS DENIED.");
-    openTab('dashboard');
-    return;
-  }
-
   const container = document.getElementById("feedbackList");
   if (!container) return;
 
+  const lang = document.documentElement.lang || 'en';
+  const dict = translations[lang] || translations['en'];
+
   container.innerHTML = `<p style="text-align:center; color:var(--text-dim);">${dict["loading-logs"] || "Retrieving logs..."}</p>`;
+
 
   try {
     const res = await fetch(`${BACKEND_URL}/feedback-logs`);
