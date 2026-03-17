@@ -1,4 +1,4 @@
-const AI_MODEL = "google/gemini-2.0-flash-exp:free"; // Default to a more stable FREE vision model
+const AI_MODEL = "google/gemma-3-27b-it:free"; // Default to a more stable FREE vision model
 const BACKEND_URL = window.location.protocol === "file:" ? "http://localhost:3000" : "";
 
 
@@ -497,6 +497,145 @@ function toggleTheme() {
 
 // Secret Dev Reveal Logic
 let logoClickCount = 0;
+
+// --- SECRET KEYBOARD SHORTCUT: Type "hfit" anywhere to trigger Architect Portal access ---
+let secretBuffer = '';
+let secretTimeout = null;
+const SECRET_CODE = 'hfit';
+const ARCHITECT_PASSWORD = '2026';
+
+document.addEventListener('keydown', (e) => {
+  // Don't trigger if user is typing in an input/textarea
+  const tag = e.target.tagName.toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+  secretBuffer += e.key.toLowerCase();
+  
+  // Reset buffer after 2 seconds of inactivity
+  if (secretTimeout) clearTimeout(secretTimeout);
+  secretTimeout = setTimeout(() => { secretBuffer = ''; }, 2000);
+
+  // Check if the typed sequence ends with the secret code
+  if (secretBuffer.includes(SECRET_CODE)) {
+    secretBuffer = '';
+    showArchitectPasswordModal();
+  }
+});
+
+function showArchitectPasswordModal() {
+  // Remove any existing modal
+  const existing = document.getElementById('architectModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'architectModal';
+  modal.innerHTML = `
+    <div style="
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center;
+      z-index: 99999; backdrop-filter: blur(20px);
+      animation: architectFadeIn 0.3s ease-out;
+    ">
+      <div style="
+        background: linear-gradient(145deg, rgba(10,15,25,0.98), rgba(5,8,15,0.95));
+        border: 1px solid rgba(0, 242, 255, 0.15);
+        border-radius: 24px; padding: 45px; max-width: 420px; width: 90%;
+        text-align: center; position: relative;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 60px rgba(0, 242, 255, 0.05);
+        animation: architectSlideUp 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+      ">
+        <div style="font-size: 2.5rem; margin-bottom: 15px;">🔐</div>
+        <h2 style="
+          color: #00f2ff; font-family: 'Inter', sans-serif; font-weight: 900;
+          font-size: 1.3rem; letter-spacing: 3px; margin-bottom: 8px;
+        ">ARCHITECT ACCESS</h2>
+        <p style="
+          color: rgba(255,255,255,0.4); font-size: 0.8rem; font-weight: 500;
+          margin-bottom: 30px; letter-spacing: 1px;
+        ">HFIT CORE AUTHENTICATION REQUIRED</p>
+        <input type="password" id="architectPasswordInput" placeholder="Enter access code" 
+          autocomplete="off" maxlength="10"
+          style="
+            width: 100%; padding: 16px 20px; border-radius: 16px; border: 1px solid rgba(0, 242, 255, 0.2);
+            background: rgba(0,0,0,0.4); color: #fff; font-size: 1.1rem; font-family: 'Inter', sans-serif;
+            text-align: center; letter-spacing: 8px; font-weight: 700;
+            outline: none; transition: border-color 0.3s;
+            box-sizing: border-box;
+          " />
+        <div id="architectError" style="
+          color: #ef4444; font-size: 0.85rem; font-weight: 700; margin-top: 12px;
+          min-height: 20px; letter-spacing: 1px;
+        "></div>
+        <div style="display: flex; gap: 12px; margin-top: 20px;">
+          <button onclick="document.getElementById('architectModal').remove()" style="
+            flex: 1; padding: 14px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
+            background: transparent; color: rgba(255,255,255,0.5); font-weight: 700;
+            cursor: pointer; font-size: 0.85rem; letter-spacing: 1px;
+            font-family: 'Inter', sans-serif; transition: all 0.3s;
+          ">ABORT</button>
+          <button id="architectSubmitBtn" onclick="submitArchitectPassword()" style="
+            flex: 1; padding: 14px; border-radius: 14px; border: none;
+            background: linear-gradient(135deg, #00f2ff, #0080ff); color: #000; font-weight: 800;
+            cursor: pointer; font-size: 0.85rem; letter-spacing: 1px;
+            font-family: 'Inter', sans-serif; transition: all 0.3s;
+          ">AUTHENTICATE</button>
+        </div>
+        <p style="
+          color: rgba(255,255,255,0.15); font-size: 0.7rem; margin-top: 20px;
+          letter-spacing: 0.5px;
+        ">ENCRYPTED CHANNEL • HFIT CORE v2.1</p>
+      </div>
+    </div>
+    <style>
+      @keyframes architectFadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes architectSlideUp { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+      #architectPasswordInput:focus { border-color: #00f2ff !important; box-shadow: 0 0 20px rgba(0, 242, 255, 0.15); }
+      #architectSubmitBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 242, 255, 0.3); }
+    </style>
+  `;
+  document.body.appendChild(modal);
+
+  // Focus the input
+  setTimeout(() => {
+    const inp = document.getElementById('architectPasswordInput');
+    if (inp) {
+      inp.focus();
+      inp.addEventListener('keyup', (ev) => {
+        if (ev.key === 'Enter') submitArchitectPassword();
+        // Also allow Escape to close
+        if (ev.key === 'Escape') document.getElementById('architectModal')?.remove();
+      });
+    }
+  }, 100);
+}
+
+function submitArchitectPassword() {
+  const inp = document.getElementById('architectPasswordInput');
+  const errEl = document.getElementById('architectError');
+  if (!inp) return;
+
+  const pwd = inp.value.trim();
+  if (pwd === ARCHITECT_PASSWORD) {
+    // Success — animate and redirect
+    errEl.style.color = '#00f2ff';
+    errEl.textContent = 'ACCESS GRANTED';
+    inp.style.borderColor = '#00f2ff';
+    inp.disabled = true;
+    setTimeout(() => {
+      document.getElementById('architectModal')?.remove();
+      window.location.href = `${BACKEND_URL}/architect-portal?key=hfit_architect_2026`;
+    }, 800);
+  } else {
+    // Wrong password
+    errEl.textContent = 'ACCESS DENIED';
+    inp.value = '';
+    inp.style.borderColor = '#ef4444';
+    setTimeout(() => {
+      inp.style.borderColor = 'rgba(0, 242, 255, 0.2)';
+      errEl.textContent = '';
+    }, 1500);
+  }
+}
 
 function openTab(id) {
   console.log("Hfit Nav: switching to", id);

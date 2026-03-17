@@ -217,11 +217,9 @@ app.post("/chat", async (req, res) => {
 
     // Basic Validation
     if (req.body.image) {
-        // Check if image is a base64 string
         if (!req.body.image.startsWith('data:image/')) {
             return res.status(400).json({ error: "Invalid visual data. Please upload a valid image file." });
         }
-        // Rough size check (base64 is ~1.33x original size)
         if (req.body.image.length > 25000000) {
             return res.status(400).json({ error: "Visual data too dense. Please upload a smaller image." });
         }
@@ -246,16 +244,18 @@ app.post("/chat", async (req, res) => {
     let searchModels = [
         initialModel,
         "google/gemma-3-27b-it:free",
-        "qwen/qwen-2-vl-7b-instruct:free",
-        "google/gemini-2.0-flash-exp:free"
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "mistralai/mistral-small-3.1-24b-instruct:free",
+        "openrouter/free"
     ];
 
     if (req.body.image) {
-        // Prioritize Vision models
         searchModels = [
-            "google/gemini-2.0-flash-exp:free",
-            "qwen/qwen-2-vl-7b-instruct:free",
-            "google/gemini-2.0-pro-exp-02-05:free"
+            initialModel,
+            "nvidia/nemotron-nano-12b-v2-vl:free",
+            "google/gemma-3-12b-it:free",
+            "openrouter/free"
         ];
     }
 
@@ -263,6 +263,7 @@ app.post("/chat", async (req, res) => {
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders();
     }
 
     let lastError = null;
@@ -270,18 +271,19 @@ app.post("/chat", async (req, res) => {
     for (const model of searchModels) {
         try {
             console.log(`[AI ${stream ? 'STREAM' : 'SYNC'}] Attempting with model: ${model}`);
-            if (req.body.image) console.log("[AI VISION] Visual data detected.");
-
-            const messages = [{ role: "system", content: systemMessage }];
-            const userContent = [];
-
-            if (userMessage)
-                userContent.push({ type: "text", text: userMessage + webData });
-
-            if (req.body.image)
-                userContent.push({ type: "image_url", image_url: { url: req.body.image } });
-
-            messages.push({ role: "user", content: userContent });
+            
+            const messages = [
+                { role: "system", content: systemMessage },
+                { 
+                    role: "user", 
+                    content: req.body.image 
+                        ? [
+                            { type: "text", text: userMessage + webData },
+                            { type: "image_url", image_url: { url: req.body.image } }
+                          ]
+                        : userMessage + webData
+                }
+            ];
 
             const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
@@ -294,29 +296,39 @@ app.post("/chat", async (req, res) => {
                 body: JSON.stringify({
                     model: model,
                     messages: messages,
-                    stream: stream
+                    stream: stream,
+                    temperature: 0.7,
+                    max_tokens: 2000
                 }),
-                timeout: 45000
+                timeout: 60000 
             });
 
             if (!response.ok) {
                 const errText = await response.text();
+                console.warn(`[MODEL FAIL] ${model}: ${response.status}`, errText);
                 throw new Error(errText || `Model ${model} failed with status ${response.status}`);
             }
 
             if (stream) {
                 const reader = response.body;
+                console.log(`[STREAM START] Model: ${model}`);
+                
                 reader.on('data', (chunk) => {
                     res.write(chunk);
                 });
-                reader.on('end', () => {
-                    res.end();
+                
+                return new Promise((resolve) => {
+                    reader.on('end', () => {
+                        console.log(`[STREAM END] Model: ${model}`);
+                        res.end();
+                        resolve();
+                    });
+                    reader.on('error', (err) => {
+                        console.error("[STREAM ERROR]", err);
+                        res.end();
+                        resolve();
+                    });
                 });
-                reader.on('error', (err) => {
-                    console.error("[STREAM ERROR]", err);
-                    res.end();
-                });
-                return; // Exit loop on success
             } else {
                 const data = await response.json();
                 if (data.choices && data.choices[0]) {
@@ -331,7 +343,7 @@ app.post("/chat", async (req, res) => {
             }
         } catch (error) {
             lastError = error.message;
-            console.error(`[AI ERROR] Request failed for ${model}:`, error.message);
+            console.error(`[AI ERROR] Attempt failed for ${model}:`, error.message);
             if (stream && model === searchModels[searchModels.length - 1]) {
                 res.write(`data: ${JSON.stringify({ error: lastError })}\n\n`);
                 res.end();
