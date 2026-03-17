@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hfit Architect Hub | Feedback Logs</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #030303;
             --accent: #00f2ff;
+            --danger: #ff3366;
             --glass: rgba(255, 255, 255, 0.03);
             --border: rgba(255, 255, 255, 0.08);
             --text: #ffffff;
@@ -19,14 +20,14 @@
         body { 
             background: var(--bg); 
             color: var(--text); 
-            padding: 50px; 
+            padding: 40px 5%; 
             min-height: 100vh;
-            background-image: radial-gradient(circle at 50% 50%, rgba(0, 242, 255, 0.05) 0%, transparent 70%);
+            background-image: radial-gradient(circle at 50% -10%, rgba(0, 242, 255, 0.1) 0%, transparent 50%);
         }
 
         .header {
             max-width: 1200px;
-            margin: 0 auto 50px;
+            margin: 0 auto 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -34,10 +35,21 @@
             padding-bottom: 20px;
         }
 
-        h1 { font-size: 2.5rem; font-weight: 950; letter-spacing: 2px; color: var(--accent); }
-        .badge { background: var(--accent); color: #000; padding: 5px 15px; border-radius: 20px; font-weight: 800; font-size: 0.8rem; }
+        h1 { font-size: 2.2rem; font-weight: 900; letter-spacing: 1px; color: var(--accent); display: flex; align-items: center; gap: 10px;}
+        h1 span { font-size: 1.2rem; background: rgba(0, 242, 255, 0.1); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(0, 242, 255, 0.2); }
+        .controls { display: flex; gap: 15px; }
+        .controls input {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--glass);
+            color: #fff;
+            outline: none;
+            width: 250px;
+        }
+        .controls input:focus { border-color: var(--accent); }
 
-        .logs-container { max-width: 1200px; margin: 0 auto; display: grid; gap: 20px; }
+        .logs-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
 
         .log-card {
             background: var(--glass);
@@ -45,50 +57,61 @@
             padding: 25px;
             border-radius: 16px;
             backdrop-filter: blur(10px);
-            transition: 0.3s ease;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-
-        .log-card:hover { border-color: var(--accent); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 242, 255, 0.1); }
-
-        .meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 0.9rem; font-weight: 700; color: var(--accent); }
-        .msg { font-size: 1.1rem; line-height: 1.6; color: var(--text); background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; }
         
-        #status { text-align: center; font-weight: 700; color: var(--text-dim); margin-top: 50px; }
+        .log-card.deleted { transform: scale(0.9); opacity: 0; pointer-events: none; }
+
+        .log-card:hover { border-color: rgba(0, 242, 255, 0.3); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 242, 255, 0.05); }
+
+        .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;}
+        .meta-name { font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+        .meta-id { font-size: 0.8rem; color: var(--text-dim); background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px; font-weight: 600; }
+        
+        .msg { font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px; flex-grow: 1; word-wrap: break-word;}
+        
+        .actions { display: flex; justify-content: flex-end; gap: 10px; }
+        .btn { padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-danger { background: rgba(255, 51, 102, 0.1); color: var(--danger); border: 1px solid rgba(255, 51, 102, 0.2); }
+        .btn-danger:hover { background: var(--danger); color: #fff; }
+        .btn-resolve { background: rgba(0, 242, 255, 0.1); color: var(--accent); border: 1px solid rgba(0, 242, 255, 0.2); }
+        .btn-resolve:hover { background: var(--accent); color: #000; }
+
+        #status { text-align: center; font-weight: 700; color: var(--accent); margin-top: 50px; font-size: 1.2rem; letter-spacing: 2px;}
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .log-card { animation: fadeIn 0.5s ease backwards; }
+        .log-card { animation: fadeIn 0.4s ease backwards; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>HFIT ARCHITECT HUB</h1>
-        <div class="badge">LOGS DECRYPTED</div>
+        <h1>HFIT ARCHITECT <span>ADVANCED LOGS</span></h1>
+        <div class="controls">
+            <input type="text" id="searchInput" placeholder="Search logs by name or text..." onkeyup="filterLogs()">
+        </div>
     </div>
 
     <div id="logs" class="logs-container">
         <!-- Logs injected here -->
     </div>
 
-    <div id="status">INITIALIZING ENCRYPTED CONNECTION...</div>
+    <div id="status">SYNCING WITH DEMIGOD SUBROUTINES...</div>
 
     <script>
+        let globalLogs = [];
+
         async function fetchLogs() {
             const status = document.getElementById('status');
-            const container = document.getElementById('logs');
             try {
                 const res = await fetch('/feedback-logs');
                 const data = await res.json();
                 if (data.success && data.logs) {
+                    globalLogs = data.logs;
                     status.style.display = 'none';
-                    container.innerHTML = data.logs.map((log, i) => `
-                        <div class="log-card" style="animation-delay: ${i * 0.1}s">
-                            <div class="meta">
-                                <span>ARCHITECT LOG: ${log.name || 'Anonymous'}</span>
-                                <span>ENTRY ID: #${log.id}</span>
-                            </div>
-                            <div class="msg">${log.feedback}</div>
-                        </div>
-                    `).join('');
+                    renderLogs(globalLogs);
                 } else {
                     status.textContent = "DECRYPTION FAILED. SYSTEM OFFLINE.";
                 }
@@ -96,6 +119,63 @@
                 status.textContent = "CORE CONNECTION LOST.";
             }
         }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('logs');
+            if(logs.length === 0) {
+                container.innerHTML = `<p style="color: var(--text-dim); text-align: center; grid-column: 1/-1;">NO LOGS FOUND.</p>`;
+                return;
+            }
+            container.innerHTML = logs.map((log, i) => `
+                <div class="log-card" id="log-${log.id}" style="animation-delay: ${i * 0.05}s">
+                    <div class="meta">
+                        <span class="meta-name">${log.name || 'Anonymous User'}</span>
+                        <span class="meta-id">ID: #${log.id}</span>
+                    </div>
+                    <div class="msg">${log.feedback}</div>
+                    <div class="actions">
+                        <button class="btn btn-resolve" onclick="resolveLog(${log.id})">Mark Resolved</button>
+                        <button class="btn btn-danger" onclick="deleteLog(${log.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterLogs() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = globalLogs.filter(log => 
+                (log.name || 'anonymous').toLowerCase().includes(query) || 
+                (log.feedback || '').toLowerCase().includes(query)
+            );
+            renderLogs(filtered);
+        }
+
+        async function deleteLog(id) {
+            const card = document.getElementById(\`log-\${id}\`);
+            if (!confirm('Permanently wipe this record from Hfit Core?')) return;
+            
+            card.classList.add('deleted');
+            try {
+                await fetch(\`/feedback/\${id}\`, { method: 'DELETE' });
+                setTimeout(() => {
+                    globalLogs = globalLogs.filter(l => l.id !== id);
+                    filterLogs();
+                }, 300);
+            } catch(e) {
+                alert("Wipe failed.");
+                card.classList.remove('deleted');
+            }
+        }
+
+        function resolveLog(id) {
+            const card = document.getElementById(\`log-\${id}\`);
+            card.style.borderColor = "#00f2ff";
+            card.style.background = "rgba(0, 242, 255, 0.05)";
+            card.querySelector('.btn-resolve').textContent = "Resolved ✔";
+            card.querySelector('.btn-resolve').style.background = "#00f2ff";
+            card.querySelector('.btn-resolve').style.color = "#000";
+        }
+
         fetchLogs();
     </script>
 </body>

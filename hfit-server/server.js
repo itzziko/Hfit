@@ -450,8 +450,18 @@ app.get("/architect-portal", (req, res) => {
 app.get("/feedback-logs", async (req, res) => {
     try {
         const db = await dbPromise;
-        const logs = await db.all("SELECT id, name, message as feedback FROM feedback ORDER BY id DESC LIMIT 15");
+        const logs = await db.all("SELECT id, name, message as feedback FROM feedback ORDER BY id DESC LIMIT 50");
         res.json({ success: true, logs });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.delete("/feedback/:id", async (req, res) => {
+    try {
+        const db = await dbPromise;
+        await db.run("DELETE FROM feedback WHERE id = ?", [req.params.id]);
+        res.json({ success: true });
     } catch (e) {
         res.status(500).json({ success: false });
     }

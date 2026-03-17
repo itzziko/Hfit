@@ -942,7 +942,7 @@ let foodImageBase64 = null;
 function handleImageUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-  resizeImage(file, 800, 800, (resizedBase64) => {
+  resizeImage(file, 512, 512, (resizedBase64) => {
     foodImageBase64 = resizedBase64;
     const prev = document.getElementById("foodPreview");
     prev.src = foodImageBase64;
@@ -1173,7 +1173,7 @@ let bruiseImageBase64 = null;
 function handleBruiseUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-  resizeImage(file, 800, 800, (resizedBase64) => {
+  resizeImage(file, 512, 512, (resizedBase64) => {
     bruiseImageBase64 = resizedBase64;
     const prev = document.getElementById("bruisePreview");
     prev.src = bruiseImageBase64;
