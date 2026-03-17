@@ -306,15 +306,27 @@ function renderRecentAccounts() {
 
   container.classList.remove("hidden");
   list.innerHTML = accounts.map(email => `
-    <div class="card stat-card" style="padding: 12px 20px; cursor: pointer; display: flex; align-items: center; gap: 15px; background: var(--glass-bg); margin: 0;" onclick="selectRecentAccount('${email}')">
-      <div style="width: 32px; height: 32px; background: var(--accent-primary); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">${email[0].toUpperCase()}</div>
-      <div style="flex-grow: 1;">
-        <p style="font-weight: 700; font-size: 0.9rem; margin: 0;">${email}</p>
-        <p style="font-size: 0.7rem; color: var(--text-dim); margin: 0;">Stored Profile</p>
+    <div class="card stat-card" style="padding: 12px 20px; display: flex; align-items: center; gap: 15px; background: var(--glass-bg); margin: 0; position: relative; transition: all 0.3s;">
+      <div style="flex-grow: 1; display: flex; align-items: center; gap: 15px; cursor: pointer;" onclick="selectRecentAccount('${email}')">
+        <div style="width: 32px; height: 32px; background: var(--accent-primary); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem;">${email[0].toUpperCase()}</div>
+        <div>
+          <p style="font-weight: 700; font-size: 0.9rem; margin: 0;">${email}</p>
+          <p style="font-size: 0.7rem; color: var(--text-dim); margin: 0;">Stored Profile</p>
+        </div>
       </div>
-      <span style="font-size: 1.2rem; opacity: 0.5;">→</span>
+      <button onclick="removeRecentAccount('${email}')" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s; font-size: 0.8rem;" title="Remove Account from Device">✖</button>
     </div>
   `).join('');
+}
+
+function removeRecentAccount(email) {
+  let accounts = getRecentAccounts();
+  accounts = accounts.filter(e => e !== email);
+  localStorage.setItem("hfit_accounts", JSON.stringify(accounts));
+  renderRecentAccounts();
+  if (accounts.length === 0) {
+    setAuthMode('signup');
+  }
 }
 
 function selectRecentAccount(email) {
@@ -498,22 +510,29 @@ function toggleTheme() {
 // Secret Dev Reveal Logic
 let logoClickCount = 0;
 
-// --- SECRET KEYBOARD SHORTCUT: Type "hfit" anywhere to trigger Architect Portal access ---
+// --- ADVANCED ARCHITECT ACCESS: Combo (Alt+Shift+F) OR Sequence "coreaccess" ---
 let secretBuffer = '';
 let secretTimeout = null;
-const SECRET_CODE = 'hfit';
-const ARCHITECT_PASSWORD = '2026';
+const SECRET_CODE = 'coreaccess';
+const ARCHITECT_PASSWORD = '2026'; // Preserve this constant
 
 document.addEventListener('keydown', (e) => {
-  // Don't trigger if user is typing in an input/textarea
+  // Option 1: Advanced Keyboard Combo
+  if (e.altKey && e.shiftKey && e.key.toLowerCase() === 'f') {
+    e.preventDefault();
+    showArchitectPasswordModal();
+    return;
+  }
+
+  // Option 2: Extended hidden code sequence
   const tag = e.target.tagName.toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
   secretBuffer += e.key.toLowerCase();
-  
-  // Reset buffer after 2 seconds of inactivity
+
+  // Reset buffer after 3 seconds of inactivity
   if (secretTimeout) clearTimeout(secretTimeout);
-  secretTimeout = setTimeout(() => { secretBuffer = ''; }, 2000);
+  secretTimeout = setTimeout(() => { secretBuffer = ''; }, 3000);
 
   // Check if the typed sequence ends with the secret code
   if (secretBuffer.includes(SECRET_CODE)) {
@@ -651,26 +670,17 @@ function openTab(id) {
 
   // Secret Architect Hub Redirect - 15 LOGO CLICKS + OVERVIEW CLICK
   if (id === 'dashboard' && logoClickCount >= 15) {
-      const lang = document.documentElement.lang || 'en';
-      const dict = translations[lang] || translations['en'];
-      const auth = prompt(dict["architect-prompt"] || "HFIT CORE ACCESS CODE REQUIRED:");
-      if (auth === "2026") {
-          logoClickCount = 0; // Reset
-          alert(dict["architect-success"] || "Hfit Architect Hub: Encrypted Feed Unlocked.");
-          window.location.href = `${BACKEND_URL}/architect-portal?key=hfit_architect_2026`;
-      } else if (auth !== null) {
-          alert(dict["access-denied"] || "ACCESS DENIED: INVALID CODE.");
-          logoClickCount = 0;
-      }
-      return;
+    logoClickCount = 0; // Reset
+    showArchitectPasswordModal();
+    return;
   }
-  
+
   if (id === 'dashboard') updateDashboard();
   if (id === 'ai') setTimeout(() => {
     const chatHist = document.getElementById("chatHistory");
     chatHist.scrollTop = chatHist.scrollHeight;
   }, 100);
-  
+
   if (id === 'feedback') {
     const hub = document.querySelector('.feedback-hub');
     const form = document.getElementById('feedbackFormContainer');
@@ -686,15 +696,15 @@ function openTab(id) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        const logo = document.querySelector('.sidebar-logo');
-        if (logo) {
-            logo.addEventListener('click', () => {
-                logoClickCount++;
-                console.log("System Sequence:", logoClickCount);
-            });
-        }
-    }, 1000);
+  setTimeout(() => {
+    const logo = document.querySelector('.sidebar-logo');
+    if (logo) {
+      logo.addEventListener('click', () => {
+        logoClickCount++;
+        console.log("System Sequence:", logoClickCount);
+      });
+    }
+  }, 1000);
 });
 
 // --- DATA PERSISTENCE HELPERS ---
@@ -942,7 +952,7 @@ let foodImageBase64 = null;
 function handleImageUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
-  resizeImage(file, 512, 512, (resizedBase64) => {
+  resizeImage(file, 1024, 1024, (resizedBase64) => {
     foodImageBase64 = resizedBase64;
     const prev = document.getElementById("foodPreview");
     prev.src = foodImageBase64;
@@ -1305,7 +1315,7 @@ function renderGoals() {
     const progress = g.targetValue > 0 ? Math.min((g.currentValue / g.targetValue) * 100, 100) : (g.done ? 100 : 0);
     const circleContent = g.targetValue > 0 ? Math.round(progress) + '%' : (g.done ? '✔' : '📌');
     const circleSize = g.targetValue > 0 ? '0.7rem' : '1.2rem';
-    
+
     return `
       <li class="goal-item" style="display:flex; align-items:center; gap:15px; background:var(--glass-bg); padding:20px; border-radius:24px; border:1px solid var(--glass-border);">
         <div class="progress-circle" style="width:50px; height:50px; min-width:50px; background: conic-gradient(var(--accent-primary) ${progress * 3.6}deg, var(--glass-border) 0deg);">
@@ -1429,7 +1439,7 @@ async function loadFeedbackHub() {
         container.innerHTML = `<p style="text-align:center; color:var(--text-dim);">No logs found in the core buffer.</p>`;
         return;
       }
-      
+
       container.innerHTML = data.logs.map((log, i) => `
         <div class="feedback-card" style="animation-delay: ${i * 0.1}s">
           <div class="feedback-meta">
@@ -1855,7 +1865,7 @@ async function updateDashboard() {
   let greetingKey = "good-evening";
   if (hour < 12) greetingKey = "good-morning";
   else if (hour < 18) greetingKey = "good-afternoon";
-  
+
   const greeting = dict[greetingKey] || "Hi";
 
   document.getElementById("welcomeText").innerHTML = `${greeting}, <span id="userName">${currentUser.profile.username}</span> 👋`;
@@ -1929,14 +1939,14 @@ async function updateDashboard() {
 function translatePage() {
   const lang = document.documentElement.lang || 'en';
   const dict = translations[lang] || translations['en'];
-  
+
   document.querySelectorAll('[data-t]').forEach(el => {
     const key = el.getAttribute('data-t');
     if (dict[key]) {
       el.innerHTML = dict[key];
     }
   });
-  
+
   document.querySelectorAll('[data-t-placeholder]').forEach(el => {
     const key = el.getAttribute('data-t-placeholder');
     if (dict[key]) {
@@ -1957,16 +1967,16 @@ function translatePage() {
   }
 }
 
-window.setLanguage = function(lang) {
+window.setLanguage = function (lang) {
   document.documentElement.lang = lang;
   localStorage.setItem('hfit_lang', lang);
-  
+
   translatePage();
-  
+
   document.querySelectorAll('.lang-btn').forEach(btn => {
     btn.classList.remove('active');
   });
-  
+
   const activeBtn = document.getElementById('lang-' + lang);
   if (activeBtn) {
     activeBtn.classList.add('active');

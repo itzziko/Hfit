@@ -252,9 +252,11 @@ app.post("/chat", async (req, res) => {
 
     if (req.body.image) {
         searchModels = [
-            initialModel,
+            "qwen/qwen-vl-plus:free",
+            "qwen/qwen-2-vl-7b-instruct:free",
+            "google/gemini-2.0-flash-exp:free",
+            "google/gemini-2.0-pro-exp-02-05:free",
             "nvidia/nemotron-nano-12b-v2-vl:free",
-            "google/gemma-3-12b-it:free",
             "openrouter/free"
         ];
     }
