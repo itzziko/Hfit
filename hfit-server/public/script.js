@@ -510,32 +510,21 @@ function toggleTheme() {
 // Secret Dev Reveal Logic
 let logoClickCount = 0;
 
-// --- ADVANCED ARCHITECT ACCESS: Combo (Alt+Shift+F) OR Sequence "coreaccess" ---
+// --- SECRET ARCHITECT ACCESS CODE: 2026hfit ---
 let secretBuffer = '';
 let secretTimeout = null;
-const SECRET_CODE = 'coreaccess';
-const ARCHITECT_PASSWORD = '2026'; // Preserve this constant
+const SECRET_CODE = '2026hfit';
+const ARCHITECT_PASSWORD = '2026';
 
 document.addEventListener('keydown', (e) => {
-  // Option 1: Advanced Keyboard Combo
-  if (e.altKey && e.shiftKey && e.key.toLowerCase() === 'f') {
-    e.preventDefault();
-    showArchitectPasswordModal();
-    return;
-  }
-
-  // Option 2: Extended hidden code sequence
   const tag = e.target.tagName.toLowerCase();
   if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
 
   secretBuffer += e.key.toLowerCase();
-
-  // Reset buffer after 3 seconds of inactivity
   if (secretTimeout) clearTimeout(secretTimeout);
   secretTimeout = setTimeout(() => { secretBuffer = ''; }, 3000);
 
-  // Check if the typed sequence ends with the secret code
-  if (secretBuffer.includes(SECRET_CODE)) {
+  if (secretBuffer.endsWith(SECRET_CODE)) {
     secretBuffer = '';
     showArchitectPasswordModal();
   }
@@ -643,7 +632,7 @@ function submitArchitectPassword() {
     setTimeout(() => {
       document.getElementById('architectModal')?.remove();
       window.location.href = `${BACKEND_URL}/architect-portal?key=hfit_architect_2026`;
-    }, 800);
+    }, 300);
   } else {
     // Wrong password
     errEl.textContent = 'ACCESS DENIED';
@@ -794,6 +783,7 @@ async function askAI(message, systemPrompt = "You are a helpful health assistant
       return fullReply;
     } else {
       const data = await res.json();
+      console.log("[AI SYNC]", data);
       if (statusEl) {
         statusEl.textContent = "CONNECTED TO CORE";
         statusEl.style.color = "var(--accent-primary)";
