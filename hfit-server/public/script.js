@@ -9,11 +9,10 @@ let authMode = 'signup';
 function setSession(token, email) {
   localStorage.setItem("hfit_token", token);
   if (email) {
-    const accounts = JSON.parse(localStorage.getItem("hfit_accounts") || "[]");
-    if (!accounts.includes(email)) {
-      accounts.push(email);
-      localStorage.setItem("hfit_accounts", JSON.stringify(accounts));
-    }
+    let accounts = JSON.parse(localStorage.getItem("hfit_accounts") || "[]");
+    accounts = accounts.filter(a => a !== email); // Prevent duplicates
+    accounts.unshift(email); // Put most recent at top
+    localStorage.setItem("hfit_accounts", JSON.stringify(accounts.slice(0, 5)));
   }
 }
 
@@ -139,6 +138,7 @@ window.onload = async () => {
   }
 
   if (token) {
+    document.getElementById("authScreen").classList.add("hidden"); // Immediately hide auth if token exists
     try {
       const res = await fetch(`${BACKEND_URL}/api/user`, {
         method: "GET",
@@ -157,7 +157,7 @@ window.onload = async () => {
 
         initChatSystem();
         showApp();
-        checkAiStatus(); // Re-sync if session is active
+        checkAiStatus(); 
         checkBioRhythm();
         initDraggableDashboard();
         renderActivities();
@@ -167,23 +167,14 @@ window.onload = async () => {
       }
     } catch (e) {
       console.warn("Session check failed:", e);
-      // Only clear if it was explicitly an invalid session from server
       if (e.message === "Invalid session") clearSession();
 
-      if (!currentUser) {
-        document.getElementById("authScreen").classList.remove("hidden");
-        document.getElementById("app").classList.add("hidden");
-        const fab = document.querySelector(".fab-ai");
-        if (fab) fab.classList.add("hidden");
-      }
+      document.getElementById("authScreen").classList.remove("hidden");
+      document.getElementById("app").classList.add("hidden");
     }
   } else {
     document.getElementById("authScreen").classList.remove("hidden");
     document.getElementById("app").classList.add("hidden");
-    const fab = document.querySelector(".fab-ai");
-    if (fab) fab.classList.add("hidden");
-    const mobileHeader = document.querySelector(".mobile-header");
-    if (mobileHeader) mobileHeader.classList.add("hidden");
   }
 
   const theme = localStorage.getItem("hfitTheme") || "dark-mode";
@@ -1017,8 +1008,9 @@ async function analyzeFood(e) {
     document.getElementById("food-fats").textContent = fats + "g";
     document.getElementById("dash-cals").textContent = cals;
 
-    // Save calorie data to today's history for trends
+    // Save calorie data to today's history
     const today = new Date().toLocaleDateString();
+    if (!currentUser.data.sleep) currentUser.data.sleep = [];
     let todayLog = currentUser.data.sleep.find(s => s.fullDate === today);
     if (!todayLog) {
       todayLog = {
@@ -1030,10 +1022,7 @@ async function analyzeFood(e) {
       };
       currentUser.data.sleep.push(todayLog);
     }
-    todayLog.cals = (todayLog.cals || 0) + (result.cals || 0);
-
-    // Keep history at 7 days
-    if (currentUser.data.sleep.length > 7) currentUser.data.sleep.shift();
+    todayLog.cals = (todayLog.cals || 0) + cals;
 
     // Reset visuals gracefully
     foodImageBase64 = null;
@@ -1041,7 +1030,11 @@ async function analyzeFood(e) {
     document.getElementById("uploadPlaceholder").classList.remove("hidden");
     document.getElementById("foodInput").value = "";
 
+    saveCurrentUserData();
     updateDashboard();
+    
+    // Jump to dashboard after short delay to see result
+    setTimeout(() => openTab('dashboard'), 2000);
   } catch (e) {
     const lang = document.documentElement.lang || 'en';
     const dict = translations[lang] || translations['en'];
@@ -1216,18 +1209,26 @@ async function analyzeBruise(e) {
       throw new Error(reply);
     }
 
-    status.innerHTML = `
-    <div style="background: rgba(0, 242, 255, 0.03); border: 1px solid var(--accent-primary); padding: 20px; border-radius: 20px;">
-      <span style="color:var(--accent-primary); font-weight:700; font-size: 1.2rem; display: block; margin-bottom: 15px;">🔍 DIAGNOSTIC COMPLETE</span>
-      <div style="line-height: 1.6;">${reply.replace(/\n/g, "<br>")}</div>
-    </div>
-    `;
+    // Save result to dashboard
+    if (!currentUser.data.visionHistory) currentUser.data.visionHistory = [];
+    currentUser.data.visionHistory.unshift({
+      timestamp: new Date().toISOString(),
+      displayDate: new Date().toLocaleString(),
+      result: reply
+    });
+    if (currentUser.data.visionHistory.length > 5) currentUser.data.visionHistory.pop();
 
-    // Clear visual preview to allow for next scan
+    // Clear visual preview
     document.getElementById("scannerContainer").classList.remove("active-scan");
     document.getElementById("scannerContainer").classList.add("hidden");
     document.getElementById("bruisePlaceholder").classList.remove("hidden");
     bruiseImageBase64 = null;
+    
+    saveCurrentUserData();
+    updateDashboard();
+    
+    // Switch to dashboard to show permanence
+    setTimeout(() => openTab('dashboard'), 3000);
   } catch (e) {
     const lang = document.documentElement.lang || 'en';
     const dict = translations[lang] || translations['en'];
@@ -1506,7 +1507,7 @@ window.simulateGoogleLogin = async function (email, name) {
     });
     const data = await res.json();
     if (data.success) {
-      setSession(data.token);
+      setSession(data.token, email);
       currentUser = {
         email: data.user.email,
         profile: { username: data.user.username, age: data.user.age },
@@ -1908,6 +1909,20 @@ async function updateDashboard() {
 
   // Ensure all static text is translated
   translatePage();
+
+  // Update Vision Widget
+  const visionHist = document.getElementById("dash-vision-history");
+  const visionLastText = document.getElementById("dash-vision-last-text");
+  const visionContent = document.getElementById("dash-vision-content");
+
+  if (currentUser.data.visionHistory && currentUser.data.visionHistory.length > 0) {
+    const lastVision = currentUser.data.visionHistory[0];
+    if (visionHist && visionLastText && visionContent) {
+      visionHist.classList.remove("hidden");
+      visionContent.classList.add("hidden");
+      visionLastText.textContent = lastVision.result;
+    }
+  }
 
   // Update AI Insights
   const insightBox = document.getElementById("dash-ai-insight");

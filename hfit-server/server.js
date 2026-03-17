@@ -284,7 +284,9 @@ app.post("/chat", async (req, res) => {
                             { type: "text", text: userMessage + webData },
                             { type: "image_url", image_url: { url: req.body.image } }
                           ]
-                        : userMessage + webData
+                        : [
+                            { type: "text", text: userMessage + webData }
+                          ]
                 }
             ];
 

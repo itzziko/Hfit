@@ -191,11 +191,15 @@
           <div class="card stat-card" id="widget-vision" onclick="openTab('bruise')" style="cursor:pointer; background: linear-gradient(135deg, rgba(0, 242, 255, 0.05), transparent);">
              <span class="drag-handle" draggable="true">⋮⋮</span>
              <h3 data-t="vision-scan">Vision Scan (AI)</h3>
-             <div style="margin:20px 0; display:flex; align-items:center; gap:15px;">
+             <div style="margin:20px 0; display:flex; align-items:center; gap:15px;" id="dash-vision-content">
                <span style="font-size:2.5rem;">🔍</span>
                <p style="font-size:0.9rem; color:var(--text-dim);" data-t="upload-photo">UPLOAD PHOTO FOR ANALYSIS</p>
              </div>
-             <button class="btn-secondary btn-small" data-t="analyze">ANALYZE</button>
+             <div id="dash-vision-history" class="hidden" style="margin-top: 10px; font-size: 0.8rem; border-top: 1px solid var(--glass-border); padding-top: 15px;">
+                <p style="color:var(--accent-primary); font-weight:700; margin-bottom: 5px;">LAST DIAGNOSTIC:</p>
+                <div id="dash-vision-last-text" style="color: var(--text-dim); max-height: 60px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.4;"></div>
+             </div>
+             <button class="btn-secondary btn-small" style="margin-top: 10px;" data-t="analyze">ANALYZE</button>
           </div>
 
           <div class="card full-width-card" style="grid-column: 1 / -1;" id="widget-ai-insight">
