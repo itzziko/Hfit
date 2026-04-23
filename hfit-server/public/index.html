@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" translate="no">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google" content="notranslate" />
   <title>Hfit | Premium Health Intelligence</title>
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +20,7 @@
   <!-- SPLASH SCREEN -->
   <div id="splashScreen" class="splash-screen">
     <div class="logo-container">
-      <div class="splash-logo">
+      <div class="splash-logo" dir="ltr">
         <span class="splash-h">H</span><span class="splash-fit">fit</span>
       </div>
     </div>
@@ -92,6 +93,17 @@
     </div>
   </div>
 
+  <!-- GOAL ADJUST MODAL -->
+  <div id="goalAdjustModal" class="hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:10000; backdrop-filter:blur(10px);">
+    <div class="card" style="max-width:400px; width:90%; position:relative;">
+      <button onclick="document.getElementById('goalAdjustModal').classList.add('hidden')" style="position:absolute; top:20px; right:20px; background:none; box-shadow:none; color:var(--text-dim); font-size:1.5rem; padding:0;">✖</button>
+      <h3 style="margin-bottom:10px;">Adjust Goal</h3>
+      <p id="goalAdjustText" style="color:var(--text-dim); margin-bottom:20px; font-size:0.9rem;"></p>
+      <input type="number" id="goalAdjustInput" placeholder="Enter new total" style="margin-bottom:15px;" onfocus="this.select()" />
+      <button id="goalAdjustBtn" style="width:100%;">SAVE PROGRESS</button>
+    </div>
+  </div>
+
   <!-- MOBILE HEADER -->
   <header class="mobile-header hidden">
     <h2 class="sidebar-logo" onclick="openTab('dashboard')">Hfit</h2>
@@ -108,10 +120,9 @@
       <nav>
         <button id="btn-dashboard" onclick="openTab('dashboard')" class="active"
           title="View your health overview and trends"><span class="nav-icon">📊</span> <span data-t="overview">Overview</span></button>
-        <button id="btn-ai" onclick="openTab('ai')" title="Chat with Hfit's elite medical AI"
-          style="border: 1px solid var(--accent-primary); background: rgba(0, 242, 255, 0.05);"><span class="nav-icon"
+        <button id="btn-ai" onclick="openTab('ai')" title="Chat with Hfit's elite medical AI"><span class="nav-icon"
             style="background: var(--accent-primary); color: #000;">🤖</span> <span
-            style="font-weight: 800; color: var(--accent-primary);" data-t="ai-assistant">AI Assistant</span></button>
+            style="font-weight: 800; color: var(--accent-primary);" data-t="ai-assistant">AI Agent</span></button>
         <button id="btn-food" onclick="openTab('food')" title="Identify meals and track nutritional data"><span
             class="nav-icon">🍎</span> <span data-t="food-engine">Food Engine</span></button>
         <button id="btn-sleep" onclick="openTab('sleep')" title="Monitor sleep quality and recovery cycles"><span
@@ -143,14 +154,15 @@
             <h1 id="welcomeText"><span data-t="welcome-message">Hi</span>, <span id="userName">User</span></h1>
             <p class="subtitle" data-t="subtitle">Your health performance overview.</p>
           </div>
-          <div class="status-badge" onclick="checkAiStatus()" style="cursor:pointer;"
-            title="Click to refresh core status">
-            <span class="pulse-dot"></span>
-            <span id="ai-status-pulse" data-t="initializing">INITIALIZING...</span>
+          <div style="display:flex; align-items:center; gap: 15px;">
+            <button id="themeToggleBtn" class="btn-secondary btn-small" onclick="toggleTheme()" data-t="toggle-theme" title="Toggle Light/Dark Mode">🌓 Theme</button>
+            <div class="status-badge" onclick="resetDevice()" style="cursor:pointer;"
+              title="Click to Reset Device">
+              <span class="pulse-dot"></span>
+              <span id="reset-device-text" data-t="reset-device">RESET DEVICE</span>
+            </div>
           </div>
         </div>
-
-
 
         <div class="dashboard-grid">
           <div class="card stat-card" id="widget-nutrition">
@@ -432,6 +444,10 @@
             <p style="color:var(--text-dim); margin-bottom: 30px; font-size: 1.1rem;" data-t="how-improve">
               How can we improve Hfit? Your insights go directly to our development team.
             </p>
+            <div style="background: rgba(0, 242, 255, 0.05); border: 1px dashed var(--accent-primary); padding: 15px; border-radius: 12px; margin-bottom: 30px; text-align: left;">
+              <h4 style="color: var(--accent-primary); margin-bottom: 5px;">Support Flow Reminder</h4>
+              <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.4;">Please describe your issue clearly. Our architects aim to respond to system errors within 24 hours to keep the Hfit Core fully calibrated.</p>
+            </div>
             <input type="text" id="nameInput" placeholder="Your Name (Optional)"
               style="width: 100%; margin-bottom: 15px; font-weight: 700; background: rgba(0,0,0,0.2);" />
             <textarea id="feedbackInput" placeholder="Encountered an issue? Describe it here..."

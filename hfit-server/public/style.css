@@ -721,6 +721,26 @@ button:disabled {
   font-weight: 800;
 }
 
+#btn-ai {
+  border-color: var(--accent-primary);
+  background: rgba(0, 242, 255, 0.05);
+}
+
+#btn-ai:hover {
+  background: rgba(0, 242, 255, 0.1);
+  border-color: var(--accent-primary);
+}
+
+#btn-ai.active {
+  background: var(--accent-primary);
+  color: #000;
+}
+
+#btn-ai.active .nav-icon {
+  background: #000;
+  color: var(--accent-primary);
+}
+
 .logout {
   margin-top: auto;
   filter: grayscale(0.5);

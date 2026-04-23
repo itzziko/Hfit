@@ -363,6 +363,20 @@ async function checkAiStatus(retries = 10) {
   }
 }
 
+function resetDevice() {
+  const lang = document.documentElement.lang || 'en';
+  const dict = window.translations ? window.translations[lang] || window.translations['en'] : {};
+  const msg = dict["reset-confirm"] || "Are you sure you want to reset the device and clear all memory? This will log you out and erase all local data.";
+  
+  if (confirm(msg)) {
+    clearSession();
+    localStorage.removeItem("hfit_accounts");
+    localStorage.removeItem("hfitTheme");
+    localStorage.removeItem("hfit_dashboard_order");
+    location.reload();
+  }
+}
+
 // --- CHAT HISTORY SYSTEM ---
 function initChatSystem() {
   if (!currentUser.data.chatThreads) {
@@ -742,29 +756,41 @@ async function askAI(message, systemPrompt = "You are a helpful health assistant
       const decoder = new TextDecoder();
       let fullReply = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+      try {
+        let streamTimeout;
+        while (true) {
+          const { done, value } = await Promise.race([
+            reader.read(),
+            new Promise((_, reject) => {
+              streamTimeout = setTimeout(() => reject(new Error("Stream timeout")), 15000);
+            })
+          ]);
+          clearTimeout(streamTimeout);
+          if (done) break;
 
-        const chunk = decoder.decode(value);
-        const lines = chunk.split("\n");
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n");
 
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const dataStr = line.slice(6);
-            if (dataStr === "[DONE]") break;
-            try {
-              const data = JSON.parse(dataStr);
-              const content = data.choices[0]?.delta?.content || "";
-              if (content) {
-                fullReply += content;
-                onChunk(fullReply);
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const dataStr = line.slice(6);
+              if (dataStr.trim() === "[DONE]") break;
+              try {
+                const data = JSON.parse(dataStr);
+                const content = data.choices[0]?.delta?.content || "";
+                if (content) {
+                  fullReply += content;
+                  onChunk(fullReply);
+                }
+              } catch (e) {
+                // Ignore partial JSON or other stream noise
               }
-            } catch (e) {
-              // Ignore partial JSON or other stream noise
             }
           }
         }
+      } catch (err) {
+        console.warn("Stream disconnected early or timed out:", err);
+        if (!fullReply) fullReply = "Connection interrupted. Partial response unavailable.";
       }
 
       if (statusEl) {
@@ -1103,12 +1129,28 @@ function updateSleepCircle(percent) {
 
 function renderSleepWeekly() {
   const container = document.getElementById("sleepWeeklyList");
-  container.innerHTML = currentUser.data.sleep.map(s => `
+  const lang = document.documentElement.lang || 'en';
+  const hebrewDays = {
+    'Sun': 'יום ראשון',
+    'Mon': 'יום שני',
+    'Tue': 'יום שלישי',
+    'Wed': 'יום רביעי',
+    'Thu': 'יום חמישי',
+    'Fri': 'יום שישי',
+    'Sat': 'שבת'
+  };
+  container.innerHTML = currentUser.data.sleep.map(s => {
+    let displayDate = s.date;
+    if (lang === 'iw' && hebrewDays[s.date]) {
+      displayDate = hebrewDays[s.date];
+    }
+    return `
     <div class="day-circle-box">
       <div class="day-circle ${s.percent >= 80 ? 'score-high' : ''}">${s.percent}%</div>
-      <span class="day-label">${s.date}</span>
+      <span class="day-label">${displayDate}</span>
     </div>
-    `).join('');
+    `;
+  }).join('');
 }
 
 // --- PLANNING ---
@@ -1332,9 +1374,37 @@ function renderGoals() {
 
 function adjustGoalAmount(idx) {
   const goal = currentUser.data.goals[idx];
-  let val = prompt(`Enter NEW TOTAL for "${goal.text}" (Current: ${goal.currentValue} ${goal.unit}):`);
-  if (val === null) return;
-  let num = parseFloat(val);
+  const modal = document.getElementById("goalAdjustModal");
+  if (!modal) {
+    let val = prompt(`Enter NEW TOTAL for "${goal.text}" (Current: ${goal.currentValue} ${goal.unit}):`);
+    if (val === null) return;
+    let num = parseFloat(val);
+    saveGoalAdjustment(idx, num);
+    return;
+  }
+  document.getElementById("goalAdjustText").textContent = `Enter NEW TOTAL for "${goal.text}" (Current: ${goal.currentValue} ${goal.unit}):`;
+  const input = document.getElementById("goalAdjustInput");
+  input.value = goal.currentValue;
+  
+  modal.classList.remove("hidden");
+  input.focus();
+  
+  const btn = document.getElementById("goalAdjustBtn");
+  btn.onclick = () => {
+    let num = parseFloat(input.value);
+    modal.classList.add("hidden");
+    saveGoalAdjustment(idx, num);
+  };
+  input.onkeyup = (e) => {
+    if (e.key === 'Enter') {
+      let num = parseFloat(input.value);
+      modal.classList.add("hidden");
+      saveGoalAdjustment(idx, num);
+    }
+  };
+}
+
+function saveGoalAdjustment(idx, num) {
   if (!isNaN(num)) {
     currentUser.data.goals[idx].currentValue = Math.max(0, num);
     if (currentUser.data.goals[idx].currentValue >= currentUser.data.goals[idx].targetValue) {
@@ -1387,6 +1457,10 @@ function logActivity() {
   renderActivities();
   saveCurrentUserData();
   updateDashboard();
+
+  if (typeof showNotification === 'function') {
+    showNotification("Activity Logged", `${activity.type} completed and saved.`);
+  }
 }
 
 function renderActivities() {

@@ -112,7 +112,10 @@ const translations = {
     "scan-interrupted": "SCAN INTERRUPTED. SYSTEM OFFLINE OR CLEARER PHOTO REQUIRED.",
     "architect-prompt": "HFIT CORE ACCESS CODE REQUIRED:",
     "architect-success": "Hfit Architect Hub: Encrypted Feed Unlocked.",
-    "access-denied": "ACCESS DENIED: INVALID CODE."
+    "access-denied": "ACCESS DENIED: INVALID CODE.",
+    "toggle-theme": "🌓 Theme",
+    "reset-device": "RESET DEVICE",
+    "reset-confirm": "Are you sure you want to reset the device and clear all memory? This will log you out and erase all local data."
   },
   iw: {
     "welcome-message": "שלום,",
@@ -227,7 +230,10 @@ const translations = {
     "scan-interrupted": "הסריקה הופסקה. המערכת לא מקוונת או שנדרשת תמונה ברורה יותר.",
     "architect-prompt": "נדרש קוד גישה לליבת המערכת:",
     "architect-success": "מרכז הארכיטקט נפתח: השידור המוצפן זמין.",
-    "access-denied": "גישה נדחתה: קוד שגוי."
+    "access-denied": "גישה נדחתה: קוד שגוי.",
+    "toggle-theme": "🌓 נושא",
+    "reset-device": "איפוס מכשיר",
+    "reset-confirm": "האם אתה בטוח שברצונך לאפס את המכשיר ולמחוק את כל הזיכרון? זה ינתק אותך וימחק את כל הנתונים המקומיים."
   }
 };
 
