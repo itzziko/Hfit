@@ -2226,4 +2226,5 @@ async function fetchVisitsCount() {
   } catch(e) {
     alert("Could not retrieve visits count.");
   }
+}
 
