@@ -455,8 +455,20 @@ app.get("/architect-portal", (req, res) => {
 app.get("/feedback-logs", async (req, res) => {
     try {
         const db = await dbPromise;
-        const logs = await db.all("SELECT id, name, message as feedback FROM feedback ORDER BY id DESC LIMIT 50");
+        const logs = await db.all("SELECT id, name, message as feedback, reply, timestamp FROM feedback ORDER BY id DESC LIMIT 100");
         res.json({ success: true, logs });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.post("/api/feedback/reply", authenticateToken, async (req, res) => {
+    try {
+        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
+        const { id, reply } = req.body;
+        const db = await dbPromise;
+        await db.run("UPDATE feedback SET reply = ? WHERE id = ?", [reply, id]);
+        res.json({ success: true });
     } catch (e) {
         res.status(500).json({ success: false });
     }
@@ -476,7 +488,7 @@ app.get("/api/users", authenticateToken, async (req, res) => {
     try {
         if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
         const db = await dbPromise;
-        const users = await db.all("SELECT id, email, username, age, is_admin FROM users");
+        const users = await db.all("SELECT id, email, username, age, is_admin, created_at FROM users");
         res.json({ success: true, users });
     } catch (e) {
         res.status(500).json({ success: false });

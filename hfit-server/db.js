@@ -23,12 +23,17 @@ export async function initDb() {
       password_hash TEXT NOT NULL,
       username TEXT NOT NULL,
       age INTEGER NOT NULL,
-      is_admin INTEGER DEFAULT 0
+      is_admin INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);
 
   try {
     await db.exec("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
+  } catch (e) {}
+
+  try {
+    await db.exec("ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP");
   } catch (e) {}
 
   // Automatically promote first user to admin if no admins exist
@@ -41,6 +46,10 @@ export async function initDb() {
     }
   }
 
+  try {
+    await db.exec("ALTER TABLE feedback ADD COLUMN reply TEXT");
+  } catch (e) {}
+
   await db.exec(`
     CREATE TABLE IF NOT EXISTS user_data (
 
@@ -52,6 +61,7 @@ export async function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
       message TEXT NOT NULL,
+      reply TEXT,
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
   `);

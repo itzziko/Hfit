@@ -1525,9 +1525,15 @@ async function loadFeedbackHub() {
         <div class="feedback-card" style="animation-delay: ${i * 0.1}s">
           <div class="feedback-meta">
             <span>USER: ${log.name || 'Anonymous'}</span>
-            <span>ID: #${log.id}</span>
+            <span style="opacity: 0.7; font-size: 0.75rem;">${new Date(log.timestamp).toLocaleString()}</span>
           </div>
           <div class="feedback-text">${log.feedback}</div>
+          ${log.reply ? `
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--glass-border); font-size: 0.85rem;">
+              <strong style="color: var(--accent-primary);">ARCHITECT RELAY:</strong>
+              <p style="font-style: italic; opacity: 0.9;">${log.reply}</p>
+            </div>
+          ` : ''}
         </div>
       `).join('');
     } else {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hfit Architect Hub | Feedback Logs</title>
+    <title>Hfit Architect Hub | Management Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -14,6 +14,7 @@
             --border: rgba(255, 255, 255, 0.08);
             --text: #ffffff;
             --text-dim: #94a3b8;
+            --card-bg: rgba(15, 15, 15, 0.6);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
@@ -27,7 +28,7 @@
 
         .header {
             max-width: 1200px;
-            margin: 0 auto 40px;
+            margin: 0 auto 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -37,146 +38,418 @@
 
         h1 { font-size: 2.2rem; font-weight: 900; letter-spacing: 1px; color: var(--accent); display: flex; align-items: center; gap: 10px;}
         h1 span { font-size: 1.2rem; background: rgba(0, 242, 255, 0.1); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(0, 242, 255, 0.2); }
-        .controls { display: flex; gap: 15px; }
+        
+        .tabs {
+            max-width: 1200px;
+            margin: 0 auto 30px;
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        
+        .tab {
+            padding: 10px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            color: var(--text-dim);
+            transition: 0.3s;
+            border: 1px solid transparent;
+        }
+        .tab:hover { background: var(--glass); color: var(--text); }
+        .tab.active { background: rgba(0, 242, 255, 0.1); color: var(--accent); border-color: rgba(0, 242, 255, 0.2); }
+
+        .controls { 
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            display: flex; 
+            gap: 15px; 
+            align-items: center;
+        }
         .controls input {
-            padding: 10px 15px;
-            border-radius: 8px;
+            padding: 12px 18px;
+            border-radius: 10px;
             border: 1px solid var(--border);
             background: var(--glass);
             color: #fff;
             outline: none;
-            width: 250px;
+            width: 300px;
+            font-size: 0.95rem;
         }
-        .controls input:focus { border-color: var(--accent); }
+        .controls input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(0, 242, 255, 0.1); }
 
-        .logs-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .view-content { max-width: 1200px; margin: 0 auto; display: none; }
+        .view-content.active { display: block; }
 
-        .log-card {
-            background: var(--glass);
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+
+        .card {
+            background: var(--card-bg);
             border: 1px solid var(--border);
             padding: 25px;
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
             transition: all 0.3s ease;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
         }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: 0.3s;
+        }
+        .card:hover { border-color: rgba(0, 242, 255, 0.3); transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
+        .card:hover::before { opacity: 1; }
         
-        .log-card.deleted { transform: scale(0.9); opacity: 0; pointer-events: none; }
+        .card.deleted { transform: scale(0.9); opacity: 0; pointer-events: none; }
 
-        .log-card:hover { border-color: rgba(0, 242, 255, 0.3); transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 242, 255, 0.05); }
+        .meta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;}
+        .meta-info h3 { font-weight: 700; color: var(--accent); font-size: 1.15rem; margin-bottom: 4px; }
+        .meta-info p { font-size: 0.75rem; color: var(--text-dim); }
+        .meta-id { font-size: 0.75rem; color: var(--text-dim); background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 8px; font-weight: 700; }
+        
+        .msg-box { font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 15px; flex-grow: 1; word-wrap: break-word; border: 1px solid rgba(255,255,255,0.03);}
+        
+        .reply-box {
+            margin-top: 10px;
+            background: rgba(0, 242, 255, 0.05);
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 242, 255, 0.1);
+        }
+        .reply-label { font-size: 0.75rem; font-weight: 800; color: var(--accent); text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .reply-text { font-size: 0.9rem; color: #fff; font-style: italic; }
 
-        .meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;}
-        .meta-name { font-weight: 700; color: var(--accent); font-size: 1.1rem; }
-        .meta-id { font-size: 0.8rem; color: var(--text-dim); background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 6px; font-weight: 600; }
+        .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        .btn { padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; border: none; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
         
-        .msg { font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; margin-bottom: 20px; flex-grow: 1; word-wrap: break-word;}
-        
-        .actions { display: flex; justify-content: flex-end; gap: 10px; }
-        .btn { padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: none; transition: 0.2s; }
         .btn-danger { background: rgba(255, 51, 102, 0.1); color: var(--danger); border: 1px solid rgba(255, 51, 102, 0.2); }
         .btn-danger:hover { background: var(--danger); color: #fff; }
-        .btn-resolve { background: rgba(0, 242, 255, 0.1); color: var(--accent); border: 1px solid rgba(0, 242, 255, 0.2); }
-        .btn-resolve:hover { background: var(--accent); color: #000; }
+        
+        .btn-accent { background: rgba(0, 242, 255, 0.1); color: var(--accent); border: 1px solid rgba(0, 242, 255, 0.2); }
+        .btn-accent:hover { background: var(--accent); color: #000; }
+
+        /* User Table Styles */
+        .user-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+        .user-table th { text-align: left; padding: 15px; color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
+        .user-table tr { background: var(--card-bg); border-radius: 12px; transition: 0.3s; }
+        .user-table tr:hover { background: rgba(255,255,255,0.05); }
+        .user-table td { padding: 15px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+        .user-table td:first-child { border-left: 1px solid var(--border); border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+        .user-table td:last-child { border-right: 1px solid var(--border); border-top-right-radius: 12px; border-bottom-right-radius: 12px; text-align: right;}
+        
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; }
+        .badge-admin { background: rgba(0, 242, 255, 0.1); color: var(--accent); border: 1px solid var(--accent); }
+        .badge-user { background: rgba(255, 255, 255, 0.1); color: var(--text-dim); }
 
         #status { text-align: center; font-weight: 700; color: var(--accent); margin-top: 50px; font-size: 1.2rem; letter-spacing: 2px;}
 
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: var(--bg);
+            border: 1px solid var(--accent);
+            padding: 30px;
+            border-radius: 20px;
+            width: 400px;
+            box-shadow: 0 0 50px rgba(0, 242, 255, 0.2);
+        }
+        .modal-content h2 { margin-bottom: 20px; color: var(--accent); }
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .log-card { animation: fadeIn 0.4s ease backwards; }
+        .card, tr { animation: fadeIn 0.4s ease backwards; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>HFIT ARCHITECT <span>ADVANCED LOGS</span></h1>
+        <h1>HFIT ARCHITECT <span>PORTAL V3</span></h1>
+        <div id="auth-status" style="font-size: 0.8rem; color: var(--text-dim);"></div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('feedback')">FEEDBACK</div>
+        <div class="tab" onclick="switchTab('users')">USERS</div>
+    </div>
+
+    <!-- FEEDBACK VIEW -->
+    <div id="view-feedback" class="view-content active">
         <div class="controls">
-            <input type="text" id="searchInput" placeholder="Search logs by name or text..." onkeyup="filterLogs()">
+            <input type="text" id="feedbackSearch" placeholder="Search feedback..." onkeyup="filterFeedback()">
+        </div>
+        <div id="feedback-list" class="grid-container">
+            <!-- Injected -->
         </div>
     </div>
 
-    <div id="logs" class="logs-container">
-        <!-- Logs injected here -->
+    <!-- USERS VIEW -->
+    <div id="view-users" class="view-content">
+        <div class="controls">
+            <input type="text" id="userSearch" placeholder="Search users by email or name..." onkeyup="filterUsers()">
+        </div>
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Age</th>
+                    <th>Joined</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="user-list">
+                <!-- Injected -->
+            </tbody>
+        </table>
     </div>
 
-    <div id="status">SYNCING WITH DEMIGOD SUBROUTINES...</div>
+    <div id="status">INITIALIZING CORE CONNECTION...</div>
+
+    <!-- Relay Modal -->
+    <div id="reply-modal" class="modal">
+        <div class="modal-content">
+            <h2>Relay Response / Why</h2>
+            <textarea id="reply-input" placeholder="Explain the relay or reasoning..." style="width: 100%; height: 100px; background: var(--glass); border: 1px solid var(--border); border-radius: 10px; color: #fff; padding: 10px; margin-bottom: 20px; resize: none;"></textarea>
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('reply-modal')">Cancel</button>
+                <button class="btn btn-accent" onclick="submitReply()">Send Relay</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Modal -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <h2>Reset Password</h2>
+            <p id="password-user-label" style="margin-bottom: 10px; font-size: 0.9rem; color: var(--text-dim);"></p>
+            <input type="password" id="new-password" placeholder="Enter new password">
+            <div class="modal-actions">
+                <button class="btn" onclick="closeModal('password-modal')">Cancel</button>
+                <button class="btn btn-danger" onclick="submitPasswordReset()">Reset Password</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        let globalLogs = [];
+        let globalFeedback = [];
+        let globalUsers = [];
+        let currentFeedbackId = null;
+        let currentUserId = null;
+        const token = localStorage.getItem('hfit_token');
 
-        async function fetchLogs() {
+        async function init() {
             const status = document.getElementById('status');
+            if (!token) {
+                status.innerHTML = "ACCESS DENIED. <br><br> Please log in as Admin first.";
+                return;
+            }
+            
             try {
-                const res = await fetch('/feedback-logs');
-                const data = await res.json();
-                if (data.success && data.logs) {
-                    globalLogs = data.logs;
-                    status.style.display = 'none';
-                    renderLogs(globalLogs);
-                } else {
-                    status.textContent = "DECRYPTION FAILED. SYSTEM OFFLINE.";
+                // Verify admin
+                const userRes = await fetch('/api/user', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const userData = await userRes.json();
+                
+                if (!userData.user || !userData.user.is_admin) {
+                    status.innerHTML = "UNAUTHORIZED ACCESS. <br><br> Admin privileges required.";
+                    return;
                 }
+
+                document.getElementById('auth-status').textContent = `Logged in as: ${userData.user.username} (Admin)`;
+                status.style.display = 'none';
+                
+                await Promise.all([fetchFeedback(), fetchUsers()]);
             } catch (e) {
                 status.textContent = "CORE CONNECTION LOST.";
             }
         }
 
-        function renderLogs(logs) {
-            const container = document.getElementById('logs');
-            if(logs.length === 0) {
-                container.innerHTML = `<p style="color: var(--text-dim); text-align: center; grid-column: 1/-1;">NO LOGS FOUND.</p>`;
-                return;
+        async function fetchFeedback() {
+            const res = await fetch('/feedback-logs');
+            const data = await res.json();
+            if (data.success) {
+                globalFeedback = data.logs;
+                renderFeedback(globalFeedback);
             }
+        }
+
+        async function fetchUsers() {
+            const res = await fetch('/api/users', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                globalUsers = data.users;
+                renderUsers(globalUsers);
+            }
+        }
+
+        function renderFeedback(logs) {
+            const container = document.getElementById('feedback-list');
             container.innerHTML = logs.map((log, i) => `
-                <div class="log-card" id="log-${log.id}" style="animation-delay: ${i * 0.05}s">
+                <div class="card" id="log-${log.id}" style="animation-delay: ${i * 0.05}s">
                     <div class="meta">
-                        <span class="meta-name">${log.name || 'Anonymous User'}</span>
-                        <span class="meta-id">ID: #${log.id}</span>
+                        <div class="meta-info">
+                            <h3>${log.name || 'Anonymous'}</h3>
+                            <p>${new Date(log.timestamp).toLocaleString()}</p>
+                        </div>
+                        <span class="meta-id">#${log.id}</span>
                     </div>
-                    <div class="msg">${log.feedback}</div>
+                    <div class="msg-box">${log.feedback}</div>
+                    ${log.reply ? `
+                        <div class="reply-box">
+                            <span class="reply-label">Architect Response</span>
+                            <div class="reply-text">${log.reply}</div>
+                        </div>
+                    ` : ''}
                     <div class="actions">
-                        <button class="btn btn-resolve" onclick="resolveLog(${log.id})">Mark Resolved</button>
-                        <button class="btn btn-danger" onclick="deleteLog(${log.id})">Delete</button>
+                        <button class="btn btn-accent" onclick="openReplyModal(${log.id})">Relay</button>
+                        <button class="btn btn-danger" onclick="deleteLog(${log.id})">Wipe</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function filterLogs() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = globalLogs.filter(log => 
+        function renderUsers(users) {
+            const container = document.getElementById('user-list');
+            container.innerHTML = users.map((user, i) => `
+                <tr style="animation-delay: ${i * 0.03}s">
+                    <td style="font-weight: 700;">${user.username}</td>
+                    <td style="color: var(--accent);">${user.email}</td>
+                    <td>${user.age}</td>
+                    <td style="font-size: 0.75rem; color: var(--text-dim);">${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Legacy'}</td>
+                    <td><span class="badge ${user.is_admin ? 'badge-admin' : 'badge-user'}">${user.is_admin ? 'ADMIN' : 'USER'}</span></td>
+                    <td>
+                        <button class="btn btn-accent" onclick="openPasswordModal(${user.id}, '${user.email}')" style="display: inline-flex;">Reset Pass</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+            
+            document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`view-${tab}`).classList.add('active');
+        }
+
+        function filterFeedback() {
+            const query = document.getElementById('feedbackSearch').value.toLowerCase();
+            const filtered = globalFeedback.filter(log => 
                 (log.name || 'anonymous').toLowerCase().includes(query) || 
-                (log.feedback || '').toLowerCase().includes(query)
+                (log.feedback || '').toLowerCase().includes(query) ||
+                (log.reply || '').toLowerCase().includes(query)
             );
-            renderLogs(filtered);
+            renderFeedback(filtered);
+        }
+
+        function filterUsers() {
+            const query = document.getElementById('userSearch').value.toLowerCase();
+            const filtered = globalUsers.filter(user => 
+                user.email.toLowerCase().includes(query) || 
+                user.username.toLowerCase().includes(query)
+            );
+            renderUsers(filtered);
+        }
+
+        // Modals
+        function openReplyModal(id) {
+            currentFeedbackId = id;
+            const log = globalFeedback.find(l => l.id === id);
+            document.getElementById('reply-input').value = log.reply || '';
+            document.getElementById('reply-modal').style.display = 'flex';
+        }
+
+        async function submitReply() {
+            const reply = document.getElementById('reply-input').value;
+            try {
+                const res = await fetch('/api/feedback/reply', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ id: currentFeedbackId, reply })
+                });
+                if (res.ok) {
+                    closeModal('reply-modal');
+                    fetchFeedback();
+                }
+            } catch (e) { alert("Relay failed."); }
+        }
+
+        function openPasswordModal(id, email) {
+            currentUserId = id;
+            document.getElementById('password-user-label').textContent = `Account: ${email}`;
+            document.getElementById('new-password').value = '';
+            document.getElementById('password-modal').style.display = 'flex';
+        }
+
+        async function submitPasswordReset() {
+            const newPassword = document.getElementById('new-password').value;
+            if (!newPassword) return alert("Enter a password.");
+            
+            try {
+                const res = await fetch('/api/reset-password', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ userId: currentUserId, newPassword })
+                });
+                if (res.ok) {
+                    alert("Password reset successful.");
+                    closeModal('password-modal');
+                }
+            } catch (e) { alert("Reset failed."); }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
         }
 
         async function deleteLog(id) {
-            const card = document.getElementById(\`log-\${id}\`);
             if (!confirm('Permanently wipe this record from Hfit Core?')) return;
-            
-            card.classList.add('deleted');
             try {
-                await fetch(\`/feedback/\${id}\`, { method: 'DELETE' });
-                setTimeout(() => {
-                    globalLogs = globalLogs.filter(l => l.id !== id);
-                    filterLogs();
-                }, 300);
-            } catch(e) {
-                alert("Wipe failed.");
-                card.classList.remove('deleted');
-            }
+                await fetch(`/feedback/${id}`, { method: 'DELETE' });
+                globalFeedback = globalFeedback.filter(l => l.id !== id);
+                renderFeedback(globalFeedback);
+            } catch(e) { alert("Wipe failed."); }
         }
 
-        function resolveLog(id) {
-            const card = document.getElementById(\`log-\${id}\`);
-            card.style.borderColor = "#00f2ff";
-            card.style.background = "rgba(0, 242, 255, 0.05)";
-            card.querySelector('.btn-resolve').textContent = "Resolved ✔";
-            card.querySelector('.btn-resolve').style.background = "#00f2ff";
-            card.querySelector('.btn-resolve').style.color = "#000";
-        }
-
-        fetchLogs();
+        init();
     </script>
 </body>
 </html>
