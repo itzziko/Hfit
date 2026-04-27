@@ -96,46 +96,32 @@
             position: relative;
             overflow: hidden;
         }
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; height: 2px;
-            background: linear-gradient(90deg, transparent, var(--accent), transparent);
-            opacity: 0;
-            transition: 0.3s;
-        }
         .card:hover { border-color: rgba(0, 242, 255, 0.3); transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
-        .card:hover::before { opacity: 1; }
         
-        .card.deleted { transform: scale(0.9); opacity: 0; pointer-events: none; }
-
         .meta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;}
         .meta-info h3 { font-weight: 700; color: var(--accent); font-size: 1.15rem; margin-bottom: 4px; }
         .meta-info p { font-size: 0.75rem; color: var(--text-dim); }
-        .meta-id { font-size: 0.75rem; color: var(--text-dim); background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 8px; font-weight: 700; }
         
         .msg-box { font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 15px; flex-grow: 1; word-wrap: break-word; border: 1px solid rgba(255,255,255,0.03);}
         
-        .reply-box {
-            margin-top: 10px;
-            background: rgba(0, 242, 255, 0.05);
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid rgba(0, 242, 255, 0.1);
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
         }
-        .reply-label { font-size: 0.75rem; font-weight: 800; color: var(--accent); text-transform: uppercase; margin-bottom: 5px; display: block; }
-        .reply-text { font-size: 0.9rem; color: #fff; font-style: italic; }
+        .stat-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 24px;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .stat-card:hover { border-color: var(--accent); background: rgba(0, 242, 255, 0.05); }
+        .stat-value { font-size: 3rem; font-weight: 900; color: var(--accent); margin-bottom: 10px; text-shadow: 0 0 20px rgba(0, 242, 255, 0.3); }
+        .stat-label { font-size: 0.9rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; }
 
-        .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
-        .btn { padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; border: none; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
-        
-        .btn-danger { background: rgba(255, 51, 102, 0.1); color: var(--danger); border: 1px solid rgba(255, 51, 102, 0.2); }
-        .btn-danger:hover { background: var(--danger); color: #fff; }
-        
-        .btn-accent { background: rgba(0, 242, 255, 0.1); color: var(--accent); border: 1px solid rgba(0, 242, 255, 0.2); }
-        .btn-accent:hover { background: var(--accent); color: #000; }
-
-        /* User Table Styles */
         .user-table {
             width: 100%;
             border-collapse: separate;
@@ -143,7 +129,7 @@
         }
         .user-table th { text-align: left; padding: 15px; color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
         .user-table tr { background: var(--card-bg); border-radius: 12px; transition: 0.3s; }
-        .user-table tr:hover { background: rgba(255,255,255,0.05); }
+        .user-table tr.me { border: 1px solid var(--accent); background: rgba(0, 242, 255, 0.05); }
         .user-table td { padding: 15px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
         .user-table td:first-child { border-left: 1px solid var(--border); border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
         .user-table td:last-child { border-right: 1px solid var(--border); border-top-right-radius: 12px; border-bottom-right-radius: 12px; text-align: right;}
@@ -154,7 +140,6 @@
 
         #status { text-align: center; font-weight: 700; color: var(--accent); margin-top: 50px; font-size: 1.2rem; letter-spacing: 2px;}
 
-        /* Modal */
         .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -171,49 +156,60 @@
             padding: 30px;
             border-radius: 20px;
             width: 400px;
-            box-shadow: 0 0 50px rgba(0, 242, 255, 0.2);
         }
-        .modal-content h2 { margin-bottom: 20px; color: var(--accent); }
-        .modal-content input {
-            width: 100%;
-            padding: 12px;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: #fff;
-            margin-bottom: 20px;
-        }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+        .btn { padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; border: none; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-accent { background: rgba(0, 242, 255, 0.1); color: var(--accent); border: 1px solid rgba(0, 242, 255, 0.2); }
+        .btn-accent:hover { background: var(--accent); color: #000; }
+        .btn-danger { background: rgba(255, 51, 102, 0.1); color: var(--danger); border: 1px solid rgba(255, 51, 102, 0.2); }
+        .btn-danger:hover { background: var(--danger); color: #fff; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .card, tr { animation: fadeIn 0.4s ease backwards; }
+        .card, tr, .stat-card { animation: fadeIn 0.4s ease backwards; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>HFIT ARCHITECT <span>PORTAL V3</span></h1>
+        <h1>HFIT ARCHITECT <span>PORTAL V4</span></h1>
         <div id="auth-status" style="font-size: 0.8rem; color: var(--text-dim);"></div>
     </div>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('feedback')">FEEDBACK</div>
+        <div class="tab active" onclick="switchTab('analytics')">ANALYTICS</div>
+        <div class="tab" onclick="switchTab('feedback')">FEEDBACK</div>
         <div class="tab" onclick="switchTab('users')">USERS</div>
     </div>
 
+    <!-- ANALYTICS VIEW -->
+    <div id="view-analytics" class="view-content active">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div id="stat-visits" class="stat-value">0</div>
+                <div class="stat-label">System Visits</div>
+            </div>
+            <div class="stat-card">
+                <div id="stat-users" class="stat-value">0</div>
+                <div class="stat-label">Total Subjects</div>
+            </div>
+            <div class="stat-card">
+                <div id="stat-feedback" class="stat-value">0</div>
+                <div class="stat-label">Relay Logs</div>
+            </div>
+        </div>
+    </div>
+
     <!-- FEEDBACK VIEW -->
-    <div id="view-feedback" class="view-content active">
+    <div id="view-feedback" class="view-content">
         <div class="controls">
             <input type="text" id="feedbackSearch" placeholder="Search feedback..." onkeyup="filterFeedback()">
         </div>
-        <div id="feedback-list" class="grid-container">
-            <!-- Injected -->
-        </div>
+        <div id="feedback-list" class="grid-container"></div>
     </div>
 
     <!-- USERS VIEW -->
     <div id="view-users" class="view-content">
         <div class="controls">
-            <input type="text" id="userSearch" placeholder="Search users by email or name..." onkeyup="filterUsers()">
+            <input type="text" id="userSearch" placeholder="Search subjects..." onkeyup="filterUsers()">
         </div>
         <table class="user-table">
             <thead>
@@ -226,72 +222,90 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="user-list">
-                <!-- Injected -->
-            </tbody>
+            <tbody id="user-list"></tbody>
         </table>
     </div>
 
     <div id="status">INITIALIZING CORE CONNECTION...</div>
 
-    <!-- Relay Modal -->
-    <div id="reply-modal" class="modal">
-        <div class="modal-content">
-            <h2>Relay Response / Why</h2>
-            <textarea id="reply-input" placeholder="Explain the relay or reasoning..." style="width: 100%; height: 100px; background: var(--glass); border: 1px solid var(--border); border-radius: 10px; color: #fff; padding: 10px; margin-bottom: 20px; resize: none;"></textarea>
-            <div class="modal-actions">
-                <button class="btn" onclick="closeModal('reply-modal')">Cancel</button>
-                <button class="btn btn-accent" onclick="submitReply()">Send Relay</button>
-            </div>
+    <!-- Modals -->
+    <div id="reply-modal" class="modal"><div class="modal-content">
+        <h2 style="color:var(--accent); margin-bottom:20px;">Relay Response / Why</h2>
+        <textarea id="reply-input" placeholder="Explain the relay or reasoning..." style="width: 100%; height: 100px; background: var(--glass); border: 1px solid var(--border); border-radius: 10px; color: #fff; padding: 10px; margin-bottom: 20px; resize: none;"></textarea>
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn" onclick="closeModal('reply-modal')">Cancel</button>
+            <button class="btn btn-accent" onclick="submitReply()">Send Relay</button>
         </div>
-    </div>
+    </div></div>
 
-    <!-- Password Modal -->
-    <div id="password-modal" class="modal">
-        <div class="modal-content">
-            <h2>Reset Password</h2>
-            <p id="password-user-label" style="margin-bottom: 10px; font-size: 0.9rem; color: var(--text-dim);"></p>
-            <input type="password" id="new-password" placeholder="Enter new password">
-            <div class="modal-actions">
-                <button class="btn" onclick="closeModal('password-modal')">Cancel</button>
-                <button class="btn btn-danger" onclick="submitPasswordReset()">Reset Password</button>
-            </div>
+    <div id="password-modal" class="modal"><div class="modal-content">
+        <h2 style="color:var(--accent); margin-bottom:20px;">Reset Password</h2>
+        <p id="password-user-label" style="margin-bottom: 15px; font-size: 0.9rem; color: var(--text-dim);"></p>
+        <input type="password" id="new-password" placeholder="Enter new password" style="width: 100%; padding: 12px; background: var(--glass); border: 1px solid var(--border); border-radius: 10px; color: #fff; margin-bottom: 20px;">
+        <div style="display:flex; justify-content:flex-end; gap:10px;">
+            <button class="btn" onclick="closeModal('password-modal')">Cancel</button>
+            <button class="btn btn-danger" onclick="submitPasswordReset()">Reset Password</button>
         </div>
-    </div>
+    </div></div>
 
     <script>
         let globalFeedback = [];
         let globalUsers = [];
-        let currentFeedbackId = null;
-        let currentUserId = null;
+        let currentUserEmail = null;
         const token = localStorage.getItem('hfit_token');
 
         async function init() {
             const status = document.getElementById('status');
             if (!token) {
-                status.innerHTML = "ACCESS DENIED. <br><br> Please log in as Admin first.";
+                status.innerHTML = "ACCESS DENIED. <br><br> Admin privileges required.";
                 return;
             }
             
             try {
-                // Verify admin
-                const userRes = await fetch('/api/user', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const userRes = await fetch('/api/user', { headers: { 'Authorization': `Bearer ${token}` } });
                 const userData = await userRes.json();
                 
                 if (!userData.user || !userData.user.is_admin) {
-                    status.innerHTML = "UNAUTHORIZED ACCESS. <br><br> Admin privileges required.";
+                    status.innerHTML = "UNAUTHORIZED ACCESS.";
                     return;
                 }
 
-                document.getElementById('auth-status').textContent = `Logged in as: ${userData.user.username} (Admin)`;
+                currentUserEmail = userData.user.email;
+                document.getElementById('auth-status').textContent = `Architect: ${userData.user.username}`;
                 status.style.display = 'none';
                 
-                await Promise.all([fetchFeedback(), fetchUsers()]);
-            } catch (e) {
-                status.textContent = "CORE CONNECTION LOST.";
+                refreshData();
+                setInterval(refreshStats, 30000); // Auto-refresh stats
+            } catch (e) { status.textContent = "CORE CONNECTION LOST."; }
+        }
+
+        async function refreshData() {
+            await Promise.all([fetchFeedback(), fetchUsers(), refreshStats()]);
+        }
+
+        async function refreshStats() {
+            const res = await fetch('/api/stats', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            if (data.success) {
+                animateValue("stat-visits", data.visits);
+                animateValue("stat-users", data.users);
+                animateValue("stat-feedback", data.feedback);
             }
+        }
+
+        function animateValue(id, value) {
+            const el = document.getElementById(id);
+            const start = parseInt(el.textContent) || 0;
+            const duration = 1000;
+            let startTime = null;
+
+            function step(timestamp) {
+                if (!startTime) startTime = timestamp;
+                const progress = Math.min((timestamp - startTime) / duration, 1);
+                el.textContent = Math.floor(progress * (value - start) + start);
+                if (progress < 1) window.requestAnimationFrame(step);
+            }
+            window.requestAnimationFrame(step);
         }
 
         async function fetchFeedback() {
@@ -304,9 +318,7 @@
         }
 
         async function fetchUsers() {
-            const res = await fetch('/api/users', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
             const data = await res.json();
             if (data.success) {
                 globalUsers = data.users;
@@ -323,16 +335,11 @@
                             <h3>${log.name || 'Anonymous'}</h3>
                             <p>${new Date(log.timestamp).toLocaleString()}</p>
                         </div>
-                        <span class="meta-id">#${log.id}</span>
+                        <span style="font-size: 0.7rem; color: var(--text-dim);">#${log.id}</span>
                     </div>
                     <div class="msg-box">${log.feedback}</div>
-                    ${log.reply ? `
-                        <div class="reply-box">
-                            <span class="reply-label">Architect Response</span>
-                            <div class="reply-text">${log.reply}</div>
-                        </div>
-                    ` : ''}
-                    <div class="actions">
+                    ${log.reply ? `<div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px; font-size:0.85rem; font-style:italic; color:var(--accent);">Relay: ${log.reply}</div>` : ''}
+                    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
                         <button class="btn btn-accent" onclick="openReplyModal(${log.id})">Relay</button>
                         <button class="btn btn-danger" onclick="deleteLog(${log.id})">Wipe</button>
                     </div>
@@ -343,14 +350,14 @@
         function renderUsers(users) {
             const container = document.getElementById('user-list');
             container.innerHTML = users.map((user, i) => `
-                <tr style="animation-delay: ${i * 0.03}s">
-                    <td style="font-weight: 700;">${user.username}</td>
+                <tr style="animation-delay: ${i * 0.03}s" class="${user.email === currentUserEmail ? 'me' : ''}">
+                    <td style="font-weight: 700;">${user.username} ${user.email === currentUserEmail ? '<span style="color:var(--accent); font-size:0.7rem;">(YOU)</span>' : ''}</td>
                     <td style="color: var(--accent);">${user.email}</td>
                     <td>${user.age}</td>
-                    <td style="font-size: 0.75rem; color: var(--text-dim);">${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Legacy'}</td>
+                    <td style="font-size:0.75rem; color:var(--text-dim);">${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Legacy'}</td>
                     <td><span class="badge ${user.is_admin ? 'badge-admin' : 'badge-user'}">${user.is_admin ? 'ADMIN' : 'USER'}</span></td>
                     <td>
-                        <button class="btn btn-accent" onclick="openPasswordModal(${user.id}, '${user.email}')" style="display: inline-flex;">Reset Pass</button>
+                        <button class="btn btn-accent" onclick="openPasswordModal(${user.id}, '${user.email}')">Reset Pass</button>
                     </td>
                 </tr>
             `).join('');
@@ -359,31 +366,22 @@
         function switchTab(tab) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
-            
             document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
             document.getElementById(`view-${tab}`).classList.add('active');
+            if (tab === 'analytics') refreshStats();
         }
 
         function filterFeedback() {
-            const query = document.getElementById('feedbackSearch').value.toLowerCase();
-            const filtered = globalFeedback.filter(log => 
-                (log.name || 'anonymous').toLowerCase().includes(query) || 
-                (log.feedback || '').toLowerCase().includes(query) ||
-                (log.reply || '').toLowerCase().includes(query)
-            );
-            renderFeedback(filtered);
+            const q = document.getElementById('feedbackSearch').value.toLowerCase();
+            renderFeedback(globalFeedback.filter(l => (l.name||'').toLowerCase().includes(q) || (l.feedback||'').toLowerCase().includes(q)));
         }
 
         function filterUsers() {
-            const query = document.getElementById('userSearch').value.toLowerCase();
-            const filtered = globalUsers.filter(user => 
-                user.email.toLowerCase().includes(query) || 
-                user.username.toLowerCase().includes(query)
-            );
-            renderUsers(filtered);
+            const q = document.getElementById('userSearch').value.toLowerCase();
+            renderUsers(globalUsers.filter(u => u.email.toLowerCase().includes(q) || u.username.toLowerCase().includes(q)));
         }
 
-        // Modals
+        let currentFeedbackId = null;
         function openReplyModal(id) {
             currentFeedbackId = id;
             const log = globalFeedback.find(l => l.id === id);
@@ -393,60 +391,40 @@
 
         async function submitReply() {
             const reply = document.getElementById('reply-input').value;
-            try {
-                const res = await fetch('/api/feedback/reply', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ id: currentFeedbackId, reply })
-                });
-                if (res.ok) {
-                    closeModal('reply-modal');
-                    fetchFeedback();
-                }
-            } catch (e) { alert("Relay failed."); }
+            await fetch('/api/feedback/reply', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ id: currentFeedbackId, reply })
+            });
+            closeModal('reply-modal');
+            fetchFeedback();
         }
 
+        let currentUserId = null;
         function openPasswordModal(id, email) {
             currentUserId = id;
-            document.getElementById('password-user-label').textContent = `Account: ${email}`;
-            document.getElementById('new-password').value = '';
+            document.getElementById('password-user-label').textContent = `Target: ${email}`;
             document.getElementById('password-modal').style.display = 'flex';
         }
 
         async function submitPasswordReset() {
             const newPassword = document.getElementById('new-password').value;
-            if (!newPassword) return alert("Enter a password.");
-            
-            try {
-                const res = await fetch('/api/reset-password', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ userId: currentUserId, newPassword })
-                });
-                if (res.ok) {
-                    alert("Password reset successful.");
-                    closeModal('password-modal');
-                }
-            } catch (e) { alert("Reset failed."); }
+            if (!newPassword) return;
+            await fetch('/api/reset-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ userId: currentUserId, newPassword })
+            });
+            alert("Password reset.");
+            closeModal('password-modal');
         }
 
-        function closeModal(id) {
-            document.getElementById(id).style.display = 'none';
-        }
-
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         async function deleteLog(id) {
-            if (!confirm('Permanently wipe this record from Hfit Core?')) return;
-            try {
+            if (confirm('Wipe record?')) {
                 await fetch(`/feedback/${id}`, { method: 'DELETE' });
-                globalFeedback = globalFeedback.filter(l => l.id !== id);
-                renderFeedback(globalFeedback);
-            } catch(e) { alert("Wipe failed."); }
+                fetchFeedback();
+            }
         }
 
         init();

@@ -522,6 +522,23 @@ app.get("/api/visit", (req, res) => {
     res.json({ visits: websiteVisits });
 });
 
+app.get("/api/stats", authenticateToken, async (req, res) => {
+    try {
+        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
+        const db = await dbPromise;
+        const userCount = await db.get("SELECT COUNT(*) as count FROM users");
+        const feedbackCount = await db.get("SELECT COUNT(*) as count FROM feedback");
+        res.json({ 
+            success: true, 
+            users: userCount.count, 
+            feedback: feedbackCount.count, 
+            visits: websiteVisits 
+        });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
 app.get("/api/get-visits", (req, res) => {
     res.json({ visits: websiteVisits });
 });
