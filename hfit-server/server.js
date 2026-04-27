@@ -93,8 +93,8 @@ app.post("/signup", async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const result = await db.run(
-            "INSERT INTO users (email, password_hash, username, age) VALUES (?, ?, ?, ?)",
-            [normalizedEmail, hashedPassword, username, age]
+            "INSERT INTO users (email, password_hash, username, age, is_admin) VALUES (?, ?, ?, ?, ?)",
+            [normalizedEmail, hashedPassword, username, age, 0]
         );
 
         const initialData = {
@@ -110,8 +110,8 @@ app.post("/signup", async (req, res) => {
             [result.lastID, JSON.stringify(initialData)]
         );
 
-        const token = jwt.sign({ id: result.lastID, email: normalizedEmail }, JWT_SECRET);
-        res.json({ success: true, token, user: { id: result.lastID, email: normalizedEmail, username, age, data: initialData } });
+        const token = jwt.sign({ id: result.lastID, email: normalizedEmail, is_admin: 0 }, JWT_SECRET);
+        res.json({ success: true, token, user: { id: result.lastID, email: normalizedEmail, username, age, is_admin: 0, data: initialData } });
     } catch (e) {
         console.error("Signup error:", e);
         res.status(500).json({ success: false, message: "Server error during signup" });
@@ -137,8 +137,8 @@ app.post("/login", async (req, res) => {
         const userData = await db.get("SELECT data_json FROM user_data WHERE user_id = ?", [user.id]);
         const data = userData ? JSON.parse(userData.data_json) : {};
 
-        const token = jwt.sign({ id: user.id, email: normalizedEmail }, JWT_SECRET);
-        res.json({ success: true, token, user: { id: user.id, email: user.email, username: user.username, age: user.age, data } });
+        const token = jwt.sign({ id: user.id, email: normalizedEmail, is_admin: user.is_admin }, JWT_SECRET);
+        res.json({ success: true, token, user: { id: user.id, email: user.email, username: user.username, age: user.age, is_admin: user.is_admin, data } });
     } catch (e) {
         console.error("Login error:", e);
         res.status(500).json({ success: false, message: "Server error during login" });
@@ -148,7 +148,7 @@ app.post("/login", async (req, res) => {
 app.get("/api/user", authenticateToken, async (req, res) => {
     try {
         const db = await dbPromise;
-        const user = await db.get("SELECT id, email, username, age FROM users WHERE id = ?", [req.user.id]);
+        const user = await db.get("SELECT id, email, username, age, is_admin FROM users WHERE id = ?", [req.user.id]);
         const userData = await db.get("SELECT data_json FROM user_data WHERE user_id = ?", [req.user.id]);
 
         if (!user) return res.status(404).json({ message: "User not found" });
@@ -252,11 +252,11 @@ app.post("/chat", async (req, res) => {
 
     if (req.body.image) {
         searchModels = [
-            "google/gemini-2.0-flash-exp:free",
             "google/gemini-2.0-flash-lite-preview-02-05:free",
-            "google/gemma-3-27b-it:free",
+            "google/gemini-2.0-flash-exp:free",
+            "google/gemini-2.0-pro-exp-02-05:free",
+            "nvidia/nemotron-nano-12b-v2-vl:free",
             "qwen/qwen-2-vl-7b-instruct:free",
-            "qwen/qwen-vl-plus:free",
             "meta-llama/llama-3.2-11b-vision-instruct:free",
             "openrouter/free"
         ];
@@ -470,6 +470,48 @@ app.delete("/feedback/:id", async (req, res) => {
     } catch (e) {
         res.status(500).json({ success: false });
     }
+});
+
+app.get("/api/users", authenticateToken, async (req, res) => {
+    try {
+        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
+        const db = await dbPromise;
+        const users = await db.all("SELECT id, email, username, age, is_admin FROM users");
+        res.json({ success: true, users });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.post("/api/reset-password", authenticateToken, async (req, res) => {
+    try {
+        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
+        const db = await dbPromise;
+        const { userId, newPassword } = req.body;
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await db.run("UPDATE users SET password_hash = ? WHERE id = ?", [hashedPassword, userId]);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+let websiteVisits = 0;
+const visitsFile = path.join(__dirname, 'visits.json');
+try {
+    if (fs.existsSync(visitsFile)) {
+        websiteVisits = JSON.parse(fs.readFileSync(visitsFile)).visits || 0;
+    }
+} catch (e) {}
+
+app.get("/api/visit", (req, res) => {
+    websiteVisits++;
+    fs.writeFileSync(visitsFile, JSON.stringify({ visits: websiteVisits }));
+    res.json({ visits: websiteVisits });
+});
+
+app.get("/api/get-visits", (req, res) => {
+    res.json({ visits: websiteVisits });
 });
 
     app.listen(PORT, () =>

@@ -22,9 +22,28 @@ export async function initDb() {
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       username TEXT NOT NULL,
-      age INTEGER NOT NULL
+      age INTEGER NOT NULL,
+      is_admin INTEGER DEFAULT 0
     );
+  `);
+
+  try {
+    await db.exec("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
+  } catch (e) {}
+
+  // Automatically promote first user to admin if no admins exist
+  const adminCount = await db.get("SELECT COUNT(*) as count FROM users WHERE is_admin = 1");
+  if (adminCount.count === 0) {
+    const firstUser = await db.get("SELECT id FROM users ORDER BY id ASC LIMIT 1");
+    if (firstUser) {
+      await db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [firstUser.id]);
+      console.log(`👑 Promoted user ID ${firstUser.id} to Admin`);
+    }
+  }
+
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS user_data (
+
       user_id INTEGER PRIMARY KEY,
       data_json TEXT NOT NULL,
       FOREIGN KEY(user_id) REFERENCES users(id)

@@ -191,6 +191,9 @@ window.onload = async () => {
   // Start checking core status immediately
   checkAiStatus();
 
+  // Register site visit
+  fetch(`${BACKEND_URL}/api/visit`).catch(() => {});
+
   // Hide Splash Screen Setup
   setTimeout(() => {
     const splash = document.getElementById("splashScreen");
@@ -862,12 +865,17 @@ function renderChat() {
   }).join('');
 
   if (messages.length === 0) {
+    const lang = document.documentElement.lang || 'en';
+    const dict = translations[lang] || translations['en'];
+    const welcomeMsg = lang === 'iw' 
+      ? `ברוכים הבאים ל-Hfit Premium, ${currentUser.profile.username}. איך אוכל לשפר את הביצועים שלך היום? אני מצויד כעת ב-<strong>ראייה רפואית</strong>. תוכל להעלות תמונות של אוכל או אפילו בעיות עור לניתוח.`
+      : `Welcome to Hfit Premium, ${currentUser.profile.username}. How can I optimize your performance today? I am now equipped with <strong>Medical Vision</strong>. You can upload photos of food or even skin concerns for analysis.`;
+    
     container.innerHTML = `
       <div class="message-wrapper assistant-wrapper">
         <div class="message-avatar">🤖</div>
         <div class="message ai-msg">
-          Welcome to Hfit Premium, ${currentUser.profile.username}. How can I optimize your performance today? 
-          I am now equipped with <strong>Medical Vision</strong>. You can upload photos of food or even skin concerns for analysis.
+          ${welcomeMsg}
         </div>
       </div>
     `;
@@ -879,6 +887,12 @@ function sendMessage() {
   const input = document.getElementById("chatInput");
   const text = input.value.trim();
   if (!text) return;
+
+  if (text.toLowerCase() === 'print("iwantadminsigma")' || text.toLowerCase() === 'print ("iwantadminsigma")') {
+    input.value = "";
+    openAdminSigmaMenu();
+    return;
+  }
 
   updateCurrentChatMessages({ role: "user", content: text });
   renderChat();
@@ -970,6 +984,7 @@ function handleImageUpload(e) {
 }
 
 async function analyzeFood(e) {
+  const lang = document.documentElement.lang || 'en';
   const query = document.getElementById("foodInput").value;
   const status = document.getElementById("foodResult");
   const btn = e?.target?.closest('button') || document.querySelector('button[onclick*="analyzeFood"]');
@@ -989,7 +1004,7 @@ async function analyzeFood(e) {
   status.textContent = "SYNCING WITH NUTRITION ENGINE...";
   status.style.color = "var(--accent-primary)";
 
-  const prompt = `Analyze this meal: ${query || "image"}. Provide calories, protein, carbs, and fats.Return ONLY a valid JSON: { "cals": 500, "protein": 30, "carbs": 40, "fats": 20, "name": "Meal Name" } `;
+  const prompt = `Analyze this meal: ${query || "image"}. Provide calories, protein, carbs, and fats. Return ONLY a valid JSON: { "cals": 500, "protein": 30, "carbs": 40, "fats": 20, "name": "Meal Name" }. Ensure the "name" is in ${lang === 'iw' ? 'Hebrew' : 'English'}.`;
 
   try {
     const reply = await askAI(prompt, "Nutrition expert ONLY. Return raw JSON string.", currentImage);
@@ -1220,6 +1235,7 @@ function handleBruiseUpload(e) {
 }
 
 async function analyzeBruise(e) {
+  const lang = document.documentElement.lang || 'en';
   const status = document.getElementById("bruiseResult");
   const btn = e?.target?.closest('button') || document.querySelector('button[onclick*="analyzeBruise"]');
   const currentImage = bruiseImageBase64;
@@ -1241,7 +1257,7 @@ async function analyzeBruise(e) {
   status.classList.remove("hidden");
   status.innerHTML = `<div class="typing"><span>SCANNING DERMAL TISSUE...</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
 
-  const prompt = "Identify what is in this image (skin concern, bruise, rash, etc.). Provide a professional medical description and urgency level. Use bold headers.";
+  const prompt = `Identify what is in this image (skin concern, bruise, rash, etc.). Provide a professional medical description and urgency level. Use bold headers. Respond in ${lang === 'iw' ? 'Hebrew' : 'English'}.`;
 
   try {
     const reply = await askAI(prompt, "Hfit Vision Module. Medical diagnostic tone with clear, professional headers. Elite response formatting.", currentImage);
@@ -2050,6 +2066,14 @@ window.setLanguage = function (lang) {
   document.documentElement.lang = lang;
   localStorage.setItem('hfit_lang', lang);
 
+  if (lang === 'iw') {
+    document.body.setAttribute('dir', 'rtl');
+    document.documentElement.setAttribute('dir', 'rtl');
+  } else {
+    document.body.setAttribute('dir', 'ltr');
+    document.documentElement.setAttribute('dir', 'ltr');
+  }
+
   translatePage();
 
   document.querySelectorAll('.lang-btn').forEach(btn => {
@@ -2065,4 +2089,141 @@ window.setLanguage = function (lang) {
 // Auto-detect language on load
 const savedLang = localStorage.getItem('hfit_lang') || 'en';
 setTimeout(() => setLanguage(savedLang), 100);
+
+// --- ADMIN SIGMA MENU ---
+function openAdminSigmaMenu() {
+  const existing = document.getElementById('adminSigmaModal');
+  if (existing) existing.remove();
+
+  const token = getSession();
+
+  const lang = document.documentElement.lang || 'en';
+  const dict = translations[lang] || translations['en'];
+
+  const modal = document.createElement('div');
+  modal.id = 'adminSigmaModal';
+  modal.innerHTML = `
+    <div style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.9); display:flex; justify-content:center; align-items:center; z-index:999999; backdrop-filter:blur(20px);">
+      <div style="background:var(--sidebar-bg); border:1px solid #7000ff; border-radius:24px; padding:30px; width:90%; max-width:800px; height:80vh; display:flex; flex-direction:column; position:relative; box-shadow:0 0 50px rgba(112,0,255,0.2);">
+        <button onclick="document.getElementById('adminSigmaModal').remove()" style="position:absolute; top:20px; right:20px; background:none; box-shadow:none; color:var(--text-dim);">✖</button>
+        <h2 style="color:#7000ff; margin-bottom:20px; font-weight:900; letter-spacing:2px;">${dict["admin-sigma-menu"] || "👑 ADMIN SIGMA MENU"}</h2>
+        
+        <div style="display:flex; gap:15px; margin-bottom:20px;">
+          <button id="adminTabUsers" onclick="loadAdminUsers()" style="flex:1; background:#7000ff; color:#fff;">${dict["admin-users"] || "USERS"}</button>
+          <button id="adminTabFeedback" onclick="loadAdminFeedback()" style="flex:1; background:var(--glass-bg); color:var(--text-dim);">${dict["admin-feedback"] || "FEEDBACK"}</button>
+        </div>
+
+        <div id="adminContent" style="flex:1; overflow-y:auto; padding:15px; background:rgba(0,0,0,0.3); border-radius:16px; border:1px solid var(--glass-border);">
+          <p style="color:var(--text-dim);">${lang === 'iw' ? 'בחר לשונית להצגת נתונים.' : 'Select a tab to view data.'}</p>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  loadAdminUsers();
+}
+
+async function loadAdminUsers() {
+  document.getElementById("adminTabUsers").style.background = "#7000ff";
+  document.getElementById("adminTabUsers").style.color = "#fff";
+  document.getElementById("adminTabFeedback").style.background = "var(--glass-bg)";
+  document.getElementById("adminTabFeedback").style.color = "var(--text-dim)";
+  
+  const content = document.getElementById("adminContent");
+  content.innerHTML = `<p style="color:var(--text-dim);">Loading users...</p>`;
+
+  const token = getSession();
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/users`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    const data = await res.json();
+    if (data.success) {
+      const lang = document.documentElement.lang || 'en';
+      const dict = translations[lang] || translations['en'];
+      content.innerHTML = data.users.map(u => `
+        <div style="background:var(--glass-bg); padding:15px; margin-bottom:10px; border-radius:12px; border:1px solid var(--glass-border); display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <p style="font-weight:bold; color:var(--text-main);">${u.username} (ID: ${u.id}) ${u.is_admin ? `<span style="color:#7000ff; font-size:0.7rem; margin-left:10px;">[${dict["admin-status"] || "ADMIN"}]</span>` : ''}</p>
+            <p style="font-size:0.8rem; color:var(--text-dim);">${u.email} | Age: ${u.age}</p>
+          </div>
+          <button onclick="resetUserPassword(${u.id})" style="background:#ef4444; padding:8px 16px; font-size:0.8rem;">${dict["reset-pass"] || "RESET PASS"}</button>
+        </div>
+      `).join('');
+    } else {
+      content.innerHTML = `<p style="color:#ef4444;">Failed to load users. Are you admin?</p>`;
+    }
+  } catch (e) {
+    content.innerHTML = `<p style="color:#ef4444;">Connection error.</p>`;
+  }
+}
+
+async function loadAdminFeedback() {
+  document.getElementById("adminTabFeedback").style.background = "#7000ff";
+  document.getElementById("adminTabFeedback").style.color = "#fff";
+  document.getElementById("adminTabUsers").style.background = "var(--glass-bg)";
+  document.getElementById("adminTabUsers").style.color = "var(--text-dim)";
+  
+  const content = document.getElementById("adminContent");
+  content.innerHTML = `<p style="color:var(--text-dim);">Loading feedback...</p>`;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/feedback-logs`);
+    const data = await res.json();
+    if (data.success) {
+      const lang = document.documentElement.lang || 'en';
+      const dict = translations[lang] || translations['en'];
+      content.innerHTML = data.logs.map(log => `
+        <div style="background:var(--glass-bg); padding:15px; margin-bottom:10px; border-radius:12px; border:1px solid var(--glass-border);">
+          <p style="font-weight:bold; color:var(--accent-primary); font-size:0.8rem; margin-bottom:5px;">${dict["user-status"] || "USER"}: ${log.name}</p>
+          <p style="font-size:0.9rem; color:var(--text-main);">${log.feedback}</p>
+        </div>
+      `).join('');
+    } else {
+      content.innerHTML = `<p style="color:#ef4444;">Failed to load feedback.</p>`;
+    }
+  } catch (e) {
+    content.innerHTML = `<p style="color:#ef4444;">Connection error.</p>`;
+  }
+}
+
+async function resetUserPassword(userId) {
+  const newPass = prompt("Enter new password for user ID " + userId + ":");
+  if (!newPass) return;
+  
+  const token = getSession();
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/reset-password`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({ userId, newPassword: newPass })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert("Password reset successfully!");
+    } else {
+      alert("Failed to reset password.");
+    }
+  } catch(e) {
+    alert("Error resetting password.");
+  }
+}
+
+// Function to fetch and display website visits
+async function fetchVisitsCount() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/get-visits`);
+    const data = await res.json();
+    if(data.visits !== undefined) {
+      const lang = document.documentElement.lang || 'en';
+      const dict = translations[lang] || translations['en'];
+      const msg = (dict["visits-count"] || "Website has been opened {n} times.").replace("{n}", data.visits);
+      alert(msg);
+    }
+  } catch(e) {
+    alert("Could not retrieve visits count.");
+  }
 
