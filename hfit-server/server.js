@@ -495,6 +495,18 @@ app.get("/api/users", authenticateToken, async (req, res) => {
     }
 });
 
+app.delete("/api/users/:id", authenticateToken, async (req, res) => {
+    try {
+        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
+        const db = await dbPromise;
+        await db.run("DELETE FROM users WHERE id = ?", [req.params.id]);
+        await db.run("DELETE FROM user_data WHERE user_id = ?", [req.params.id]);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
 app.post("/api/reset-password", authenticateToken, async (req, res) => {
     try {
         if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });

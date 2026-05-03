@@ -104,6 +104,20 @@
     </div>
   </div>
 
+  <!-- VISITS MODAL -->
+  <div id="visitsModal" class="hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:10000; backdrop-filter:blur(10px);">
+    <div class="card" style="max-width:400px; width:90%; position:relative; text-align:center;">
+      <button onclick="document.getElementById('visitsModal').classList.add('hidden')" style="position:absolute; top:20px; right:20px; background:none; box-shadow:none; color:var(--text-dim); font-size:1.5rem; padding:0;">✖</button>
+      <div style="font-size: 3rem; margin-bottom: 10px;">👁️</div>
+      <h3 style="margin-bottom:10px;">Monthly Website Visits</h3>
+      <p id="visitsModalText" style="color:var(--text-dim); margin-bottom:20px; font-size:1.1rem; font-weight:700;"></p>
+      <div style="width: 100%; background: var(--glass-border); border-radius: 10px; height: 10px; overflow: hidden; margin-bottom: 20px;">
+         <div id="visitsProgressBar" style="height: 100%; background: var(--accent-primary); width: 0%; transition: width 0.5s ease;"></div>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-dim);">Out of 500 target visits this month</p>
+    </div>
+  </div>
+
   <!-- MOBILE HEADER -->
   <header class="mobile-header hidden">
     <h2 class="sidebar-logo" onclick="openTab('dashboard')">Hfit</h2>
@@ -331,6 +345,7 @@
           <div>
             <h3 style="margin-bottom:20px;" data-t="seven-day-history">7-Day History</h3>
             <div id="sleepWeeklyList" class="weekly-row"></div>
+            <div id="sleepAiInsight" class="ai-msg hidden" style="margin-top:20px; padding:20px; border-radius:16px; border: 1px solid var(--accent-primary); font-size: 0.9rem;"></div>
           </div>
         </div>
       </section>

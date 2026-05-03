@@ -333,7 +333,7 @@
                     <div class="meta">
                         <div class="meta-info">
                             <h3>${log.name || 'Anonymous'}</h3>
-                            <p>${new Date(log.timestamp).toLocaleString()}</p>
+                            <p style="font-weight: 700;">Time: ${new Date(log.timestamp).toLocaleString()}</p>
                         </div>
                         <span style="font-size: 0.7rem; color: var(--text-dim);">#${log.id}</span>
                     </div>
@@ -341,7 +341,7 @@
                     ${log.reply ? `<div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px; font-size:0.85rem; font-style:italic; color:var(--accent);">Relay: ${log.reply}</div>` : ''}
                     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
                         <button class="btn btn-accent" onclick="openReplyModal(${log.id})">Relay</button>
-                        <button class="btn btn-danger" onclick="deleteLog(${log.id})">Wipe</button>
+                        <button class="btn btn-danger" onclick="deleteLog(${log.id})">Dismiss / Wipe</button>
                     </div>
                 </div>
             `).join('');
@@ -352,12 +352,17 @@
             container.innerHTML = users.map((user, i) => `
                 <tr style="animation-delay: ${i * 0.03}s" class="${user.email === currentUserEmail ? 'me' : ''}">
                     <td style="font-weight: 700;">${user.username} ${user.email === currentUserEmail ? '<span style="color:var(--accent); font-size:0.7rem;">(YOU)</span>' : ''}</td>
-                    <td style="color: var(--accent);">${user.email}</td>
+                    <td style="color: var(--accent);"><div style="font-weight:bold;">${user.email}</div><div style="font-size:0.7rem; color:var(--text-dim);">Pass: *[Encrypted]*</div></td>
                     <td>${user.age}</td>
-                    <td style="font-size:0.75rem; color:var(--text-dim);">${user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Legacy'}</td>
+                    <td style="font-size:0.75rem; color:var(--text-dim);">
+                        ${user.created_at ? new Date(user.created_at).toLocaleString() : 'Legacy'}
+                    </td>
                     <td><span class="badge ${user.is_admin ? 'badge-admin' : 'badge-user'}">${user.is_admin ? 'ADMIN' : 'USER'}</span></td>
                     <td>
-                        <button class="btn btn-accent" onclick="openPasswordModal(${user.id}, '${user.email}')">Reset Pass</button>
+                        <div style="display:flex; flex-direction:column; gap:5px;">
+                            <button class="btn btn-accent" style="padding: 5px 10px; font-size: 0.75rem;" onclick="openPasswordModal(${user.id}, '${user.email}')">Reset Pass</button>
+                            <button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.75rem;" onclick="deleteUser(${user.id}, '${user.email}')">Delete Acc</button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -421,9 +426,33 @@
 
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
         async function deleteLog(id) {
-            if (confirm('Wipe record?')) {
+            if (confirm('Dismiss/Wipe this record?')) {
                 await fetch(`/feedback/${id}`, { method: 'DELETE' });
                 fetchFeedback();
+            }
+        }
+        
+        async function deleteUser(id, email) {
+            if (email === currentUserEmail) {
+                alert("You cannot delete your own admin account.");
+                return;
+            }
+            if (confirm(`CRITICAL: Are you absolutely sure you want to permanently delete the user account for ${email} and all associated data?`)) {
+                try {
+                    const res = await fetch(`/api/users/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert("Account deleted permanently.");
+                        fetchUsers();
+                    } else {
+                        alert("Failed to delete account.");
+                    }
+                } catch(e) {
+                    alert("Error deleting user.");
+                }
             }
         }
 

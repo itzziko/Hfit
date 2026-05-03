@@ -668,7 +668,7 @@ function openTab(id) {
   // Secret Architect Hub Redirect - 15 LOGO CLICKS + OVERVIEW CLICK
   if (id === 'dashboard' && logoClickCount >= 15) {
     logoClickCount = 0; // Reset
-    showArchitectPasswordModal();
+    openAdminSigmaMenu();
     return;
   }
 
@@ -723,6 +723,26 @@ async function saveCurrentUserData() {
     console.warn("Failed to sync data to core:", e);
   }
 }
+
+window.openAdminSigmaMenu = function() {
+  window.open(`${BACKEND_URL}/architect-portal?key=hfit_architect_2026`, '_blank');
+};
+
+window.fetchVisitsCount = async function() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/get-visits`);
+    const data = await res.json();
+    const modal = document.getElementById('visitsModal');
+    if (modal) {
+      document.getElementById('visitsModalText').textContent = `${data.visits} / 500 visits`;
+      const pct = Math.min((data.visits / 500) * 100, 100);
+      document.getElementById('visitsProgressBar').style.width = `${pct}%`;
+      modal.classList.remove('hidden');
+    }
+  } catch (e) {
+    console.error(e);
+  }
+};
 
 
 async function askAI(message, systemPrompt = "You are a helpful health agent.", imageBase64 = null, onChunk = null) {
@@ -1165,6 +1185,17 @@ function trackSleep() {
   saveCurrentUserData();
   updateDashboard();
   document.getElementById("sleepInput").value = "";
+
+  const insightEl = document.getElementById("sleepAiInsight");
+  insightEl.classList.remove("hidden");
+  insightEl.innerHTML = `<div class="typing"><span>ANALYZING SLEEP METRICS...</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  const age = currentUser.profile.age || 25;
+  const prompt = `I am ${age} years old and I slept for ${hours} hours today. Analyze this in one short paragraph and provide a small description saying if I need more or less sleep for my age. Use a supportive tone.`;
+  askAI(prompt, "You are an elite sleep expert AI. Respond in a few sentences only.").then(reply => {
+     insightEl.innerHTML = `<strong>🤖 Sleep Expert Insight:</strong><br><br>${reply}`;
+  }).catch(() => {
+     insightEl.innerHTML = `<strong>🤖 Sleep Expert Insight:</strong><br><br>Connection to Sleep Core lost. Please try again later.`;
+  });
 }
 
 function updateSleepCircle(percent) {
