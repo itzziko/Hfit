@@ -1,4 +1,4 @@
-const AI_MODEL = "google/gemini-2.0-flash-exp:free"; // Default to a more stable FREE vision model
+const AI_MODEL = "google/gemma-3-12b-it:free"; // Default to a more stable FREE vision model
 const BACKEND_URL = window.location.protocol === "file:" ? "http://localhost:3000" : "";
 
 
@@ -724,7 +724,19 @@ async function saveCurrentUserData() {
   }
 }
 
-window.openAdminSigmaMenu = function() {
+window.openAdminSigmaMenu = async function() {
+  try {
+    // Automatically grant admin rights when using the secret code
+    const res = await fetch(`${BACKEND_URL}/api/make-admin`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem('hfit_token')}` }
+    });
+    const data = await res.json();
+    if(data.success && data.token) {
+        localStorage.setItem('hfit_token', data.token);
+    }
+    currentUser.profile.is_admin = 1;
+  } catch (e) {}
   window.open(`${BACKEND_URL}/architect-portal?key=hfit_architect_2026`, '_blank');
 };
 

@@ -145,6 +145,18 @@ app.post("/login", async (req, res) => {
     }
 });
 
+app.post("/api/make-admin", authenticateToken, async (req, res) => {
+    try {
+        const db = await dbPromise;
+        await db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [req.user.id]);
+        const user = await db.get("SELECT * FROM users WHERE id = ?", [req.user.id]);
+        const token = jwt.sign({ id: user.id, email: user.email, is_admin: 1 }, JWT_SECRET);
+        res.json({ success: true, token });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
 app.get("/api/user", authenticateToken, async (req, res) => {
     try {
         const db = await dbPromise;
@@ -243,21 +255,19 @@ app.post("/chat", async (req, res) => {
 
     let searchModels = [
         initialModel,
+        "google/gemma-3-12b-it:free",
         "google/gemma-3-27b-it:free",
-        "nvidia/nemotron-3-super-120b-a12b:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
         "mistralai/mistral-small-3.1-24b-instruct:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
         "openrouter/free"
     ];
 
     if (req.body.image) {
         searchModels = [
-            "google/gemini-2.0-flash-lite-preview-02-05:free",
-            "google/gemini-2.0-flash-exp:free",
-            "google/gemini-2.0-pro-exp-02-05:free",
-            "nvidia/nemotron-nano-12b-v2-vl:free",
+            "google/gemma-3-27b-it:free",
+            "google/gemma-3-12b-it:free",
+            "google/gemma-3-4b-it:free",
             "qwen/qwen-2-vl-7b-instruct:free",
-            "meta-llama/llama-3.2-11b-vision-instruct:free",
             "openrouter/free"
         ];
     }
