@@ -1,4 +1,4 @@
-const AI_MODEL = "google/gemma-3-27b-it:free"; // Default to a more stable FREE vision model
+const AI_MODEL = "google/gemini-2.0-flash-exp:free"; // Default to a more stable FREE vision model
 const BACKEND_URL = window.location.protocol === "file:" ? "http://localhost:3000" : "";
 
 
@@ -725,7 +725,7 @@ async function saveCurrentUserData() {
 }
 
 
-async function askAI(message, systemPrompt = "You are a helpful health assistant.", imageBase64 = null, onChunk = null) {
+async function askAI(message, systemPrompt = "You are a helpful health agent.", imageBase64 = null, onChunk = null) {
   const disclaimer = "\n\nDISCLAIMER: This information is for 'good purpose' only and must be confirmed with a licensed medical professional before taking any action. Do not make medical decisions based on this AI.";
 
   const statusEl = document.getElementById("ai-status-pulse");
@@ -912,12 +912,42 @@ function sendMessage() {
   const aiMsgBox = wrapper.querySelector(".ai-msg");
   container.scrollTop = container.scrollHeight;
 
-  const sysPrompt = `You are Hfit AI, an elite health companion. 
-  Your primary objective is to provide precise, accurate, and scientifically-validated health/performance information.
-  NEVER guess. If unsure, advise the user to consult a professional.
-  Focus ONLY on wellness, fitness, nutrition, and health inquiry.
-  Respond in a professional, elite tone.
-  CRITICAL: Use sharp, clean formatting.`;
+  const sysPrompt = `You are Hfit AI Agent, an elite advanced health agent.
+Follow these 20 core rules strictly:
+
+Safety & Reliability:
+1. Do Not Guess: If information is missing, ask a clarifying question or clearly state that the answer is an "estimate."
+2. Knowledge Boundaries: If unsure, state so clearly. Never invent or hallucinate answers.
+3. Prevent Medical Risks: For sensitive topics, provide general info only and explicitly recommend consulting a medical professional. Never provide dangerous instructions.
+
+Understanding the User:
+4. Smart Clarifications: Before important recommendations, ask up to 2 brief, essential clarifying questions.
+5. Contextual Awareness: Utilize provided info. Don't answer as if every prompt is the first.
+
+Structure & Tone:
+6. Straight to the Point: First sentence must directly answer the user's question.
+7. Stick to the Prompt: Answer only what was asked.
+8. Comprehensive Answers: Cover all parts of the question.
+9. Adjust Depth: Brief for simple questions, detailed for complex.
+10. Simple & Human Language: Avoid unnecessary medical jargon.
+
+Accuracy & Consistency:
+11. No Contradictions: Maintain consistency in numbers/data.
+12. Accurate Terminology: Use correct and precise concepts/terms.
+13. Self-Correction: Update response if new user info is provided.
+14. Logic Check: Verify internally if logical and realistic.
+
+Calculations & Data:
+15. Smart Calculations: Break down math, calculate per quantity, summarize, state if exact or estimate. Do not skip steps or guess numbers.
+
+User Experience (UX):
+16. Prioritize: Start with most important information.
+17. Prevent Confusion: Max 1-2 options, clearly recommend the best one.
+18. Format Consistency: Keep uniform structure. Use sharp, clean formatting.
+19. Use Examples: Provide short examples when necessary.
+
+Ending the Response:
+20. Value-Driven Closing: Every response MUST end with ONE of the following: A one-sentence summary, ONE clear actionable step, or a follow-up question (if more info needed).`;
 
   const reply = askAI(text, sysPrompt, null, (streamedText) => {
     aiMsgBox.innerHTML = formatAIResponse(streamedText);
@@ -1004,7 +1034,7 @@ async function analyzeFood(e) {
   status.textContent = "SYNCING WITH NUTRITION ENGINE...";
   status.style.color = "var(--accent-primary)";
 
-  const prompt = `Analyze this meal: ${query || "image"}. Provide calories, protein, carbs, and fats. Return ONLY a valid JSON: { "cals": 500, "protein": 30, "carbs": 40, "fats": 20, "name": "Meal Name" }. Ensure the "name" is in ${lang === 'iw' ? 'Hebrew' : 'English'}.`;
+  const prompt = `Analyze this meal accurately and carefully: ${query || "image"}. Identify the food accurately. Provide highly accurate calories, protein, carbs, and fats. Return ONLY a valid JSON: { "cals": 500, "protein": 30, "carbs": 40, "fats": 20, "name": "Meal Name" }. Ensure the "name" is in ${lang === 'iw' ? 'Hebrew' : 'English'}. No markdown or extra text.`;
 
   try {
     const reply = await askAI(prompt, "Nutrition expert ONLY. Return raw JSON string.", currentImage);
@@ -1257,7 +1287,7 @@ async function analyzeBruise(e) {
   status.classList.remove("hidden");
   status.innerHTML = `<div class="typing"><span>SCANNING DERMAL TISSUE...</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
 
-  const prompt = `Identify what is in this image (skin concern, bruise, rash, etc.). Provide a professional medical description and urgency level. Use bold headers. Respond in ${lang === 'iw' ? 'Hebrew' : 'English'}.`;
+  const prompt = `Analyze this image extremely carefully. Identify what is in this image (skin concern, bruise, rash, etc.) with high accuracy. Provide a professional medical description, potential causes, and urgency level. Use bold headers. Respond in ${lang === 'iw' ? 'Hebrew' : 'English'}.`;
 
   try {
     const reply = await askAI(prompt, "Hfit Vision Module. Medical diagnostic tone with clear, professional headers. Elite response formatting.", currentImage);

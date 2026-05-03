@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=1.0, user-scalable=no" />
   <meta name="google" content="notranslate" />
   <title>Hfit | Premium Health Intelligence</title>
   <link rel="stylesheet" href="style.css" />
@@ -97,10 +97,10 @@
   <div id="goalAdjustModal" class="hidden" style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:10000; backdrop-filter:blur(10px);">
     <div class="card" style="max-width:400px; width:90%; position:relative;">
       <button onclick="document.getElementById('goalAdjustModal').classList.add('hidden')" style="position:absolute; top:20px; right:20px; background:none; box-shadow:none; color:var(--text-dim); font-size:1.5rem; padding:0;">✖</button>
-      <h3 style="margin-bottom:10px;">Adjust Goal</h3>
+      <h3 style="margin-bottom:10px;" data-t="adjust-goal">Adjust Goal</h3>
       <p id="goalAdjustText" style="color:var(--text-dim); margin-bottom:20px; font-size:0.9rem;"></p>
       <input type="number" id="goalAdjustInput" placeholder="Enter new total" style="margin-bottom:15px;" onfocus="this.select()" />
-      <button id="goalAdjustBtn" style="width:100%;">SAVE PROGRESS</button>
+      <button id="goalAdjustBtn" style="width:100%;" data-t="save-progress">SAVE PROGRESS</button>
     </div>
   </div>
 
@@ -156,7 +156,7 @@
           </div>
           <div style="display:flex; align-items:center; gap: 15px;">
             <button class="btn-secondary btn-small" onclick="fetchVisitsCount()" data-t="site-visits" title="View Site Visits">👁️ Visits</button>
-            <button id="themeToggleBtn" class="btn-secondary btn-small" onclick="toggleTheme()" data-t="toggle-theme" title="Toggle Light/Dark Mode">🌓 Theme</button>
+            <button id="themeToggleBtn" class="btn-secondary btn-small" onclick="toggleTheme()" title="Toggle Light/Dark Mode" style="font-size: 1.5rem; padding: 5px 10px;">🌓</button>
             <div class="status-badge" onclick="resetDevice()" style="cursor:pointer;"
               title="Click to Reset Device">
               <span class="pulse-dot"></span>
@@ -185,15 +185,15 @@
           <div class="card stat-card" id="widget-sleep">
             <span class="drag-handle" draggable="true">⋮⋮</span>
             <div style="display:flex; justify-content:space-between; align-items:start;">
-              <h3>Sleep Recovery</h3>
+              <h3 data-t="sleep-recovery">Sleep Recovery</h3>
             </div>
             <div style="display:flex; align-items:center; gap:25px; margin:20px 0;">
               <div class="progress-circle" id="dash-sleep-circle" style="width:80px; height:80px; min-width:80px; border-radius:50%;">
                 <span id="dash-sleep-val">0%</span>
               </div>
               <div>
-                <p id="dash-sleep-status" style="font-weight:700; font-size:1.1rem;">No data yet</p>
-                <p style="font-size:0.8rem; color:var(--text-dim);">Last 24 hours</p>
+                <p id="dash-sleep-status" style="font-weight:700; font-size:1.1rem;" data-t="no-data-yet">No data yet</p>
+                <p style="font-size:0.8rem; color:var(--text-dim);" data-t="last-24-hours">Last 24 hours</p>
               </div>
             </div>
             <button class="btn-secondary btn-small" onclick="openTab('sleep')" onmousedown="event.stopPropagation()"
@@ -221,15 +221,15 @@
               <span style="font-size:1.5rem;">✨</span>
               <h3 style="margin-bottom:0;" data-t="ai-recommendation">AI Health Recommendation</h3>
             </div>
-            <p id="dash-ai-insight" class="ai-insight-text">Use our tracking tools to receive personalized wellness
+            <p id="dash-ai-insight" class="ai-insight-text" data-t="ai-insight-text">Use our tracking tools to receive personalized wellness
               insights here.</p>
           </div>
 
           <!-- ONBOARDING TIP -->
           <div class="card stat-card"
             style="background: linear-gradient(135deg, rgba(112, 0, 255, 0.1), transparent); border: 1px dashed var(--accent-primary);">
-            <h3 style="font-size: 1rem; color: var(--accent-primary);">🚀 Pro Tip</h3>
-            <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.4;">Upload meal photos in the "Food
+            <h3 style="font-size: 1rem; color: var(--accent-primary);" data-t="pro-tip">🚀 Pro Tip</h3>
+            <p style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.4;" data-t="pro-tip-desc">Upload meal photos in the "Food
               Engine" for instant calorie and macronutrient identification.</p>
           </div>
 
@@ -239,7 +239,7 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
               <div style="display:flex; align-items:center; gap:15px;">
                 <span style="font-size:1.5rem;">📈</span>
-                <h3 style="margin-bottom:0;">Performance Trends</h3>
+                <h3 style="margin-bottom:0;" data-t="performance-trends">Performance Trends</h3>
               </div>
             </div>
             <div class="chart-container" style="position: relative; height:250px; width:100%">
@@ -249,7 +249,7 @@
         </div>
       </section>
 
-      <!-- AI ASSISTANT (Immersive) -->
+      <!-- AI AGENT (Immersive) -->
       <section id="ai" class="tab">
         <div style="display:flex; width: 100%; height: 100%; gap: 20px;">
           <!-- Chat History Sidebar -->
@@ -260,6 +260,9 @@
 
           <!-- Chat Window -->
           <div class="chat-card" style="position: relative;">
+            <div class="chat-header" style="text-align: right; padding: 10px 15px; border-bottom: 1px solid var(--glass-border);">
+              <span style="font-size: 0.9rem; color: var(--text-dim); font-style: italic;" data-t="ai-tagline">AI Agent for nutrition, fitness, and health – analyzes your routine and helps you live better.</span>
+            </div>
             <div id="chatHistory" class="chat-container">
               <!-- Chat messages injected here -->
             </div>

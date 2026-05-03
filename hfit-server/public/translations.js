@@ -18,7 +18,7 @@ const translations = {
     "pro-tip-desc": "Upload meal photos in the \"Food Engine\" for instant calorie and macronutrient identification.",
     "performance-trends": "Performance Trends",
     "overview": "Overview",
-    "ai-assistant": "AI Assistant",
+    "ai-assistant": "AI Agent",
     "food-engine": "Food Engine",
     "sleep-data": "Sleep Data",
     "ai-planning": "AI Planning",
@@ -123,7 +123,11 @@ const translations = {
     "reset-pass": "RESET PASS",
     "admin-status": "ADMIN",
     "user-status": "USER",
-    "visits-count": "Website has been opened {n} times."
+    "visits-count": "Website has been opened {n} times.",
+    "ai-insight-text": "Use our tracking tools to receive personalized wellness insights here.",
+    "adjust-goal": "Adjust Goal",
+    "save-progress": "SAVE PROGRESS",
+    "ai-tagline": "AI Agent for nutrition, fitness, and health – analyzes your routine and helps you live better."
   },
   iw: {
     "welcome-message": "שלום,",
@@ -144,7 +148,7 @@ const translations = {
     "pro-tip-desc": "העלה תמונות ארוחה ב-\"מנוע המזון\" לזיהוי קלוריות וערכים תזונתיים מיידי.",
     "performance-trends": "מגמות ביצועים",
     "overview": "סקירה",
-    "ai-assistant": "עוזר AI",
+    "ai-assistant": "סוכן AI",
     "food-engine": "מנוע תזונה",
     "sleep-data": "נתוני שינה",
     "ai-planning": "תכנון AI",
@@ -249,7 +253,11 @@ const translations = {
     "reset-pass": "איפוס סיסמה",
     "admin-status": "מנהל",
     "user-status": "משתמש",
-    "visits-count": "האתר נפתח {n} פעמים."
+    "visits-count": "האתר נפתח {n} פעמים.",
+    "ai-insight-text": "השתמש בכלי המעקב שלנו כדי לקבל כאן תובנות בריאותיות מותאמות אישית.",
+    "adjust-goal": "התאם מטרה",
+    "save-progress": "שמור התקדמות",
+    "ai-tagline": "סוכן AI לתזונה, כושר ובריאות – מנתח את השגרה שלך ועוזר לך לחיות טוב יותר."
   }
 };
 
