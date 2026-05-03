@@ -315,7 +315,8 @@
 
           <div style="display:flex; gap:12px;">
             <input type="text" id="foodInput" placeholder="What did you eat today?" data-t-placeholder="food-question" onfocus="this.select()" />
-            <button onclick="analyzeFood(event)" style="width:160px;" data-t="analyze">ANALYZE</button>
+            <button type="button" onclick="analyzeFood(event)" style="width:160px;" data-t="analyze">ANALYZE</button>
+            <button type="button" class="btn-secondary" onclick="clearFoodAnalyzer()" style="width:60px;" title="Clear">✖</button>
           </div>
           <div id="foodResult" style="margin-top:20px; font-weight:600; color:var(--accent-primary);"></div>
         </div>
@@ -370,7 +371,10 @@
             <input type="text" id="dietType" placeholder="Dietary Pref (e.g. Keto, Vegan)" data-t-placeholder="diet-pref" onfocus="this.select()" />
           </div>
 
-          <button onclick="generatePlan()" style="margin-top:30px;">GENERATE AI STRATEGY</button>
+          <div style="display:flex; gap:12px; margin-top:30px;">
+             <button type="button" onclick="generatePlan(event)" style="width:100%;">GENERATE AI STRATEGY</button>
+             <button type="button" class="btn-secondary" onclick="clearPlanAnalyzer()" style="width:60px;" title="Clear">✖</button>
+          </div>
           <div id="planResult" class="ai-msg hidden" style="margin-top:25px; padding:30px; border-radius:24px;"></div>
         </div>
       </section>
@@ -447,7 +451,10 @@
             <input type="file" id="bruiseImage" accept="image/*" class="hidden" onchange="handleBruiseUpload(event)" />
           </div>
 
-          <button onclick="analyzeBruise(event)" style="width:100%; margin-top:20px;" data-t="start-classification">START CLASSIFICATION</button>
+          <div style="display:flex; gap:12px; margin-top:20px;">
+             <button type="button" onclick="analyzeBruise(event)" style="width:100%;" data-t="start-classification">START CLASSIFICATION</button>
+             <button type="button" class="btn-secondary" onclick="clearBruiseAnalyzer()" style="width:60px;" title="Clear">✖</button>
+          </div>
 
           <div id="bruiseResult" class="ai-msg hidden"
             style="margin-top:25px; padding:30px; border-radius:24px; border: 1px solid var(--accent-primary);"></div>

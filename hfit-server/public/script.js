@@ -1045,6 +1045,20 @@ function handleImageUpload(e) {
   });
 }
 
+function clearFoodAnalyzer() {
+  foodImageBase64 = null;
+  document.getElementById("foodImage").value = "";
+  document.getElementById("foodPreview").src = "";
+  document.getElementById("foodPreview").classList.add("hidden");
+  document.getElementById("uploadPlaceholder").classList.remove("hidden");
+  document.getElementById("foodInput").value = "";
+  document.getElementById("foodResult").textContent = "";
+  document.getElementById("food-cals").textContent = "0";
+  document.getElementById("food-protein").textContent = "0g";
+  document.getElementById("food-carbs").textContent = "0g";
+  document.getElementById("food-fats").textContent = "0g";
+}
+
 async function analyzeFood(e) {
   const lang = document.documentElement.lang || 'en';
   const query = document.getElementById("foodInput").value;
@@ -1204,9 +1218,9 @@ function trackSleep() {
   const age = currentUser.profile.age || 25;
   const prompt = `I am ${age} years old and I slept for ${hours} hours today. Analyze this in one short paragraph and provide a small description saying if I need more or less sleep for my age. Use a supportive tone.`;
   askAI(prompt, "You are an elite sleep expert AI. Respond in a few sentences only.").then(reply => {
-     insightEl.innerHTML = `<strong>🤖 Sleep Expert Insight:</strong><br><br>${reply}`;
+     insightEl.innerHTML = `<button type="button" onclick="document.getElementById('sleepAiInsight').classList.add('hidden')" style="float:right; background:none; color:var(--text-dim); padding:0; font-size:1.2rem;">✖</button><strong>🤖 Sleep Expert Insight:</strong><br><br>${reply}`;
   }).catch(() => {
-     insightEl.innerHTML = `<strong>🤖 Sleep Expert Insight:</strong><br><br>Connection to Sleep Core lost. Please try again later.`;
+     insightEl.innerHTML = `<button type="button" onclick="document.getElementById('sleepAiInsight').classList.add('hidden')" style="float:right; background:none; color:var(--text-dim); padding:0; font-size:1.2rem;">✖</button><strong>🤖 Sleep Expert Insight:</strong><br><br>Connection to Sleep Core lost. Please try again later.`;
   });
 }
 
@@ -1285,6 +1299,21 @@ function loadSavedPlans() {
   }
 }
 
+function clearPlanAnalyzer() {
+  document.getElementById("targetArea").value = "";
+  document.getElementById("timePerWorkout").value = "";
+  document.getElementById("location").value = "";
+  document.getElementById("mealGoal").value = "";
+  document.getElementById("dietType").value = "";
+  const resultDiv = document.getElementById("planResult");
+  resultDiv.classList.add("hidden");
+  resultDiv.innerHTML = "";
+  if (currentUser.data.lastPlans) {
+    currentUser.data.lastPlans[planMode] = "";
+    saveCurrentUserData();
+  }
+}
+
 const originalOpenTab = openTab;
 openTab = (id) => {
   originalOpenTab(id);
@@ -1305,6 +1334,17 @@ function handleBruiseUpload(e) {
     document.getElementById("bruiseResult").classList.add("hidden");
     document.getElementById("bruiseResult").innerHTML = "";
   });
+}
+
+function clearBruiseAnalyzer() {
+  bruiseImageBase64 = null;
+  document.getElementById("bruiseImage").value = "";
+  document.getElementById("bruisePreview").src = "";
+  document.getElementById("scannerContainer").classList.add("hidden");
+  document.getElementById("bruisePlaceholder").classList.remove("hidden");
+  const bruiseResult = document.getElementById("bruiseResult");
+  bruiseResult.classList.add("hidden");
+  bruiseResult.innerHTML = "";
 }
 
 async function analyzeBruise(e) {

@@ -228,15 +228,7 @@
 
     <div id="status">INITIALIZING CORE CONNECTION...</div>
 
-    <!-- Modals -->
-    <div id="reply-modal" class="modal"><div class="modal-content">
-        <h2 style="color:var(--accent); margin-bottom:20px;">Relay Response / Why</h2>
-        <textarea id="reply-input" placeholder="Explain the relay or reasoning..." style="width: 100%; height: 100px; background: var(--glass); border: 1px solid var(--border); border-radius: 10px; color: #fff; padding: 10px; margin-bottom: 20px; resize: none;"></textarea>
-        <div style="display:flex; justify-content:flex-end; gap:10px;">
-            <button class="btn" onclick="closeModal('reply-modal')">Cancel</button>
-            <button class="btn btn-accent" onclick="submitReply()">Send Relay</button>
-        </div>
-    </div></div>
+
 
     <div id="password-modal" class="modal"><div class="modal-content">
         <h2 style="color:var(--accent); margin-bottom:20px;">Reset Password</h2>
@@ -340,7 +332,6 @@
                     <div class="msg-box">${log.feedback}</div>
                     ${log.reply ? `<div style="margin-top:10px; border-top:1px solid var(--border); padding-top:10px; font-size:0.85rem; font-style:italic; color:var(--accent);">Relay: ${log.reply}</div>` : ''}
                     <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
-                        <button class="btn btn-accent" onclick="openReplyModal(${log.id})">Relay</button>
                         <button class="btn btn-danger" onclick="deleteLog(${log.id})">Dismiss / Wipe</button>
                     </div>
                 </div>
@@ -386,24 +377,7 @@
             renderUsers(globalUsers.filter(u => u.email.toLowerCase().includes(q) || u.username.toLowerCase().includes(q)));
         }
 
-        let currentFeedbackId = null;
-        function openReplyModal(id) {
-            currentFeedbackId = id;
-            const log = globalFeedback.find(l => l.id === id);
-            document.getElementById('reply-input').value = log.reply || '';
-            document.getElementById('reply-modal').style.display = 'flex';
-        }
 
-        async function submitReply() {
-            const reply = document.getElementById('reply-input').value;
-            await fetch('/api/feedback/reply', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ id: currentFeedbackId, reply })
-            });
-            closeModal('reply-modal');
-            fetchFeedback();
-        }
 
         let currentUserId = null;
         function openPasswordModal(id, email) {
