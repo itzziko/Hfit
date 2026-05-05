@@ -66,13 +66,6 @@ app.use((req, res, next) => {
     if (isForbidden) {
         return res.status(403).send("ACCESS DENIED: SYSTEM FILE PROTECTION ACTIVE");
     }
-
-    if (req.path.endsWith('.js') && !req.path.includes('node_modules')) {
-        const referer = req.get('Referer');
-        if (!referer || !referer.includes(req.get('host'))) {
-            return res.status(403).send("ACCESS DENIED: DIRECT SOURCE ACCESS PROHIBITED");
-        }
-    }
     next();
 });
 
@@ -145,31 +138,46 @@ const checkBan = async (req, res, next) => {
 /* ---------------- CAPTCHA ---------------- */
 
 app.get("/api/captcha", (req, res) => {
-    const a = Math.floor(Math.random() * 10) + 1;
-    const b = Math.floor(Math.random() * 10) + 1;
-    const solution = a + b;
-    const expiry = Date.now() + 5 * 60 * 1000; // 5 mins
+    const operators = ['+', '-'];
+    const op = operators[Math.floor(Math.random() * operators.length)];
+    let a, b, solution;
+
+    if (op === '+') {
+        a = Math.floor(Math.random() * 10) + 1;
+        b = Math.floor(Math.random() * 10) + 1;
+        solution = a + b;
+    } else {
+        a = Math.floor(Math.random() * 15) + 5;
+        b = Math.floor(Math.random() * a);
+        solution = a - b;
+    }
+
+    const expiry = Date.now() + 10 * 60 * 1000; // 10 mins
     
     const hash = crypto.createHmac('sha256', CAPTCHA_SECRET)
         .update(`${solution}:${expiry}`)
         .digest('hex');
 
     res.json({
-        question: `Human Verification: What is ${a} + ${b}?`,
+        question: `Human Verification: What is ${a} ${op} ${b}?`,
         captcha_id: `${hash}:${expiry}`
     });
 });
 
 function verifyCaptcha(userAnswer, captchaId) {
     if (!userAnswer || !captchaId) return false;
-    const [hash, expiry] = captchaId.split(':');
-    if (Date.now() > parseInt(expiry)) return false;
+    try {
+        const [hash, expiry] = captchaId.split(':');
+        if (Date.now() > parseInt(expiry)) return false;
 
-    const expectedHash = crypto.createHmac('sha256', CAPTCHA_SECRET)
-        .update(`${userAnswer}:${expiry}`)
-        .digest('hex');
+        const expectedHash = crypto.createHmac('sha256', CAPTCHA_SECRET)
+            .update(`${userAnswer.trim()}:${expiry}`)
+            .digest('hex');
 
-    return hash === expectedHash;
+        return hash === expectedHash;
+    } catch (e) {
+        return false;
+    }
 }
 
 /* ---------------- ROUTES ---------------- */

@@ -459,14 +459,18 @@ function setAuthMode(mode) {
 }
 
 async function fetchCaptcha() {
+  const questionEl = document.getElementById("captchaQuestion");
+  if (questionEl) questionEl.textContent = "SYNCING...";
+  
   try {
     const res = await fetch(`${BACKEND_URL}/api/captcha`);
     const data = await res.json();
-    document.getElementById("captchaQuestion").textContent = data.question;
+    if (questionEl) questionEl.textContent = data.question;
     document.getElementById("captchaId").value = data.captcha_id;
     document.getElementById("captchaAnswer").value = "";
   } catch (e) {
     console.error("Captcha fetch failed", e);
+    if (questionEl) questionEl.textContent = "VERIFICATION OFFLINE";
   }
 }
 
