@@ -9,13 +9,18 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fs from "fs";
 import { rateLimit } from "express-rate-limit";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import dbPromise, { initDb } from "./db.js";
+
+// Initialize Google AI
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // Rate Limiters
 const chatLimiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 15, // limit each IP to 15 requests per windowMs
-    message: { error: "Too many chat requests. Please slow down to preserve Hfit Core tokens." },
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 12, // 12 requests per minute (safe margin for Google's 15 RPM free tier)
+    message: { error: "System overload. Please wait a minute before sending more messages." },
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -290,154 +295,56 @@ app.post("/google-auth", async (req, res) => {
 
 app.post("/chat", chatLimiter, authenticateToken, checkBan, async (req, res) => {
     const userMessage = req.body.message;
-    const initialModel = req.body.model || "google/gemma-3-27b-it:free";
-    const systemMessage = req.body.system || "You are a helpful health assistant.";
-    const stream = req.body.stream === true;
+    const systemMessage = req.body.system || "You are Hfit AI Agent, an elite health assistant.";
+    const image = req.body.image;
+    const searchUrl = req.body.search_url;
 
-    // Basic Validation
-    if (req.body.image) {
-        if (!req.body.image.startsWith('data:image/')) {
-            return res.status(400).json({ error: "Invalid visual data. Please upload a valid image file." });
-        }
-        if (req.body.image.length > 25000000) {
-            return res.status(400).json({ error: "Visual data too dense. Please upload a smaller image." });
-        }
+    if (!userMessage && !image) {
+        return res.status(400).json({ error: "No input provided" });
     }
 
-    let webData = "";
-    if (req.body.search_url) {
-        const pageContent = await fetchWithBrightData(req.body.search_url);
-        if (pageContent) {
-            webData = "\n\nWebsite Data:\n" + pageContent.substring(0, 4000);
-        }
-    }
-
-    const apiKey = (process.env.OPENROUTER_API_KEY || process.env.OPENAI_API_KEY || "")
-        .replace(/['\"]/g, '')
-        .trim();
-
-    if (!apiKey) {
-        return res.status(500).json({ error: "HFIT CORE CRITICAL: API key missing." });
-    }
-
-    let searchModels = [
-        initialModel,
-        "google/gemma-3-12b-it:free",
-        "google/gemma-3-27b-it:free",
-        "mistralai/mistral-small-3.1-24b-instruct:free",
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "openrouter/free"
-    ];
-
-    if (req.body.image) {
-        searchModels = [
-            "google/gemma-3-27b-it:free",
-            "google/gemma-3-12b-it:free",
-            "google/gemma-3-4b-it:free",
-            "qwen/qwen-2-vl-7b-instruct:free",
-            "openrouter/free"
-        ];
-    }
-
-    if (stream) {
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders();
-    }
-
-    let lastError = null;
-
-    for (const model of searchModels) {
-        try {
-            console.log(`[AI ${stream ? 'STREAM' : 'SYNC'}] Attempting with model: ${model}`);
-            
-            const messages = [
-                { role: "system", content: systemMessage },
-                { 
-                    role: "user", 
-                    content: req.body.image 
-                        ? [
-                            { type: "text", text: userMessage + webData },
-                            { type: "image_url", image_url: { url: req.body.image } }
-                          ]
-                        : [
-                            { type: "text", text: userMessage + webData }
-                          ]
-                }
-            ];
-
-            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${apiKey}`,
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "https://hfit.ai",
-                    "X-Title": "Hfit Health"
-                },
-                body: JSON.stringify({
-                    model: model,
-                    messages: messages,
-                    stream: stream,
-                    temperature: 0.7,
-                    max_tokens: 2000
-                }),
-                timeout: 60000 
-            });
-
-            if (!response.ok) {
-                const errText = await response.text();
-                console.warn(`[MODEL FAIL] ${model}: ${response.status}`, errText);
-                throw new Error(errText || `Model ${model} failed with status ${response.status}`);
-            }
-
-            if (stream) {
-                const reader = response.body;
-                console.log(`[STREAM START] Model: ${model}`);
-                
-                reader.on('data', (chunk) => {
-                    res.write(chunk);
-                });
-                
-                return new Promise((resolve) => {
-                    reader.on('end', () => {
-                        console.log(`[STREAM END] Model: ${model}`);
-                        res.end();
-                        resolve();
-                    });
-                    reader.on('error', (err) => {
-                        console.error("[STREAM ERROR]", err);
-                        res.end();
-                        resolve();
-                    });
-                });
-            } else {
-                const data = await response.json();
-                if (data.choices && data.choices[0]) {
-                    console.log(`[AI SUCCESS] Response delivered via ${model}`);
-                    return res.json({
-                        reply: data.choices[0].message.content,
-                        model_used: model
-                    });
-                } else {
-                    lastError = data.error?.message || `Model ${model} unavailable`;
-                }
-            }
-        } catch (error) {
-            lastError = error.message;
-            console.error(`[AI ERROR] Attempt failed for ${model}:`, error.message);
-            if (stream && model === searchModels[searchModels.length - 1]) {
-                res.write(`data: ${JSON.stringify({ error: lastError })}\n\n`);
-                res.end();
-                return;
+    try {
+        let webData = "";
+        if (searchUrl) {
+            const pageContent = await fetchWithBrightData(searchUrl);
+            if (pageContent) {
+                webData = "\n\nWebsite Data:\n" + pageContent.substring(0, 5000);
             }
         }
-    }
 
-    if (!res.writableEnded) {
-        res.status(503).json({
-            error: "HFIT CORE OVERLOADED: All nodes busy. " + lastError
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash",
+            systemInstruction: systemMessage
         });
+
+        const promptParts = [userMessage + webData];
+        
+        if (image) {
+            // Convert base64 image to Google Generative AI format
+            const [header, data] = image.split(',');
+            const mimeType = header.match(/:(.*?);/)[1];
+            promptParts.push({
+                inlineData: {
+                    data: data,
+                    mimeType: mimeType
+                }
+            });
+        }
+
+        const result = await model.generateContent(promptParts);
+        const response = await result.response;
+        const text = response.text();
+
+        res.json({
+            reply: text,
+            model_used: "gemini-1.5-flash"
+        });
+
+    } catch (error) {
+        console.error("Gemini Core Error:", error);
+        res.status(500).json({ error: "HFIT CORE OFFLINE. System overload or invalid configuration." });
+    }
+});
     }
 });
 

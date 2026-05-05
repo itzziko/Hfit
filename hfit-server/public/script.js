@@ -1,4 +1,4 @@
-const AI_MODEL = "google/gemma-3-12b-it:free"; // Default to a more stable FREE vision model
+const AI_MODEL = "gemini-1.5-flash"; // Powered by HFIT CORE (Gemini)
 const BACKEND_URL = window.location.protocol === "file:" ? "http://localhost:3000" : "";
 
 
@@ -770,7 +770,10 @@ async function askAI(message, systemPrompt = "You are a helpful health agent.", 
 
     const res = await fetch(`${BACKEND_URL}/chat`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${getSession()}`
+      },
       body: JSON.stringify({
         message,
         system: systemPrompt + languageDirective,
