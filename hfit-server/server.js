@@ -39,11 +39,11 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             "default-src": ["'self'"],
-            "script-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com", "https://www.google.com/recaptcha/", "https://www.gstatic.com/recaptcha/"],
-            "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://www.gstatic.com/recaptcha/"],
-            "frame-src": ["'self'", "https://www.google.com/recaptcha/", "https://recaptcha.google.com/"],
+            "script-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com", "https://*.google.com", "https://www.google.com/recaptcha/", "https://www.gstatic.com/recaptcha/"],
+            "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://www.gstatic.com/recaptcha/", "https://www.google.com/recaptcha/"],
+            "frame-src": ["'self'", "https://www.google.com/recaptcha/", "https://recaptcha.google.com/", "https://*.google.com"],
             "img-src": ["'self'", "data:", "https://*"],
-            "connect-src": ["'self'", "https://api.github.com", "https://*.google.com", "https://www.google.com/recaptcha/"]
+            "connect-src": ["'self'", "https://api.github.com", "https://*.google.com", "https://www.google.com/recaptcha/", "https://*.gstatic.com"]
         }
     },
     crossOriginEmbedderPolicy: false

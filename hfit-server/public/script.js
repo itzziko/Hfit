@@ -472,10 +472,10 @@ async function handleAuth(e) {
   if (authMode === 'signup') {
     const username = document.getElementById("firstName").value;
     const age = document.getElementById("ageInput").value;
-    const captchaResponse = grecaptcha.getResponse();
+    const captchaResponse = (typeof grecaptcha !== 'undefined') ? grecaptcha.getResponse() : null;
 
     if (!username || !age || !captchaResponse) {
-      errorDiv.textContent = !captchaResponse ? "Please complete the human verification." : "All fields required.";
+      errorDiv.textContent = (!captchaResponse && typeof grecaptcha !== 'undefined') ? "Please complete the human verification." : "All fields required.";
       errorDiv.classList.remove("hidden");
       return;
     }
@@ -491,7 +491,7 @@ async function handleAuth(e) {
   } else {
     errorDiv.textContent = result.message;
     errorDiv.classList.remove("hidden");
-    if (authMode === 'signup') grecaptcha.reset(); // Reset reCAPTCHA on fail
+    if (authMode === 'signup' && typeof grecaptcha !== 'undefined') grecaptcha.reset(); // Reset reCAPTCHA on fail
   }
 }
 
