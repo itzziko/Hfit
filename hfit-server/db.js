@@ -24,17 +24,45 @@ export async function initDb() {
       username TEXT NOT NULL,
       age INTEGER NOT NULL,
       is_admin INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      is_banned INTEGER DEFAULT 0,
+      last_ip TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS user_data (
+      user_id INTEGER PRIMARY KEY,
+      data_json TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS feedback (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      message TEXT NOT NULL,
+      reply TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS bans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL, -- 'ip' or 'email'
+      value TEXT UNIQUE NOT NULL,
+      reason TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS stats (
+      key TEXT PRIMARY KEY,
+      value INTEGER DEFAULT 0
+    );
+    INSERT OR IGNORE INTO stats (key, value) VALUES ('visits', 0);
   `);
 
-  try {
-    await db.exec("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0");
-  } catch (e) {}
-
-  try {
-    await db.exec("ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP");
-  } catch (e) {}
+  try { await db.exec("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0"); } catch (e) {}
+  try { await db.exec("ALTER TABLE users ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"); } catch (e) {}
+  try { await db.exec("ALTER TABLE users ADD COLUMN is_banned INTEGER DEFAULT 0"); } catch (e) {}
+  try { await db.exec("ALTER TABLE users ADD COLUMN last_ip TEXT"); } catch (e) {}
+  try { await db.exec("ALTER TABLE feedback ADD COLUMN reply TEXT"); } catch (e) {}
 
   // Automatically promote first user to admin if no admins exist
   const adminCount = await db.get("SELECT COUNT(*) as count FROM users WHERE is_admin = 1");
@@ -46,36 +74,6 @@ export async function initDb() {
     }
   }
 
-  try {
-    await db.exec("ALTER TABLE feedback ADD COLUMN reply TEXT");
-  } catch (e) {}
-
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS user_data (
-
-      user_id INTEGER PRIMARY KEY,
-      data_json TEXT NOT NULL,
-      FOREIGN KEY(user_id) REFERENCES users(id)
-    );
-    CREATE TABLE IF NOT EXISTS feedback (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT,
-      message TEXT NOT NULL,
-      reply TEXT,
-      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE TABLE IF NOT EXISTS bans (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      type TEXT NOT NULL, -- 'ip' or 'email'
-      value TEXT UNIQUE NOT NULL,
-      reason TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-
-  try {
-    await db.exec("ALTER TABLE users ADD COLUMN is_banned INTEGER DEFAULT 0");
-  } catch (e) {}
   console.log('✅ SQLite Database initialized');
   return db;
 }

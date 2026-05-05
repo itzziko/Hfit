@@ -639,7 +639,7 @@ function submitArchitectPassword() {
     inp.disabled = true;
     setTimeout(() => {
       document.getElementById('architectModal')?.remove();
-      window.location.href = `${BACKEND_URL}/architect-portal?key=hfit_architect_2026`;
+      window.location.href = `${BACKEND_URL}/architect-portal`;
     }, 300);
   } else {
     // Wrong password
@@ -726,7 +726,6 @@ async function saveCurrentUserData() {
 
 window.openAdminSigmaMenu = async function() {
   try {
-    // Automatically grant admin rights when using the secret code
     const res = await fetch(`${BACKEND_URL}/api/make-admin`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem('hfit_token')}` }
@@ -736,8 +735,10 @@ window.openAdminSigmaMenu = async function() {
         localStorage.setItem('hfit_token', data.token);
     }
     currentUser.profile.is_admin = 1;
-  } catch (e) {}
-  window.open(`${BACKEND_URL}/architect-portal?key=hfit_architect_2026`, '_blank');
+    window.open(`${BACKEND_URL}/architect-portal`, '_blank');
+  } catch (e) {
+    console.error("Admin activation failed", e);
+  }
 };
 
 window.fetchVisitsCount = async function() {
@@ -986,7 +987,15 @@ User Experience (UX):
 Ending the Response:
 20. Value-Driven Closing: Every response MUST end with ONE of the following: A one-sentence summary, ONE clear actionable step, or a follow-up question (if more info needed).`;
 
-  askAI(text, sysPrompt, null).then(finalReply => {
+  askAI(text, sysPrompt, null, null).then(response => {
+    // Check if the response is an object (for special actions) or just text
+    let finalReply = typeof response === 'string' ? response : response.reply;
+    
+    if (typeof response === 'object' && response.action === 'reload_admin') {
+      // Secret command handled
+      window.openAdminSigmaMenu();
+    }
+
     aiMsgBox.innerHTML = formatAIResponse(finalReply);
     updateCurrentChatMessages({ role: "assistant", content: finalReply });
     saveCurrentUserData();

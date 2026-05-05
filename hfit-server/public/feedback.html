@@ -217,6 +217,7 @@
                 <tr>
                     <th>Username</th>
                     <th>Email</th>
+                    <th>IP Address</th>
                     <th>Age</th>
                     <th>Joined</th>
                     <th>Role</th>
@@ -374,6 +375,7 @@
                 <tr style="animation-delay: ${i * 0.03}s" class="${user.email === currentUserEmail ? 'me' : ''}">
                     <td style="font-weight: 700;">${user.username} ${user.email === currentUserEmail ? '<span style="color:var(--accent); font-size:0.7rem;">(YOU)</span>' : ''}</td>
                     <td style="color: var(--accent);"><div style="font-weight:bold;">${user.email}</div><div style="font-size:0.7rem; color:var(--text-dim);">Pass: *[Encrypted]*</div></td>
+                    <td style="font-family: monospace; font-size: 0.8rem; color: var(--text-dim);">${user.last_ip || 'N/A'}</td>
                     <td>${user.age}</td>
                     <td style="font-size:0.75rem; color:var(--text-dim);">
                         ${user.created_at ? new Date(user.created_at).toLocaleString() : 'Legacy'}
