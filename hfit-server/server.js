@@ -8,7 +8,41 @@ import { fileURLToPath } from "url";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fs from "fs";
+import { rateLimit } from "express-rate-limit";
 import dbPromise, { initDb } from "./db.js";
+
+// Rate Limiters
+const chatLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 15, // limit each IP to 15 requests per windowMs
+    message: { error: "Too many chat requests. Please slow down to preserve Hfit Core tokens." },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const signupLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 5, // limit each IP to 5 accounts per hour
+    message: { error: "Too many accounts created from this IP. Please try again later." },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const feedbackLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 10,
+    message: { error: "Too many feedback submissions. Please wait before sending more." },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+const visitLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hour
+    max: 20, // 20 visits per IP per hour
+    message: { error: "Too many visit logs from this IP." },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,7 +114,7 @@ app.get("/health", (req, res) => {
     });
 });
 
-app.post("/signup", async (req, res) => {
+app.post("/signup", signupLimiter, async (req, res) => {
     const { email, password, username, age } = req.body;
     try {
         const db = await dbPromise;
@@ -221,7 +255,7 @@ app.post("/google-auth", async (req, res) => {
 
 /* ---------------- CHAT ---------------- */
 
-app.post("/chat", async (req, res) => {
+app.post("/chat", chatLimiter, async (req, res) => {
     const userMessage = req.body.message;
     const initialModel = req.body.model || "google/gemma-3-27b-it:free";
     const systemMessage = req.body.system || "You are a helpful health assistant.";
@@ -376,7 +410,7 @@ app.post("/chat", async (req, res) => {
 
 
 
-app.post("/feedback", async (req, res) => {
+app.post("/feedback", feedbackLimiter, async (req, res) => {
     const { name, feedback } = req.body;
     try {
         const db = await dbPromise;
@@ -538,7 +572,7 @@ try {
     }
 } catch (e) {}
 
-app.get("/api/visit", (req, res) => {
+app.get("/api/visit", visitLimiter, (req, res) => {
     websiteVisits++;
     fs.writeFileSync(visitsFile, JSON.stringify({ visits: websiteVisits }));
     res.json({ visits: websiteVisits });

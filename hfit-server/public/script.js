@@ -933,12 +933,14 @@ function sendMessage() {
 
   const container = document.getElementById("chatHistory");
 
-  // Create temporary wrapper for streaming
+  // Create temporary wrapper for loading
   const wrapper = document.createElement("div");
   wrapper.className = "message-wrapper assistant-wrapper";
   wrapper.innerHTML = `
     <div class="message-avatar">🤖</div>
-    <div class="message ai-msg typing-streaming"></div>
+    <div class="message ai-msg">
+      <div class="typing"><span>HFIT CORE THINKING...</span><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+    </div>
   `;
   container.appendChild(wrapper);
   const aiMsgBox = wrapper.querySelector(".ai-msg");
@@ -981,13 +983,11 @@ User Experience (UX):
 Ending the Response:
 20. Value-Driven Closing: Every response MUST end with ONE of the following: A one-sentence summary, ONE clear actionable step, or a follow-up question (if more info needed).`;
 
-  const reply = askAI(text, sysPrompt, null, (streamedText) => {
-    aiMsgBox.innerHTML = formatAIResponse(streamedText);
-    container.scrollTop = container.scrollHeight;
-  }).then(finalReply => {
-    aiMsgBox.classList.remove("typing-streaming");
+  askAI(text, sysPrompt, null).then(finalReply => {
+    aiMsgBox.innerHTML = formatAIResponse(finalReply);
     updateCurrentChatMessages({ role: "assistant", content: finalReply });
     saveCurrentUserData();
+    container.scrollTop = container.scrollHeight;
 
     // Asynchronously generate a topic title if this is the first exchange
     const thread = currentUser.data.chatThreads.find(t => t.id === currentUser.data.currentChatId);
