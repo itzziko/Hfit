@@ -357,6 +357,7 @@
                         <div class="meta-info">
                             <h3>${log.name || 'Anonymous'}</h3>
                             <p style="font-weight: 700;">Time: ${new Date(log.timestamp).toLocaleString()}</p>
+                            <p style="font-family: monospace; color: var(--accent); font-size: 0.7rem;">IP: ${log.ip || 'N/A'}</p>
                         </div>
                         <span style="font-size: 0.7rem; color: var(--text-dim);">#${log.id}</span>
                     </div>

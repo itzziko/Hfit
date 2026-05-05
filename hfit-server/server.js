@@ -16,14 +16,21 @@ import helmet from "helmet";
 import xss from "xss";
 import validator from "validator";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '.env') });
+
+// Initialize Database immediately using top-level await
+await initDb();
+
 // Initialize Google AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const geminiModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 // Rate Limiters
 const chatLimiter = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 30, // Increased limit for better UX
+    max: 30,
     message: { error: "System overload. Please wait a minute before sending more messages." },
     standardHeaders: true,
     legacyHeaders: false,
@@ -31,7 +38,7 @@ const chatLimiter = rateLimit({
 
 const signupLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5, // limit each IP to 5 accounts per hour
+    max: 5,
     message: { error: "Too many accounts created from this IP. Please try again later." },
     standardHeaders: true,
     legacyHeaders: false,
@@ -47,42 +54,53 @@ const feedbackLimiter = rateLimit({
 
 const visitLimiter = rateLimit({
     windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 100, // 100 visits per 10 mins
+    max: 100,
     message: { error: "Too many visit logs from this IP." },
     standardHeaders: true,
     legacyHeaders: false,
 });
 
-// GLOBAL PACKET LIMITER (PROTECTION)
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 500, // limit each IP to 500 requests per 15 minutes
+    max: 500,
     message: { error: "Security Alert: Excessive traffic detected from this source. Access restricted." }
 });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-dotenv.config({ path: path.join(__dirname, '.env') });
-
 const OWNER_KEY = process.env.OWNER_KEY || "default_owner_key";
-
-console.log('OPENROUTER_API_KEY loaded:', !!process.env.OPENROUTER_API_KEY);
+const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret_key_123";
 
 const app = express();
 app.set('trust proxy', 1);
+
+// PRODUCTION SECURITY
 app.use(helmet({
-    contentSecurityPolicy: false, // Disable CSP for easier integration with CDNs/images
+    contentSecurityPolicy: {
+        directives: {
+            "default-src": ["'self'"],
+            "script-src": ["'self'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+            "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            "img-src": ["'self'", "data:", "https://*"],
+            "connect-src": ["'self'", "https://api.github.com", "https://*.google.com"]
+        }
+    },
     crossOriginEmbedderPolicy: false
 }));
-app.use(globalLimiter); // Full protection
-app.use(cors());
-app.use(express.json({ limit: '10mb' })); // Packet size limit
+
+app.use(globalLimiter);
+
+const corsOptions = {
+    origin: process.env.NODE_ENV === 'production' ? process.env.ALLOWED_ORIGIN : true,
+    methods: 'GET,POST,DELETE,PUT',
+    credentials: true
+};
+app.use(cors(corsOptions));
+
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Protect sensitive files and system directories
+// Protect sensitive files
 app.use((req, res, next) => {
-    const forbidden = ['.env', '.sqlite', 'package.json', 'package-lock.json', 'feedback-logs.txt'];
+    const forbidden = ['.env', '.sqlite', 'package.json', 'package-lock.json', 'feedback-logs.txt', 'feedback.html'];
     const isForbidden = forbidden.some(file => req.path.toLowerCase().includes(file));
     
     if (isForbidden) {
@@ -100,8 +118,6 @@ app.use((req, res, next) => {
 
 app.use(express.static(path.join(__dirname, "public")));
 
-const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret_key_123";
-
 /* ---------------- BRIGHT DATA CONFIG ---------------- */
 
 const BRIGHTDATA_USERNAME = process.env.BRIGHTDATA_USERNAME;
@@ -113,23 +129,18 @@ async function fetchWithBrightData(url) {
             proxy: {
                 host: "zproxy.lum-superproxy.io",
                 port: 22225,
-                auth: {
-                    username: BRIGHTDATA_USERNAME,
-                    password: BRIGHTDATA_PASSWORD
-                }
+                auth: { username: BRIGHTDATA_USERNAME, password: BRIGHTDATA_PASSWORD }
             },
             timeout: 20000
         });
-
         return response.data;
-
     } catch (err) {
         console.error("[BRIGHTDATA ERROR]", err.message);
         return null;
     }
 }
 
-/* ---------------- AUTH ---------------- */
+/* ---------------- AUTH & BANS ---------------- */
 
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
@@ -149,41 +160,37 @@ const checkBan = async (req, res, next) => {
         const ip = req.ip || req.headers['x-forwarded-for'];
         const email = req.body?.email || (req.user?.email);
 
-        // Check IP ban
         const ipBan = await db.get("SELECT * FROM bans WHERE type = 'ip' AND value = ?", [ip]);
         if (ipBan) {
             return res.status(403).json({ success: false, message: "Your access has been terminated due to system abuse.", reason: ipBan.reason });
         }
 
-        // Check Email ban
         if (email) {
             const emailBan = await db.get("SELECT * FROM bans WHERE type = 'email' AND value = ?", [email.toLowerCase().trim()]);
             if (emailBan) {
                 return res.status(403).json({ success: false, message: "This account has been banned for policy violations.", reason: emailBan.reason });
             }
-
-            // Also check is_banned flag on user
             const user = await db.get("SELECT is_banned FROM users WHERE email = ?", [email.toLowerCase().trim()]);
             if (user && user.is_banned) {
                 return res.status(403).json({ success: false, message: "Your account is currently suspended." });
             }
         }
-
         next();
     } catch (e) {
         console.error("Ban check error:", e);
-        next(); // Proceed if check fails to avoid blocking everyone
+        next();
     }
 };
 
+/* ---------------- ROUTES ---------------- */
+
 app.get("/health", (req, res) => {
-    const hasKey = !!process.env.OPENROUTER_API_KEY || !!process.env.OPENAI_API_KEY;
-    console.log(`[HEALTH CHECK] AI Core Status: ${hasKey ? 'READY' : 'MISSING'}`);
+    const hasKey = !!process.env.OPENROUTER_API_KEY || !!process.env.OPENAI_API_KEY || !!process.env.GOOGLE_API_KEY;
     res.json({
         success: true,
         status: "ok",
         ai_key_status: hasKey ? "READY" : "MISSING",
-        version: "2.1.2",
+        version: "2.1.3",
         owner_key: process.env.OWNER_KEY ? "CONFIGURED" : "DEFAULT"
     });
 });
@@ -193,15 +200,10 @@ app.post("/signup", signupLimiter, checkBan, async (req, res) => {
     try {
         const db = await dbPromise;
         const normalizedEmail = email.trim().toLowerCase();
-
-        if (!validator.isEmail(normalizedEmail)) {
-            return res.status(400).json({ success: false, message: "Invalid email format protocol." });
-        }
+        if (!validator.isEmail(normalizedEmail)) return res.status(400).json({ success: false, message: "Invalid email format." });
 
         const existing = await db.get("SELECT * FROM users WHERE email = ?", [normalizedEmail]);
-        if (existing) {
-            return res.status(400).json({ success: false, message: "Account already exists with this email." });
-        }
+        if (existing) return res.status(400).json({ success: false, message: "Account already exists." });
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const ip = req.ip || req.headers['x-forwarded-for'];
@@ -210,18 +212,8 @@ app.post("/signup", signupLimiter, checkBan, async (req, res) => {
             [normalizedEmail, hashedPassword, username, age, 0, ip]
         );
 
-        const initialData = {
-            sleep: [],
-            goals: [],
-            chats: [],
-            chatThreads: [],
-            currentChatId: null
-        };
-
-        await db.run(
-            "INSERT INTO user_data (user_id, data_json) VALUES (?, ?)",
-            [result.lastID, JSON.stringify(initialData)]
-        );
+        const initialData = { sleep: [], goals: [], chats: [], chatThreads: [], currentChatId: null };
+        await db.run("INSERT INTO user_data (user_id, data_json) VALUES (?, ?)", [result.lastID, JSON.stringify(initialData)]);
 
         const token = jwt.sign({ id: result.lastID, email: normalizedEmail, is_admin: 0 }, JWT_SECRET);
         res.json({ success: true, token, user: { id: result.lastID, email: normalizedEmail, username, age, is_admin: 0, data: initialData, last_ip: ip } });
@@ -236,16 +228,11 @@ app.post("/login", checkBan, async (req, res) => {
     try {
         const db = await dbPromise;
         const normalizedEmail = email.trim().toLowerCase();
-
         const user = await db.get("SELECT * FROM users WHERE email = ?", [normalizedEmail]);
-        if (!user) {
-            return res.status(400).json({ success: false, message: "Account not found." });
-        }
+        if (!user) return res.status(400).json({ success: false, message: "Account not found." });
 
         const match = await bcrypt.compare(password, user.password_hash);
-        if (!match) {
-            return res.status(400).json({ success: false, message: "Incorrect password." });
-        }
+        if (!match) return res.status(400).json({ success: false, message: "Incorrect password." });
 
         const ip = req.ip || req.headers['x-forwarded-for'];
         await db.run("UPDATE users SET last_ip = ? WHERE id = ?", [ip, user.id]);
@@ -261,30 +248,14 @@ app.post("/login", checkBan, async (req, res) => {
     }
 });
 
-app.post("/api/make-admin", authenticateToken, async (req, res) => {
-    try {
-        const db = await dbPromise;
-        await db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [req.user.id]);
-        const user = await db.get("SELECT * FROM users WHERE id = ?", [req.user.id]);
-        const token = jwt.sign({ id: user.id, email: user.email, is_admin: 1 }, JWT_SECRET);
-        res.json({ success: true, token });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
-});
-
 app.get("/api/user", authenticateToken, async (req, res) => {
     try {
         const db = await dbPromise;
         const user = await db.get("SELECT id, email, username, age, is_admin FROM users WHERE id = ?", [req.user.id]);
         const userData = await db.get("SELECT data_json FROM user_data WHERE user_id = ?", [req.user.id]);
-
         if (!user) return res.status(404).json({ message: "User not found" });
-
-        const data = userData ? JSON.parse(userData.data_json) : {};
-        res.json({ success: true, user: { ...user, data } });
+        res.json({ success: true, user: { ...user, data: userData ? JSON.parse(userData.data_json) : {} } });
     } catch (e) {
-        console.error("User fetch error:", e);
         res.status(500).json({ message: "Server error" });
     }
 });
@@ -292,383 +263,203 @@ app.get("/api/user", authenticateToken, async (req, res) => {
 app.post("/api/data", authenticateToken, async (req, res) => {
     try {
         const db = await dbPromise;
-        const { data } = req.body;
-
-        await db.run(
-            "UPDATE user_data SET data_json = ? WHERE user_id = ?",
-            [JSON.stringify(data), req.user.id]
-        );
+        await db.run("UPDATE user_data SET data_json = ? WHERE user_id = ?", [JSON.stringify(req.body.data), req.user.id]);
         res.json({ success: true });
     } catch (e) {
-        console.error("Data update error:", e);
         res.status(500).json({ message: "Server error" });
     }
 });
 
-app.post("/google-auth", async (req, res) => {
-    const { email, name } = req.body;
-    try {
-        const db = await dbPromise;
-        const normalizedEmail = email.trim().toLowerCase();
-
-        let user = await db.get("SELECT * FROM users WHERE email = ?", [normalizedEmail]);
-
-        if (!user) {
-            const result = await db.run(
-                "INSERT INTO users (email, password_hash, username, age) VALUES (?, ?, ?, ?)",
-                [normalizedEmail, 'google_simulated_auth', name, 25]
-            );
-            user = { id: result.lastID, email: normalizedEmail, username: name, age: 25 };
-
-            const initialData = { sleep: [], goals: [], chats: [], chatThreads: [], currentChatId: null };
-            await db.run("INSERT INTO user_data (user_id, data_json) VALUES (?, ?)", [user.id, JSON.stringify(initialData)]);
-        }
-
-        const userData = await db.get("SELECT data_json FROM user_data WHERE user_id = ?", [user.id]);
-        const data = userData ? JSON.parse(userData.data_json) : {};
-
-        const token = jwt.sign({ id: user.id, email: normalizedEmail }, JWT_SECRET);
-        res.json({ success: true, token, user: { ...user, data } });
-    } catch (e) {
-        console.error("Google Auth error:", e);
-        res.status(500).json({ success: false, message: "Server error during Google simulation" });
-    }
-});
-
-/* ---------------- CHAT ---------------- */
-
 app.post("/chat", chatLimiter, authenticateToken, checkBan, async (req, res) => {
-    const userMessage = req.body.message;
-    const systemMessage = req.body.system || "You are Hfit AI Agent, an elite health assistant.";
-    const image = req.body.image;
-    const searchUrl = req.body.search_url;
+    const { message: userMessage, system: systemMessage = "You are Hfit AI Agent, an elite health assistant.", image, search_url: searchUrl } = req.body;
+    
+    if (!userMessage && !image) return res.status(400).json({ error: "No input provided" });
 
-    if (!userMessage && !image) {
-        return res.status(400).json({ error: "No input provided" });
-    }
-
-    // Secret Admin Activation Command - NOW REQUIRES OWNER_KEY VERIFICATION
+    // Admin Promotion Command
     if (userMessage && userMessage.startsWith('promote_admin:')) {
-        const providedKey = userMessage.split(':')[1];
-        if (providedKey === OWNER_KEY) {
+        if (userMessage.split(':')[1] === OWNER_KEY) {
             try {
                 const db = await dbPromise;
                 await db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [req.user.id]);
-                return res.json({ 
-                    reply: "HFIT_SYSTEM: ADMIN_ACCESS_GRANTED. Welcome, Architect Daniel.", 
-                    action: "reload_admin",
-                    model_used: "HFIT_SECURITY_CORE"
-                });
-            } catch (e) {
-                return res.status(500).json({ error: "Promotion protocol failed." });
-            }
-        } else {
-            return res.json({ reply: "HFIT_SECURITY: Invalid authorization key. This attempt has been logged." });
+                return res.json({ reply: "HFIT_SYSTEM: ADMIN_ACCESS_GRANTED. Welcome, Architect.", action: "reload_admin" });
+            } catch (e) { return res.status(500).json({ error: "Promotion failed." }); }
         }
+        return res.json({ reply: "HFIT_SECURITY: Invalid authorization key." });
     }
 
     try {
         let webData = "";
         if (searchUrl) {
             const pageContent = await fetchWithBrightData(searchUrl);
-            if (pageContent) {
-                webData = "\n\nWebsite Data:\n" + pageContent.substring(0, 5000);
-            }
+            if (pageContent) webData = "\n\nWebsite Data:\n" + pageContent.substring(0, 5000);
         }
 
-        const model = genAI.getGenerativeModel({ 
-            model: "gemini-1.5-flash",
-            systemInstruction: systemMessage
-        });
-
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: systemMessage });
         const promptParts = [userMessage + webData];
         
         if (image) {
-            // Convert base64 image to Google Generative AI format
             const [header, data] = image.split(',');
-            const mimeType = header.match(/:(.*?);/)[1];
-            promptParts.push({
-                inlineData: {
-                    data: data,
-                    mimeType: mimeType
-                }
-            });
+            const mimeType = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
+            promptParts.push({ inlineData: { data, mimeType } });
         }
 
         const result = await model.generateContent(promptParts);
-        const response = await result.response;
-        const text = response.text();
-
-        res.json({
-            reply: text,
-            model_used: "gemini-1.5-flash"
-        });
-
+        res.json({ reply: (await result.response).text(), model_used: "gemini-1.5-flash" });
     } catch (error) {
-        console.error("Gemini Core Error:", error);
-        res.status(500).json({ error: "HFIT CORE OFFLINE. System overload or invalid configuration." });
+        console.error("Gemini Error:", error);
+        res.status(500).json({ error: "HFIT CORE OFFLINE." });
     }
 });
-    }
-});
-
-
 
 app.post("/feedback", feedbackLimiter, checkBan, async (req, res) => {
-    let { name, feedback } = req.body;
+    const { name, feedback } = req.body;
     try {
         const db = await dbPromise;
-        
-        // SECURE INPUTS: Sanitize name and feedback to prevent XSS/Injection
         const cleanName = xss(validator.escape(name || 'Anonymous'));
         const cleanFeedback = xss(feedback || '');
+        if (!cleanFeedback) return res.status(400).json({ success: false, message: "Empty transmission." });
 
-        if (!cleanFeedback) return res.status(400).json({ success: false, message: "Empty transmission aborted." });
-
-        await db.run("INSERT INTO feedback (name, message) VALUES (?, ?)", [cleanName, cleanFeedback]);
+        const ip = req.ip || req.headers['x-forwarded-for'];
+        await db.run("INSERT INTO feedback (name, message, ip) VALUES (?, ?, ?)", [cleanName, cleanFeedback, ip]);
+        
         const timestamp = new Date().toLocaleString();
-        const logEntry = `\n--- FEEDBACK ENTRY ---\nTime: ${timestamp}\nName: ${cleanName}\nResponse: ${cleanFeedback}\nStatus: Logged to Hfit Core\n----------------------\n`;
+        const logEntry = `\n--- FEEDBACK ---\nTime: ${timestamp}\nName: ${cleanName}\nIP: ${ip}\nMessage: ${cleanFeedback}\n-----------------\n`;
+        fs.appendFileSync(path.join(__dirname, "..", "feedback-logs.txt"), logEntry);
 
-        // Local Log File
-        const localLogPath = path.join(__dirname, "..", "feedback-logs.txt");
-        fs.appendFileSync(localLogPath, logEntry);
-        console.log(`[LOCAL LOG] Feedback saved to ${localLogPath}`);
-
+        // GitHub Sync
         const ghToken = process.env.GITHUB_TOKEN;
         if (ghToken) {
             try {
-                const timestamp = new Date().toLocaleString();
-                const logEntry = `\n--- FEEDBACK ENTRY ---\nTime: ${timestamp}\nName: ${name || 'Anonymous'}\nResponse: ${feedback}\nStatus: Sent to Hfit Developers\n----------------------\n`;
-
                 const repo = "itzziko/hfit";
                 const filePath = "feedback-logs.txt";
                 const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
-
-                const getFile = await fetch(url, {
-                    headers: { "Authorization": `Bearer ${ghToken}` }
-                });
-
-                let sha = null;
-                let existingContent = "";
+                const getFile = await fetch(url, { headers: { "Authorization": `Bearer ${ghToken}` } });
+                let sha = null, existingContent = "";
                 if (getFile.ok) {
                     const fileData = await getFile.json();
                     sha = fileData.sha;
                     existingContent = Buffer.from(fileData.content, 'base64').toString('utf-8');
                 }
-
-                const newContent = existingContent + logEntry;
-                const base64Content = Buffer.from(newContent).toString('base64');
-
+                const base64Content = Buffer.from(existingContent + logEntry).toString('base64');
                 await fetch(url, {
                     method: "PUT",
-                    headers: {
-                        "Authorization": `Bearer ${ghToken}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        message: `New feedback from ${name || 'Anonymous'}`,
-                        content: base64Content,
-                        sha: sha
-                    })
+                    headers: { "Authorization": `Bearer ${ghToken}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: `Feedback from ${cleanName}`, content: base64Content, sha })
                 });
-                console.log("[GITHUB SYNC] Feedback logged to GitHub successfully.");
-            } catch (ghErr) {
-                console.error("[GITHUB SYNC ERROR]", ghErr.message);
-            }
+            } catch (err) { console.error("GitHub Sync Error:", err.message); }
         }
-
-        res.json({ success: true, message: "Feedback has been sent to Hfit developers." });
-    } catch (e) {
-        console.error("Feedback save error:", e);
-        res.status(500).json({ success: false, message: "Failed to save feedback" });
-    }
+        res.json({ success: true, message: "Feedback logged." });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-app.get("/ping", (req, res) => {
-    res.status(200).send("HFIT_SYSTEM_ACTIVE");
-});
+/* ---------------- ADMIN PORTAL ---------------- */
 
-app.use((err, req, res, next) => {
-    console.error("Critical System Error:", err);
-    res.status(500).json({ success: false, message: "Internal server error occurred. System remains active." });
-});
-
-/* ---------------- SERVER START ---------------- */
-
-initDb().then(() => {
-    const PORT = process.env.PORT || 3000;
-
-
-app.get("/architect-portal", authenticateToken, async (req, res) => {
-    if (!req.user.is_admin) {
-        return res.status(403).send("ACCESS DENIED: HFIT ADMIN CLEARANCE REQUIRED");
-    }
-    res.sendFile(path.join(__dirname, "public", "feedback.html"));
+app.get("/architect-portal", authenticateToken, (req, res) => {
+    if (!req.user.is_admin) return res.status(403).send("ADMIN CLEARANCE REQUIRED");
+    res.sendFile(path.join(__dirname, "private", "feedback.html"));
 });
 
 app.get("/feedback-logs", authenticateToken, async (req, res) => {
-    try {
-        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin clearance required." });
-        const db = await dbPromise;
-        const logs = await db.all("SELECT id, name, message as feedback, reply, timestamp FROM feedback ORDER BY id DESC LIMIT 100");
-        res.json({ success: true, logs });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    if (!req.user.is_admin) return res.status(403).json({ success: false });
+    const db = await dbPromise;
+    const logs = await db.all("SELECT id, name, message as feedback, reply, timestamp, ip FROM feedback ORDER BY id DESC LIMIT 100");
+    res.json({ success: true, logs });
 });
 
 app.post("/api/feedback/reply", authenticateToken, async (req, res) => {
-    try {
-        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
-        const { id, reply } = req.body;
-        const db = await dbPromise;
-        await db.run("UPDATE feedback SET reply = ? WHERE id = ?", [reply, id]);
-        res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    if (!req.user.is_admin) return res.status(403).json({ success: false });
+    const db = await dbPromise;
+    await db.run("UPDATE feedback SET reply = ? WHERE id = ?", [req.body.reply, req.body.id]);
+    res.json({ success: true });
 });
 
 app.delete("/feedback/:id", authenticateToken, async (req, res) => {
-    try {
-        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin clearance required." });
-        const db = await dbPromise;
-        await db.run("DELETE FROM feedback WHERE id = ?", [req.params.id]);
-        res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    if (!req.user.is_admin) return res.status(403).json({ success: false });
+    const db = await dbPromise;
+    await db.run("DELETE FROM feedback WHERE id = ?", [req.params.id]);
+    res.json({ success: true });
 });
 
 app.get("/api/users", authenticateToken, async (req, res) => {
-    try {
-        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
-        const db = await dbPromise;
-        const users = await db.all("SELECT id, email, username, age, is_admin, created_at, last_ip FROM users");
-        res.json({ success: true, users });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    if (!req.user.is_admin) return res.status(403).json({ success: false });
+    const db = await dbPromise;
+    const users = await db.all("SELECT id, email, username, age, is_admin, created_at, last_ip FROM users");
+    res.json({ success: true, users });
 });
 
 app.delete("/api/users/:id", authenticateToken, async (req, res) => {
-    try {
-        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
-        const db = await dbPromise;
-        await db.run("DELETE FROM users WHERE id = ?", [req.params.id]);
-        await db.run("DELETE FROM user_data WHERE user_id = ?", [req.params.id]);
-        res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    if (!req.user.is_admin) return res.status(403).json({ success: false });
+    const db = await dbPromise;
+    await db.run("DELETE FROM users WHERE id = ?", [req.params.id]);
+    await db.run("DELETE FROM user_data WHERE user_id = ?", [req.params.id]);
+    res.json({ success: true });
 });
 
 app.post("/api/reset-password", authenticateToken, async (req, res) => {
-    try {
-        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
-        const db = await dbPromise;
-        const { userId, newPassword } = req.body;
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await db.run("UPDATE users SET password_hash = ? WHERE id = ?", [hashedPassword, userId]);
-        res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    if (!req.user.is_admin) return res.status(403).json({ success: false });
+    const { userId, newPassword } = req.body;
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const db = await dbPromise;
+    await db.run("UPDATE users SET password_hash = ? WHERE id = ?", [hashedPassword, userId]);
+    res.json({ success: true });
 });
 
 app.get("/api/visit", visitLimiter, async (req, res) => {
-    try {
-        const db = await dbPromise;
-        await db.run("UPDATE stats SET value = value + 1 WHERE key = 'visits'");
-        const stats = await db.get("SELECT value FROM stats WHERE key = 'visits'");
-        res.json({ visits: stats.value });
-    } catch (e) {
-        res.status(500).json({ error: "Visit log failed" });
-    }
+    const db = await dbPromise;
+    await db.run("UPDATE stats SET value = value + 1 WHERE key = 'visits'");
+    const stats = await db.get("SELECT value FROM stats WHERE key = 'visits'");
+    res.json({ visits: stats.value });
 });
 
 app.get("/api/stats", authenticateToken, async (req, res) => {
-    try {
-        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin access required" });
-        const db = await dbPromise;
-        const userCount = await db.get("SELECT COUNT(*) as count FROM users");
-        const feedbackCount = await db.get("SELECT COUNT(*) as count FROM feedback");
-        const stats = await db.get("SELECT value FROM stats WHERE key = 'visits'");
-        res.json({ 
-            success: true, 
-            users: userCount.count, 
-            feedback: feedbackCount.count, 
-            visits: stats.value 
-        });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    if (!req.user.is_admin) return res.status(403).json({ success: false });
+    const db = await dbPromise;
+    const userCount = await db.get("SELECT COUNT(*) as count FROM users");
+    const feedbackCount = await db.get("SELECT COUNT(*) as count FROM feedback");
+    const stats = await db.get("SELECT value FROM stats WHERE key = 'visits'");
+    res.json({ success: true, users: userCount.count, feedback: feedbackCount.count, visits: stats.value });
 });
 
 app.get("/api/bans", authenticateToken, async (req, res) => {
-    try {
-        if (!req.user.is_admin) return res.status(403).json({ success: false });
-        const db = await dbPromise;
-        const bans = await db.all("SELECT * FROM bans ORDER BY id DESC");
-        res.json({ success: true, bans });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    if (!req.user.is_admin) return res.status(403).json({ success: false });
+    const db = await dbPromise;
+    res.json({ success: true, bans: await db.all("SELECT * FROM bans ORDER BY id DESC") });
 });
 
 app.post("/api/bans", authenticateToken, async (req, res) => {
-    try {
-        if (!req.user.is_admin) return res.status(403).json({ success: false });
-        const { type, value, reason } = req.body;
-        const db = await dbPromise;
-        await db.run("INSERT OR REPLACE INTO bans (type, value, reason) VALUES (?, ?, ?)", [type, value.toLowerCase().trim(), reason]);
-        
-        if (type === 'email') {
-            await db.run("UPDATE users SET is_banned = 1 WHERE email = ?", [value.toLowerCase().trim()]);
-        }
-        
-        res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    if (!req.user.is_admin) return res.status(403).json({ success: false });
+    const { type, value, reason } = req.body;
+    const db = await dbPromise;
+    await db.run("INSERT OR REPLACE INTO bans (type, value, reason) VALUES (?, ?, ?)", [type, value.toLowerCase().trim(), reason]);
+    if (type === 'email') await db.run("UPDATE users SET is_banned = 1 WHERE email = ?", [value.toLowerCase().trim()]);
+    res.json({ success: true });
 });
 
 app.delete("/api/bans/:id", authenticateToken, async (req, res) => {
-    try {
-        if (!req.user.is_admin) return res.status(403).json({ success: false });
-        const db = await dbPromise;
-        const ban = await db.get("SELECT * FROM bans WHERE id = ?", [req.params.id]);
-        if (ban && ban.type === 'email') {
-            await db.run("UPDATE users SET is_banned = 0 WHERE email = ?", [ban.value]);
-        }
-        await db.run("DELETE FROM bans WHERE id = ?", [req.params.id]);
-        res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ success: false });
-    }
+    if (!req.user.is_admin) return res.status(403).json({ success: false });
+    const db = await dbPromise;
+    const ban = await db.get("SELECT * FROM bans WHERE id = ?", [req.params.id]);
+    if (ban?.type === 'email') await db.run("UPDATE users SET is_banned = 0 WHERE email = ?", [ban.value]);
+    await db.run("DELETE FROM bans WHERE id = ?", [req.params.id]);
+    res.json({ success: true });
 });
 
 app.get("/api/get-visits", async (req, res) => {
-    try {
-        const db = await dbPromise;
-        const stats = await db.get("SELECT value FROM stats WHERE key = 'visits'");
-        res.json({ visits: stats.value });
-    } catch (e) {
-        res.status(500).json({ visits: 0 });
-    }
+    const db = await dbPromise;
+    const stats = await db.get("SELECT value FROM stats WHERE key = 'visits'");
+    res.json({ visits: stats?.value || 0 });
 });
 
-    app.listen(PORT, () =>
-        console.log(`✅ Hfit server running on port ${PORT}`)
-    );
+app.get("/ping", (req, res) => res.status(200).send("HFIT_SYSTEM_ACTIVE"));
+
+// Error Handling
+app.use((err, req, res, next) => {
+    console.error("Critical System Error:", err);
+    res.status(500).json({ success: false, message: "Internal server error." });
 });
 
-/* ---------------- ERROR HANDLING ---------------- */
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`✅ Hfit server running on port ${PORT}`));
 
-process.on('uncaughtException', (err) => {
-    console.error('There was an uncaught error', err);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-});
+process.on('uncaughtException', (err) => console.error('Uncaught Exception:', err));
+process.on('unhandledRejection', (reason, promise) => console.error('Unhandled Rejection:', promise, 'reason:', reason));

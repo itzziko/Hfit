@@ -40,6 +40,7 @@ export async function initDb() {
       name TEXT,
       message TEXT NOT NULL,
       reply TEXT,
+      ip TEXT,
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -63,6 +64,7 @@ export async function initDb() {
   try { await db.exec("ALTER TABLE users ADD COLUMN is_banned INTEGER DEFAULT 0"); } catch (e) {}
   try { await db.exec("ALTER TABLE users ADD COLUMN last_ip TEXT"); } catch (e) {}
   try { await db.exec("ALTER TABLE feedback ADD COLUMN reply TEXT"); } catch (e) {}
+  try { await db.exec("ALTER TABLE feedback ADD COLUMN ip TEXT"); } catch (e) {}
 
   // Automatic promotion disabled for security. Use OWNER_KEY to promote via chat.
   console.log('✅ SQLite Database initialized and secured');
