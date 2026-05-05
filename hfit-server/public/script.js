@@ -29,12 +29,12 @@ function clearSession() {
 }
 
 // --- AUTH LOGIC ---
-async function createAccount(email, password, username, age) {
+async function createAccount(email, password, username, age, captchaAnswer, captchaId) {
   try {
     const res = await fetch(`${BACKEND_URL}/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, username, age })
+      body: JSON.stringify({ email, password, username, age, captcha_answer: captchaAnswer, captcha_id: captchaId })
     });
     const result = await res.json();
     const lang = document.documentElement.lang || 'en';
@@ -452,6 +452,22 @@ function setAuthMode(mode) {
   document.getElementById("btn-mode-signin").classList.toggle("active", mode === 'signin');
   document.getElementById("signupFields").style.display = mode === 'signup' ? "contents" : "none";
   document.getElementById("authSubmitBtn").textContent = mode === 'signup' ? "Initialize Health AI" : "Authenticate Session";
+  
+  if (mode === 'signup') {
+    fetchCaptcha();
+  }
+}
+
+async function fetchCaptcha() {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/captcha`);
+    const data = await res.json();
+    document.getElementById("captchaQuestion").textContent = data.question;
+    document.getElementById("captchaId").value = data.captcha_id;
+    document.getElementById("captchaAnswer").value = "";
+  } catch (e) {
+    console.error("Captcha fetch failed", e);
+  }
 }
 
 async function handleAuth(e) {
@@ -466,24 +482,27 @@ async function handleAuth(e) {
   if (authMode === 'signup') {
     const username = document.getElementById("firstName").value;
     const age = document.getElementById("ageInput").value;
-    if (!username || !age) {
-      errorDiv.textContent = "Please provide Name and Age.";
+    const captchaAnswer = document.getElementById("captchaAnswer").value;
+    const captchaId = document.getElementById("captchaId").value;
+
+    if (!username || !age || !captchaAnswer) {
+      errorDiv.textContent = "All fields and verification required.";
       errorDiv.classList.remove("hidden");
       return;
     }
-    result = await createAccount(email, password, username, age);
+    result = await createAccount(email, password, username, age, captchaAnswer, captchaId);
   } else {
     result = await login(email, password);
   }
 
   if (result.success) {
-    // currentUser is successfully populated inside createAccount / login
     initChatSystem();
     showApp();
     checkAiStatus();
   } else {
     errorDiv.textContent = result.message;
     errorDiv.classList.remove("hidden");
+    if (authMode === 'signup') fetchCaptcha(); // Refresh on fail
   }
 }
 
@@ -725,20 +744,7 @@ async function saveCurrentUserData() {
 }
 
 window.openAdminSigmaMenu = async function() {
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/make-admin`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem('hfit_token')}` }
-    });
-    const data = await res.json();
-    if(data.success && data.token) {
-        localStorage.setItem('hfit_token', data.token);
-    }
-    currentUser.profile.is_admin = 1;
-    window.open(`${BACKEND_URL}/architect-portal`, '_blank');
-  } catch (e) {
-    console.error("Admin activation failed", e);
-  }
+    alert("SECURITY ALERT: This feature has been disabled for safety. Use the promote_admin chat command or the Architect Portal password.");
 };
 
 window.fetchVisitsCount = async function() {

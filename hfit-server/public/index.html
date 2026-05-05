@@ -62,6 +62,12 @@
         <div id="signupFields" style="display:contents;">
           <input id="firstName" name="given-name" autocomplete="given-name" placeholder="First Name" data-t-placeholder="firstname-placeholder" />
           <input id="ageInput" name="age" type="number" placeholder="Age" data-t-placeholder="age-placeholder" />
+          
+          <div id="captchaContainer" style="margin-top:10px; background: rgba(0, 242, 255, 0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(0, 242, 255, 0.1);">
+            <p id="captchaQuestion" style="font-size:0.8rem; color:var(--accent-primary); font-weight:800; margin-bottom:10px; text-transform: uppercase; letter-spacing:1px;"></p>
+            <input id="captchaAnswer" type="text" placeholder="Your Answer" style="background: rgba(0,0,0,0.3); border-color: rgba(0, 242, 255, 0.2);" required />
+            <input id="captchaId" type="hidden" />
+          </div>
         </div>
       </div>
 

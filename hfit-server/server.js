@@ -8,13 +8,13 @@ import { fileURLToPath } from "url";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fs from "fs";
-import { rateLimit } from "express-rate-limit";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { initDb } from "./db.js";
 import dbPromise from "./db.js";
 import helmet from "helmet";
 import xss from "xss";
 import validator from "validator";
+import crypto from "crypto";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,47 +27,9 @@ await initDb();
 // Initialize Google AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
-// Rate Limiters
-const chatLimiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute
-    max: 30,
-    message: { error: "System overload. Please wait a minute before sending more messages." },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
-const signupLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 5,
-    message: { error: "Too many accounts created from this IP. Please try again later." },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
-const feedbackLimiter = rateLimit({
-    windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10,
-    message: { error: "Too many feedback submissions. Please wait before sending more." },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
-const visitLimiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 100,
-    message: { error: "Too many visit logs from this IP." },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-
-const globalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 500,
-    message: { error: "Security Alert: Excessive traffic detected from this source. Access restricted." }
-});
-
 const OWNER_KEY = process.env.OWNER_KEY || "default_owner_key";
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret_key_123";
+const CAPTCHA_SECRET = process.env.CAPTCHA_SECRET || "captcha_salt_99";
 
 const app = express();
 app.set('trust proxy', 1);
@@ -85,8 +47,6 @@ app.use(helmet({
     },
     crossOriginEmbedderPolicy: false
 }));
-
-app.use(globalLimiter);
 
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' ? process.env.ALLOWED_ORIGIN : true,
@@ -182,6 +142,36 @@ const checkBan = async (req, res, next) => {
     }
 };
 
+/* ---------------- CAPTCHA ---------------- */
+
+app.get("/api/captcha", (req, res) => {
+    const a = Math.floor(Math.random() * 10) + 1;
+    const b = Math.floor(Math.random() * 10) + 1;
+    const solution = a + b;
+    const expiry = Date.now() + 5 * 60 * 1000; // 5 mins
+    
+    const hash = crypto.createHmac('sha256', CAPTCHA_SECRET)
+        .update(`${solution}:${expiry}`)
+        .digest('hex');
+
+    res.json({
+        question: `Human Verification: What is ${a} + ${b}?`,
+        captcha_id: `${hash}:${expiry}`
+    });
+});
+
+function verifyCaptcha(userAnswer, captchaId) {
+    if (!userAnswer || !captchaId) return false;
+    const [hash, expiry] = captchaId.split(':');
+    if (Date.now() > parseInt(expiry)) return false;
+
+    const expectedHash = crypto.createHmac('sha256', CAPTCHA_SECRET)
+        .update(`${userAnswer}:${expiry}`)
+        .digest('hex');
+
+    return hash === expectedHash;
+}
+
 /* ---------------- ROUTES ---------------- */
 
 app.get("/health", (req, res) => {
@@ -190,13 +180,18 @@ app.get("/health", (req, res) => {
         success: true,
         status: "ok",
         ai_key_status: hasKey ? "READY" : "MISSING",
-        version: "2.1.3",
+        version: "2.1.4",
         owner_key: process.env.OWNER_KEY ? "CONFIGURED" : "DEFAULT"
     });
 });
 
-app.post("/signup", signupLimiter, checkBan, async (req, res) => {
-    const { email, password, username, age } = req.body;
+app.post("/signup", checkBan, async (req, res) => {
+    const { email, password, username, age, captcha_answer, captcha_id } = req.body;
+    
+    if (!verifyCaptcha(captcha_answer, captcha_id)) {
+        return res.status(400).json({ success: false, message: "Human verification failed. Please try again." });
+    }
+
     try {
         const db = await dbPromise;
         const normalizedEmail = email.trim().toLowerCase();
@@ -270,7 +265,7 @@ app.post("/api/data", authenticateToken, async (req, res) => {
     }
 });
 
-app.post("/chat", chatLimiter, authenticateToken, checkBan, async (req, res) => {
+app.post("/chat", authenticateToken, checkBan, async (req, res) => {
     const { message: userMessage, system: systemMessage = "You are Hfit AI Agent, an elite health assistant.", image, search_url: searchUrl } = req.body;
     
     if (!userMessage && !image) return res.status(400).json({ error: "No input provided" });
@@ -311,7 +306,7 @@ app.post("/chat", chatLimiter, authenticateToken, checkBan, async (req, res) => 
     }
 });
 
-app.post("/feedback", feedbackLimiter, checkBan, async (req, res) => {
+app.post("/feedback", checkBan, async (req, res) => {
     const { name, feedback } = req.body;
     try {
         const db = await dbPromise;
@@ -404,7 +399,7 @@ app.post("/api/reset-password", authenticateToken, async (req, res) => {
     res.json({ success: true });
 });
 
-app.get("/api/visit", visitLimiter, async (req, res) => {
+app.get("/api/visit", async (req, res) => {
     const db = await dbPromise;
     await db.run("UPDATE stats SET value = value + 1 WHERE key = 'visits'");
     const stats = await db.get("SELECT value FROM stats WHERE key = 'visits'");
