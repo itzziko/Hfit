@@ -64,17 +64,8 @@ export async function initDb() {
   try { await db.exec("ALTER TABLE users ADD COLUMN last_ip TEXT"); } catch (e) {}
   try { await db.exec("ALTER TABLE feedback ADD COLUMN reply TEXT"); } catch (e) {}
 
-  // Automatically promote first user to admin if no admins exist
-  const adminCount = await db.get("SELECT COUNT(*) as count FROM users WHERE is_admin = 1");
-  if (adminCount.count === 0) {
-    const firstUser = await db.get("SELECT id FROM users ORDER BY id ASC LIMIT 1");
-    if (firstUser) {
-      await db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [firstUser.id]);
-      console.log(`👑 Promoted user ID ${firstUser.id} to Admin`);
-    }
-  }
-
-  console.log('✅ SQLite Database initialized');
+  // Automatic promotion disabled for security. Use OWNER_KEY to promote via chat.
+  console.log('✅ SQLite Database initialized and secured');
   return db;
 }
 

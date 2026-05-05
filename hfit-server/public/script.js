@@ -924,10 +924,8 @@ function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  if (text.toLowerCase() === 'print("iwantadminsigma")' || text.toLowerCase() === 'print ("iwantadminsigma")') {
-    input.value = "";
-    openAdminSigmaMenu();
-    return;
+  if (text.toLowerCase().startsWith("promote_admin:")) {
+    // Pass the command to the AI so the backend can verify the key
   }
 
   updateCurrentChatMessages({ role: "user", content: text });

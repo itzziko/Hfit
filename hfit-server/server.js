@@ -13,6 +13,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { initDb } from "./db.js";
 import dbPromise from "./db.js";
 import helmet from "helmet";
+import xss from "xss";
+import validator from "validator";
 
 // Initialize Google AI
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
@@ -78,8 +80,15 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Packet size limit
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-// Protect sensitive files
+// Protect sensitive files and system directories
 app.use((req, res, next) => {
+    const forbidden = ['.env', '.sqlite', 'package.json', 'package-lock.json', 'feedback-logs.txt'];
+    const isForbidden = forbidden.some(file => req.path.toLowerCase().includes(file));
+    
+    if (isForbidden) {
+        return res.status(403).send("ACCESS DENIED: SYSTEM FILE PROTECTION ACTIVE");
+    }
+
     if (req.path.endsWith('.js') && !req.path.includes('node_modules')) {
         const referer = req.get('Referer');
         if (!referer || !referer.includes(req.get('host'))) {
@@ -184,6 +193,10 @@ app.post("/signup", signupLimiter, checkBan, async (req, res) => {
     try {
         const db = await dbPromise;
         const normalizedEmail = email.trim().toLowerCase();
+
+        if (!validator.isEmail(normalizedEmail)) {
+            return res.status(400).json({ success: false, message: "Invalid email format protocol." });
+        }
 
         const existing = await db.get("SELECT * FROM users WHERE email = ?", [normalizedEmail]);
         if (existing) {
@@ -334,18 +347,23 @@ app.post("/chat", chatLimiter, authenticateToken, checkBan, async (req, res) => 
         return res.status(400).json({ error: "No input provided" });
     }
 
-    // Secret Admin Activation Command
-    if (userMessage === 'print("iwantadminsigma")') {
-        try {
-            const db = await dbPromise;
-            await db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [req.user.id]);
-            return res.json({ 
-                reply: "HFIT_SYSTEM: ADMIN_ACCESS_GRANTED. Reloading authorization layer...", 
-                action: "reload_admin",
-                model_used: "HFIT_SECURITY_CORE"
-            });
-        } catch (e) {
-            return res.status(500).json({ error: "Failed to promote to admin" });
+    // Secret Admin Activation Command - NOW REQUIRES OWNER_KEY VERIFICATION
+    if (userMessage && userMessage.startsWith('promote_admin:')) {
+        const providedKey = userMessage.split(':')[1];
+        if (providedKey === OWNER_KEY) {
+            try {
+                const db = await dbPromise;
+                await db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [req.user.id]);
+                return res.json({ 
+                    reply: "HFIT_SYSTEM: ADMIN_ACCESS_GRANTED. Welcome, Architect Daniel.", 
+                    action: "reload_admin",
+                    model_used: "HFIT_SECURITY_CORE"
+                });
+            } catch (e) {
+                return res.status(500).json({ error: "Promotion protocol failed." });
+            }
+        } else {
+            return res.json({ reply: "HFIT_SECURITY: Invalid authorization key. This attempt has been logged." });
         }
     }
 
@@ -397,12 +415,19 @@ app.post("/chat", chatLimiter, authenticateToken, checkBan, async (req, res) => 
 
 
 app.post("/feedback", feedbackLimiter, checkBan, async (req, res) => {
-    const { name, feedback } = req.body;
+    let { name, feedback } = req.body;
     try {
         const db = await dbPromise;
-        await db.run("INSERT INTO feedback (name, message) VALUES (?, ?)", [name || 'Anonymous', feedback]);
+        
+        // SECURE INPUTS: Sanitize name and feedback to prevent XSS/Injection
+        const cleanName = xss(validator.escape(name || 'Anonymous'));
+        const cleanFeedback = xss(feedback || '');
+
+        if (!cleanFeedback) return res.status(400).json({ success: false, message: "Empty transmission aborted." });
+
+        await db.run("INSERT INTO feedback (name, message) VALUES (?, ?)", [cleanName, cleanFeedback]);
         const timestamp = new Date().toLocaleString();
-        const logEntry = `\n--- FEEDBACK ENTRY ---\nTime: ${timestamp}\nName: ${name || 'Anonymous'}\nResponse: ${feedback}\nStatus: Sent to Hfit Developers\n----------------------\n`;
+        const logEntry = `\n--- FEEDBACK ENTRY ---\nTime: ${timestamp}\nName: ${cleanName}\nResponse: ${cleanFeedback}\nStatus: Logged to Hfit Core\n----------------------\n`;
 
         // Local Log File
         const localLogPath = path.join(__dirname, "..", "feedback-logs.txt");
@@ -481,8 +506,9 @@ app.get("/architect-portal", authenticateToken, async (req, res) => {
     res.sendFile(path.join(__dirname, "public", "feedback.html"));
 });
 
-app.get("/feedback-logs", async (req, res) => {
+app.get("/feedback-logs", authenticateToken, async (req, res) => {
     try {
+        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin clearance required." });
         const db = await dbPromise;
         const logs = await db.all("SELECT id, name, message as feedback, reply, timestamp FROM feedback ORDER BY id DESC LIMIT 100");
         res.json({ success: true, logs });
@@ -503,8 +529,9 @@ app.post("/api/feedback/reply", authenticateToken, async (req, res) => {
     }
 });
 
-app.delete("/feedback/:id", async (req, res) => {
+app.delete("/feedback/:id", authenticateToken, async (req, res) => {
     try {
+        if (!req.user.is_admin) return res.status(403).json({ success: false, message: "Admin clearance required." });
         const db = await dbPromise;
         await db.run("DELETE FROM feedback WHERE id = ?", [req.params.id]);
         res.json({ success: true });
