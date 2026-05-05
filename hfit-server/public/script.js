@@ -29,12 +29,12 @@ function clearSession() {
 }
 
 // --- AUTH LOGIC ---
-async function createAccount(email, password, username, age, captchaAnswer, captchaId) {
+async function createAccount(email, password, username, age, captchaResponse) {
   try {
     const res = await fetch(`${BACKEND_URL}/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, username, age, captcha_answer: captchaAnswer, captcha_id: captchaId })
+      body: JSON.stringify({ email, password, username, age, captcha_response: captchaResponse })
     });
     const result = await res.json();
     const lang = document.documentElement.lang || 'en';
@@ -454,25 +454,11 @@ function setAuthMode(mode) {
   document.getElementById("authSubmitBtn").textContent = mode === 'signup' ? "Initialize Health AI" : "Authenticate Session";
   
   if (mode === 'signup') {
-    fetchCaptcha();
+    // reCAPTCHA is handled by the Google script
   }
 }
 
-async function fetchCaptcha() {
-  const questionEl = document.getElementById("captchaQuestion");
-  if (questionEl) questionEl.textContent = "SYNCING...";
-  
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/captcha`);
-    const data = await res.json();
-    if (questionEl) questionEl.textContent = data.question;
-    document.getElementById("captchaId").value = data.captcha_id;
-    document.getElementById("captchaAnswer").value = "";
-  } catch (e) {
-    console.error("Captcha fetch failed", e);
-    if (questionEl) questionEl.textContent = "VERIFICATION OFFLINE";
-  }
-}
+// reCAPTCHA logic handled by Google script
 
 async function handleAuth(e) {
   e.preventDefault();
@@ -486,15 +472,14 @@ async function handleAuth(e) {
   if (authMode === 'signup') {
     const username = document.getElementById("firstName").value;
     const age = document.getElementById("ageInput").value;
-    const captchaAnswer = document.getElementById("captchaAnswer").value;
-    const captchaId = document.getElementById("captchaId").value;
+    const captchaResponse = grecaptcha.getResponse();
 
-    if (!username || !age || !captchaAnswer) {
-      errorDiv.textContent = "All fields and verification required.";
+    if (!username || !age || !captchaResponse) {
+      errorDiv.textContent = !captchaResponse ? "Please complete the human verification." : "All fields required.";
       errorDiv.classList.remove("hidden");
       return;
     }
-    result = await createAccount(email, password, username, age, captchaAnswer, captchaId);
+    result = await createAccount(email, password, username, age, captchaResponse);
   } else {
     result = await login(email, password);
   }
@@ -506,7 +491,7 @@ async function handleAuth(e) {
   } else {
     errorDiv.textContent = result.message;
     errorDiv.classList.remove("hidden");
-    if (authMode === 'signup') fetchCaptcha(); // Refresh on fail
+    if (authMode === 'signup') grecaptcha.reset(); // Reset reCAPTCHA on fail
   }
 }
 

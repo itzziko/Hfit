@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,11 +18,17 @@
             --card-bg: rgba(15, 15, 15, 0.6);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-        body { 
-            background: var(--bg); 
-            color: var(--text); 
-            padding: 40px 5%; 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            padding: 40px 5%;
             min-height: 100vh;
             background-image: radial-gradient(circle at 50% -10%, rgba(0, 242, 255, 0.1) 0%, transparent 50%);
         }
@@ -36,9 +43,24 @@
             padding-bottom: 20px;
         }
 
-        h1 { font-size: 2.2rem; font-weight: 900; letter-spacing: 1px; color: var(--accent); display: flex; align-items: center; gap: 10px;}
-        h1 span { font-size: 1.2rem; background: rgba(0, 242, 255, 0.1); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(0, 242, 255, 0.2); }
-        
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h1 span {
+            font-size: 1.2rem;
+            background: rgba(0, 242, 255, 0.1);
+            padding: 5px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+
         .tabs {
             max-width: 1200px;
             margin: 0 auto 30px;
@@ -47,7 +69,7 @@
             border-bottom: 1px solid var(--border);
             padding-bottom: 10px;
         }
-        
+
         .tab {
             padding: 10px 25px;
             border-radius: 10px;
@@ -57,16 +79,26 @@
             transition: 0.3s;
             border: 1px solid transparent;
         }
-        .tab:hover { background: var(--glass); color: var(--text); }
-        .tab.active { background: rgba(0, 242, 255, 0.1); color: var(--accent); border-color: rgba(0, 242, 255, 0.2); }
 
-        .controls { 
+        .tab:hover {
+            background: var(--glass);
+            color: var(--text);
+        }
+
+        .tab.active {
+            background: rgba(0, 242, 255, 0.1);
+            color: var(--accent);
+            border-color: rgba(0, 242, 255, 0.2);
+        }
+
+        .controls {
             max-width: 1200px;
             margin: 0 auto 20px;
-            display: flex; 
-            gap: 15px; 
+            display: flex;
+            gap: 15px;
             align-items: center;
         }
+
         .controls input {
             padding: 12px 18px;
             border-radius: 10px;
@@ -77,12 +109,27 @@
             width: 300px;
             font-size: 0.95rem;
         }
-        .controls input:focus { border-color: var(--accent); box-shadow: 0 0 15px rgba(0, 242, 255, 0.1); }
 
-        .view-content { max-width: 1200px; margin: 0 auto; display: none; }
-        .view-content.active { display: block; }
+        .controls input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.1);
+        }
 
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .view-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: none;
+        }
+
+        .view-content.active {
+            display: block;
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
 
         .card {
             background: var(--card-bg);
@@ -96,20 +143,54 @@
             position: relative;
             overflow: hidden;
         }
-        .card:hover { border-color: rgba(0, 242, 255, 0.3); transform: translateY(-5px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }
-        
-        .meta { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px;}
-        .meta-info h3 { font-weight: 700; color: var(--accent); font-size: 1.15rem; margin-bottom: 4px; }
-        .meta-info p { font-size: 0.75rem; color: var(--text-dim); }
-        
-        .msg-box { font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.9); background: rgba(0,0,0,0.4); padding: 15px; border-radius: 12px; margin-bottom: 15px; flex-grow: 1; word-wrap: break-word; border: 1px solid rgba(255,255,255,0.03);}
-        
+
+        .card:hover {
+            border-color: rgba(0, 242, 255, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 10px;
+        }
+
+        .meta-info h3 {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 1.15rem;
+            margin-bottom: 4px;
+        }
+
+        .meta-info p {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .msg-box {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            flex-grow: 1;
+            word-wrap: break-word;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 25px;
             margin-bottom: 40px;
         }
+
         .stat-card {
             background: var(--glass);
             border: 1px solid var(--border);
@@ -118,38 +199,114 @@
             text-align: center;
             transition: 0.3s;
         }
-        .stat-card:hover { border-color: var(--accent); background: rgba(0, 242, 255, 0.05); }
-        .stat-value { font-size: 3rem; font-weight: 900; color: var(--accent); margin-bottom: 10px; text-shadow: 0 0 20px rgba(0, 242, 255, 0.3); }
-        .stat-label { font-size: 0.9rem; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: 2px; }
+
+        .stat-card:hover {
+            border-color: var(--accent);
+            background: rgba(0, 242, 255, 0.05);
+        }
+
+        .stat-value {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--accent);
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.3);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
 
         .user-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0 10px;
         }
-        .user-table th { text-align: left; padding: 15px; color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
-        .user-table tr { background: var(--card-bg); border-radius: 12px; transition: 0.3s; }
-        .user-table tr.me { border: 1px solid var(--accent); background: rgba(0, 242, 255, 0.05); }
-        .user-table td { padding: 15px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-        .user-table td:first-child { border-left: 1px solid var(--border); border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
-        .user-table td:last-child { border-right: 1px solid var(--border); border-top-right-radius: 12px; border-bottom-right-radius: 12px; text-align: right;}
-        
-        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 800; }
-        .badge-admin { background: rgba(0, 242, 255, 0.1); color: var(--accent); border: 1px solid var(--accent); }
-        .badge-user { background: rgba(255, 255, 255, 0.1); color: var(--text-dim); }
 
-        #status { text-align: center; font-weight: 700; color: var(--accent); margin-top: 50px; font-size: 1.2rem; letter-spacing: 2px;}
+        .user-table th {
+            text-align: left;
+            padding: 15px;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .user-table tr {
+            background: var(--card-bg);
+            border-radius: 12px;
+            transition: 0.3s;
+        }
+
+        .user-table tr.me {
+            border: 1px solid var(--accent);
+            background: rgba(0, 242, 255, 0.05);
+        }
+
+        .user-table td {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .user-table td:first-child {
+            border-left: 1px solid var(--border);
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+
+        .user-table td:last-child {
+            border-right: 1px solid var(--border);
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+            text-align: right;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+
+        .badge-admin {
+            background: rgba(0, 242, 255, 0.1);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .badge-user {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-dim);
+        }
+
+        #status {
+            text-align: center;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 50px;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
 
         .modal {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(10px);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
         }
+
         .modal-content {
             background: var(--bg);
             border: 1px solid var(--accent);
@@ -158,16 +315,61 @@
             width: 400px;
         }
 
-        .btn { padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; border: none; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-        .btn-accent { background: rgba(0, 242, 255, 0.1); color: var(--accent); border: 1px solid rgba(0, 242, 255, 0.2); }
-        .btn-accent:hover { background: var(--accent); color: #000; }
-        .btn-danger { background: rgba(255, 51, 102, 0.1); color: var(--danger); border: 1px solid rgba(255, 51, 102, 0.2); }
-        .btn-danger:hover { background: var(--danger); color: #fff; }
+        .btn {
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            border: none;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .card, tr, .stat-card { animation: fadeIn 0.4s ease backwards; }
+        .btn-accent {
+            background: rgba(0, 242, 255, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+
+        .btn-accent:hover {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-danger {
+            background: rgba(255, 51, 102, 0.1);
+            color: var(--danger);
+            border: 1px solid rgba(255, 51, 102, 0.2);
+        }
+
+        .btn-danger:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card,
+        tr,
+        .stat-card {
+            animation: fadeIn 0.4s ease backwards;
+        }
     </style>
 </head>
+
 <body>
     <div class="header">
         <h1>HFIT ARCHITECT <span>PORTAL V4</span></h1>
@@ -230,19 +432,23 @@
 
     <!-- BANS VIEW -->
     <div id="view-bans" class="view-content">
-        <div class="controls" style="background: var(--card-bg); padding: 25px; border-radius: 20px; border: 1px solid var(--border); flex-direction: column; align-items: stretch; gap: 20px;">
+        <div class="controls"
+            style="background: var(--card-bg); padding: 25px; border-radius: 20px; border: 1px solid var(--border); flex-direction: column; align-items: stretch; gap: 20px;">
             <h3 style="color: var(--accent); margin-bottom: 5px;">Establish New Restriction</h3>
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                <select id="banType" style="padding: 12px; border-radius: 10px; background: var(--glass); border: 1px solid var(--border); color: #fff; outline: none; width: 120px;">
+                <select id="banType"
+                    style="padding: 12px; border-radius: 10px; background: var(--glass); border: 1px solid var(--border); color: #fff; outline: none; width: 120px;">
                     <option value="ip">IP Address</option>
                     <option value="email">Email</option>
                 </select>
-                <input type="text" id="banValue" placeholder="Target value (IP or Email)..." style="flex: 1; min-width: 250px;">
-                <input type="text" id="banReason" placeholder="Reason for restriction..." style="flex: 1; min-width: 250px;">
+                <input type="text" id="banValue" placeholder="Target value (IP or Email)..."
+                    style="flex: 1; min-width: 250px;">
+                <input type="text" id="banReason" placeholder="Reason for restriction..."
+                    style="flex: 1; min-width: 250px;">
                 <button class="btn btn-danger" onclick="addBan()">EXECUTE BAN</button>
             </div>
         </div>
-        
+
         <table class="user-table">
             <thead>
                 <tr>
@@ -261,15 +467,18 @@
 
 
 
-    <div id="password-modal" class="modal"><div class="modal-content">
-        <h2 style="color:var(--accent); margin-bottom:20px;">Reset Password</h2>
-        <p id="password-user-label" style="margin-bottom: 15px; font-size: 0.9rem; color: var(--text-dim);"></p>
-        <input type="password" id="new-password" placeholder="Enter new password" style="width: 100%; padding: 12px; background: var(--glass); border: 1px solid var(--border); border-radius: 10px; color: #fff; margin-bottom: 20px;">
-        <div style="display:flex; justify-content:flex-end; gap:10px;">
-            <button class="btn" onclick="closeModal('password-modal')">Cancel</button>
-            <button class="btn btn-danger" onclick="submitPasswordReset()">Reset Password</button>
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="color:var(--accent); margin-bottom:20px;">Reset Password</h2>
+            <p id="password-user-label" style="margin-bottom: 15px; font-size: 0.9rem; color: var(--text-dim);"></p>
+            <input type="password" id="new-password" placeholder="Enter new password"
+                style="width: 100%; padding: 12px; background: var(--glass); border: 1px solid var(--border); border-radius: 10px; color: #fff; margin-bottom: 20px;">
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button class="btn" onclick="closeModal('password-modal')">Cancel</button>
+                <button class="btn btn-danger" onclick="submitPasswordReset()">Reset Password</button>
+            </div>
         </div>
-    </div></div>
+    </div>
 
     <script>
         let globalFeedback = [];
@@ -283,11 +492,11 @@
                 status.innerHTML = "ACCESS DENIED. <br><br> Admin privileges required.";
                 return;
             }
-            
+
             try {
                 const userRes = await fetch('/api/user', { headers: { 'Authorization': `Bearer ${token}` } });
                 const userData = await userRes.json();
-                
+
                 if (!userData.user || !userData.user.is_admin) {
                     status.innerHTML = "UNAUTHORIZED ACCESS.";
                     return;
@@ -296,7 +505,7 @@
                 currentUserEmail = userData.user.email;
                 document.getElementById('auth-status').textContent = `Architect: ${userData.user.username}`;
                 status.style.display = 'none';
-                
+
                 refreshData();
                 setInterval(refreshStats, 30000); // Auto-refresh stats
             } catch (e) { status.textContent = "CORE CONNECTION LOST."; }
@@ -403,7 +612,7 @@
 
         function filterFeedback() {
             const q = document.getElementById('feedbackSearch').value.toLowerCase();
-            renderFeedback(globalFeedback.filter(l => (l.name||'').toLowerCase().includes(q) || (l.feedback||'').toLowerCase().includes(q)));
+            renderFeedback(globalFeedback.filter(l => (l.name || '').toLowerCase().includes(q) || (l.feedback || '').toLowerCase().includes(q)));
         }
 
         function filterUsers() {
@@ -439,7 +648,7 @@
                 fetchFeedback();
             }
         }
-        
+
         async function deleteUser(id, email) {
             if (email === currentUserEmail) {
                 alert("You cannot delete your own admin account.");
@@ -458,7 +667,7 @@
                     } else {
                         alert("Failed to delete account.");
                     }
-                } catch(e) {
+                } catch (e) {
                     alert("Error deleting user.");
                 }
             }
@@ -527,4 +736,5 @@
         init();
     </script>
 </body>
+
 </html>
