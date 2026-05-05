@@ -436,7 +436,15 @@ button:hover {
 }
 
 button:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.98);
+  filter: brightness(0.9);
+}
+
+.btn-small.active {
+  background: var(--accent-primary) !important;
+  color: #000 !important;
+  box-shadow: 0 5px 15px var(--accent-glow) !important;
+  opacity: 1 !important;
 }
 
 button:disabled {

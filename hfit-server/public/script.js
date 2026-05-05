@@ -195,14 +195,17 @@ window.onload = async () => {
   fetch(`${BACKEND_URL}/api/visit`).catch(() => {});
 
   // Hide Splash Screen Setup
-  setTimeout(() => {
+  const hideSplash = () => {
     const splash = document.getElementById("splashScreen");
-    if (splash) {
+    if (splash && splash.style.opacity !== '0') {
       splash.style.opacity = '0';
       splash.style.visibility = 'hidden';
       setTimeout(() => splash.remove(), 800);
     }
-  }, 4800);
+  };
+
+  document.getElementById("splashScreen")?.addEventListener("click", hideSplash);
+  setTimeout(hideSplash, 1200);
 };
 
 // --- BIO-RHYTHM ---
