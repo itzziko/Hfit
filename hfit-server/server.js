@@ -29,7 +29,7 @@ const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 const OWNER_KEY = process.env.OWNER_KEY || "default_owner_key";
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret_key_123";
-const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET || "YOUR_SECRET_KEY";
+
 
 const app = express();
 app.set('trust proxy', 1);
@@ -39,11 +39,11 @@ app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             "default-src": ["'self'"],
-            "script-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com", "https://*.google.com", "https://www.google.com/recaptcha/", "https://www.gstatic.com/recaptcha/"],
-            "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://www.gstatic.com/recaptcha/", "https://www.google.com/recaptcha/"],
-            "frame-src": ["'self'", "https://www.google.com/recaptcha/", "https://recaptcha.google.com/", "https://*.google.com"],
+            "script-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://fonts.googleapis.com"],
+            "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            "frame-src": ["'self'"],
             "img-src": ["'self'", "data:", "https://*"],
-            "connect-src": ["'self'", "https://api.github.com", "https://*.google.com", "https://www.google.com/recaptcha/", "https://*.gstatic.com"]
+            "connect-src": ["'self'", "https://api.github.com"]
         }
     },
     crossOriginEmbedderPolicy: false
@@ -136,21 +136,9 @@ const checkBan = async (req, res, next) => {
     }
 };
 
-/* ---------------- CAPTCHA ---------------- */
 
-async function verifyRecaptcha(token) {
-    if (!token) return false;
-    try {
-        const response = await fetch(`https://www.google.com/recaptcha/api/siteverify?secret=${RECAPTCHA_SECRET}&response=${token}`, {
-            method: "POST"
-        });
-        const data = await response.json();
-        return data.success;
-    } catch (e) {
-        console.error("reCAPTCHA Error:", e);
-        return false;
-    }
-}
+
+
 
 /* ---------------- ROUTES ---------------- */
 
@@ -166,11 +154,9 @@ app.get("/health", (req, res) => {
 });
 
 app.post("/signup", checkBan, async (req, res) => {
-    const { email, password, username, age, captcha_response } = req.body;
+    const { email, password, username, age } = req.body;
     
-    if (!(await verifyRecaptcha(captcha_response))) {
-        return res.status(400).json({ success: false, message: "Human verification failed. Please try again." });
-    }
+
 
     try {
         const db = await dbPromise;

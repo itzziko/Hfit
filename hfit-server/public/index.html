@@ -13,7 +13,6 @@
     rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="translations.js"></script>
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 
 <body class="dark-mode">
@@ -59,19 +58,12 @@
           required />
         <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Password" data-t-placeholder="password-placeholder"
           required />
-
         <div id="signupFields" style="display:contents;">
           <input id="firstName" name="given-name" autocomplete="given-name" placeholder="First Name" data-t-placeholder="firstname-placeholder" />
           <input id="ageInput" name="age" type="number" placeholder="Age" data-t-placeholder="age-placeholder" />
-          
-          <div id="captchaContainer" style="margin-top:10px;">
-            <div class="g-recaptcha" data-sitekey="YOUR_SITE_KEY" data-theme="dark"></div>
-          </div>
         </div>
       </div>
-
       <button type="submit" id="authSubmitBtn" data-t="initialize-ai">Initialize Health AI</button>
-
       <div id="authError" class="auth-error hidden"></div>
 
       <div style="margin-top: 20px; text-align: center;">

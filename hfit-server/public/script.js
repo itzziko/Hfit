@@ -29,12 +29,12 @@ function clearSession() {
 }
 
 // --- AUTH LOGIC ---
-async function createAccount(email, password, username, age, captchaResponse) {
+async function createAccount(email, password, username, age) {
   try {
     const res = await fetch(`${BACKEND_URL}/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, username, age, captcha_response: captchaResponse })
+      body: JSON.stringify({ email, password, username, age })
     });
     const result = await res.json();
     const lang = document.documentElement.lang || 'en';
@@ -454,11 +454,11 @@ function setAuthMode(mode) {
   document.getElementById("authSubmitBtn").textContent = mode === 'signup' ? "Initialize Health AI" : "Authenticate Session";
   
   if (mode === 'signup') {
-    // reCAPTCHA is handled by the Google script
+    // Captcha has been removed for frictionless onboarding
   }
 }
 
-// reCAPTCHA logic handled by Google script
+// Auth logic
 
 async function handleAuth(e) {
   e.preventDefault();
@@ -472,14 +472,7 @@ async function handleAuth(e) {
   if (authMode === 'signup') {
     const username = document.getElementById("firstName").value;
     const age = document.getElementById("ageInput").value;
-    const captchaResponse = (typeof grecaptcha !== 'undefined') ? grecaptcha.getResponse() : null;
-
-    if (!username || !age || !captchaResponse) {
-      errorDiv.textContent = (!captchaResponse && typeof grecaptcha !== 'undefined') ? "Please complete the human verification." : "All fields required.";
-      errorDiv.classList.remove("hidden");
-      return;
-    }
-    result = await createAccount(email, password, username, age, captchaResponse);
+    result = await createAccount(email, password, username, age);
   } else {
     result = await login(email, password);
   }
@@ -491,7 +484,6 @@ async function handleAuth(e) {
   } else {
     errorDiv.textContent = result.message;
     errorDiv.classList.remove("hidden");
-    if (authMode === 'signup' && typeof grecaptcha !== 'undefined') grecaptcha.reset(); // Reset reCAPTCHA on fail
   }
 }
 
