@@ -589,30 +589,32 @@ button:disabled {
   z-index: 10;
 }
 
-.auth-container {
-  max-width: 440px;
-  width: 95%;
-  background: var(--card-bg);
-  backdrop-filter: blur(40px);
-  border: 1px solid var(--glass-border);
-  padding: 50px;
-  border-radius: 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
-  animation: authFadeIn 0.8s var(--transition);
+.auth-screen h1 {
+  font-size: 5rem;
+  font-weight: 950;
+  letter-spacing: -4px;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 10px 20px var(--accent-glow));
+  margin-bottom: 5px;
 }
 
-.auth-error {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid #ef4444;
-  color: #ef4444;
-  padding: 12px;
-  border-radius: 12px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-align: center;
+.auth-container {
+  max-width: 480px;
+  width: 95%;
+  background: var(--card-bg);
+  backdrop-filter: blur(60px);
+  border: 1px solid var(--glass-border);
+  padding: 60px;
+  border-radius: 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  box-shadow: var(--shadow-premium);
+  animation: authFadeIn 1s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 
