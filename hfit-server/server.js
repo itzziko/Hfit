@@ -102,6 +102,39 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+const checkBan = async (req, res, next) => {
+    try {
+        const db = await dbPromise;
+        const ip = req.ip || req.headers['x-forwarded-for'];
+        const email = req.body?.email || (req.user?.email);
+
+        // Check IP ban
+        const ipBan = await db.get("SELECT * FROM bans WHERE type = 'ip' AND value = ?", [ip]);
+        if (ipBan) {
+            return res.status(403).json({ success: false, message: "Your access has been terminated due to system abuse.", reason: ipBan.reason });
+        }
+
+        // Check Email ban
+        if (email) {
+            const emailBan = await db.get("SELECT * FROM bans WHERE type = 'email' AND value = ?", [email.toLowerCase().trim()]);
+            if (emailBan) {
+                return res.status(403).json({ success: false, message: "This account has been banned for policy violations.", reason: emailBan.reason });
+            }
+
+            // Also check is_banned flag on user
+            const user = await db.get("SELECT is_banned FROM users WHERE email = ?", [email.toLowerCase().trim()]);
+            if (user && user.is_banned) {
+                return res.status(403).json({ success: false, message: "Your account is currently suspended." });
+            }
+        }
+
+        next();
+    } catch (e) {
+        console.error("Ban check error:", e);
+        next(); // Proceed if check fails to avoid blocking everyone
+    }
+};
+
 app.get("/health", (req, res) => {
     const hasKey = !!process.env.OPENROUTER_API_KEY || !!process.env.OPENAI_API_KEY;
     console.log(`[HEALTH CHECK] AI Core Status: ${hasKey ? 'READY' : 'MISSING'}`);
@@ -114,7 +147,7 @@ app.get("/health", (req, res) => {
     });
 });
 
-app.post("/signup", signupLimiter, async (req, res) => {
+app.post("/signup", signupLimiter, checkBan, async (req, res) => {
     const { email, password, username, age } = req.body;
     try {
         const db = await dbPromise;
@@ -152,7 +185,7 @@ app.post("/signup", signupLimiter, async (req, res) => {
     }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/login", checkBan, async (req, res) => {
     const { email, password } = req.body;
     try {
         const db = await dbPromise;
@@ -255,7 +288,7 @@ app.post("/google-auth", async (req, res) => {
 
 /* ---------------- CHAT ---------------- */
 
-app.post("/chat", chatLimiter, async (req, res) => {
+app.post("/chat", chatLimiter, authenticateToken, checkBan, async (req, res) => {
     const userMessage = req.body.message;
     const initialModel = req.body.model || "google/gemma-3-27b-it:free";
     const systemMessage = req.body.system || "You are a helpful health assistant.";
@@ -410,7 +443,7 @@ app.post("/chat", chatLimiter, async (req, res) => {
 
 
 
-app.post("/feedback", feedbackLimiter, async (req, res) => {
+app.post("/feedback", feedbackLimiter, checkBan, async (req, res) => {
     const { name, feedback } = req.body;
     try {
         const db = await dbPromise;
@@ -590,6 +623,49 @@ app.get("/api/stats", authenticateToken, async (req, res) => {
             feedback: feedbackCount.count, 
             visits: websiteVisits 
         });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.get("/api/bans", authenticateToken, async (req, res) => {
+    try {
+        if (!req.user.is_admin) return res.status(403).json({ success: false });
+        const db = await dbPromise;
+        const bans = await db.all("SELECT * FROM bans ORDER BY id DESC");
+        res.json({ success: true, bans });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.post("/api/bans", authenticateToken, async (req, res) => {
+    try {
+        if (!req.user.is_admin) return res.status(403).json({ success: false });
+        const { type, value, reason } = req.body;
+        const db = await dbPromise;
+        await db.run("INSERT OR REPLACE INTO bans (type, value, reason) VALUES (?, ?, ?)", [type, value.toLowerCase().trim(), reason]);
+        
+        if (type === 'email') {
+            await db.run("UPDATE users SET is_banned = 1 WHERE email = ?", [value.toLowerCase().trim()]);
+        }
+        
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.delete("/api/bans/:id", authenticateToken, async (req, res) => {
+    try {
+        if (!req.user.is_admin) return res.status(403).json({ success: false });
+        const db = await dbPromise;
+        const ban = await db.get("SELECT * FROM bans WHERE id = ?", [req.params.id]);
+        if (ban && ban.type === 'email') {
+            await db.run("UPDATE users SET is_banned = 0 WHERE email = ?", [ban.value]);
+        }
+        await db.run("DELETE FROM bans WHERE id = ?", [req.params.id]);
+        res.json({ success: true });
     } catch (e) {
         res.status(500).json({ success: false });
     }

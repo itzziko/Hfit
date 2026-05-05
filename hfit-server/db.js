@@ -64,7 +64,18 @@ export async function initDb() {
       reply TEXT,
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
+    CREATE TABLE IF NOT EXISTS bans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      type TEXT NOT NULL, -- 'ip' or 'email'
+      value TEXT UNIQUE NOT NULL,
+      reason TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
   `);
+
+  try {
+    await db.exec("ALTER TABLE users ADD COLUMN is_banned INTEGER DEFAULT 0");
+  } catch (e) {}
   console.log('✅ SQLite Database initialized');
   return db;
 }

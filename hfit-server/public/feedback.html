@@ -178,6 +178,7 @@
         <div class="tab active" onclick="switchTab('analytics')">ANALYTICS</div>
         <div class="tab" onclick="switchTab('feedback')">FEEDBACK</div>
         <div class="tab" onclick="switchTab('users')">USERS</div>
+        <div class="tab" onclick="switchTab('bans')">BANS</div>
     </div>
 
     <!-- ANALYTICS VIEW -->
@@ -223,6 +224,35 @@
                 </tr>
             </thead>
             <tbody id="user-list"></tbody>
+        </table>
+    </div>
+
+    <!-- BANS VIEW -->
+    <div id="view-bans" class="view-content">
+        <div class="controls" style="background: var(--card-bg); padding: 25px; border-radius: 20px; border: 1px solid var(--border); flex-direction: column; align-items: stretch; gap: 20px;">
+            <h3 style="color: var(--accent); margin-bottom: 5px;">Establish New Restriction</h3>
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                <select id="banType" style="padding: 12px; border-radius: 10px; background: var(--glass); border: 1px solid var(--border); color: #fff; outline: none; width: 120px;">
+                    <option value="ip">IP Address</option>
+                    <option value="email">Email</option>
+                </select>
+                <input type="text" id="banValue" placeholder="Target value (IP or Email)..." style="flex: 1; min-width: 250px;">
+                <input type="text" id="banReason" placeholder="Reason for restriction..." style="flex: 1; min-width: 250px;">
+                <button class="btn btn-danger" onclick="addBan()">EXECUTE BAN</button>
+            </div>
+        </div>
+        
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Target Value</th>
+                    <th>Reason</th>
+                    <th>Established</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="ban-list"></tbody>
         </table>
     </div>
 
@@ -272,7 +302,7 @@
         }
 
         async function refreshData() {
-            await Promise.all([fetchFeedback(), fetchUsers(), refreshStats()]);
+            await Promise.all([fetchFeedback(), fetchUsers(), fetchBans(), refreshStats()]);
         }
 
         async function refreshStats() {
@@ -365,6 +395,7 @@
             document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
             document.getElementById(`view-${tab}`).classList.add('active');
             if (tab === 'analytics') refreshStats();
+            if (tab === 'bans') fetchBans();
         }
 
         function filterFeedback() {
@@ -426,6 +457,66 @@
                     }
                 } catch(e) {
                     alert("Error deleting user.");
+                }
+            }
+        }
+
+        async function fetchBans() {
+            const res = await fetch('/api/bans', { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            if (data.success) {
+                renderBans(data.bans);
+            }
+        }
+
+        function renderBans(bans) {
+            const container = document.getElementById('ban-list');
+            container.innerHTML = bans.map((ban, i) => `
+                <tr style="animation-delay: ${i * 0.03}s">
+                    <td style="font-weight: 800; color: var(--danger);">${ban.type.toUpperCase()}</td>
+                    <td style="font-family: monospace; font-size: 0.9rem;">${ban.value}</td>
+                    <td style="font-size: 0.85rem;">${ban.reason || 'No reason provided.'}</td>
+                    <td style="font-size: 0.75rem; color: var(--text-dim);">${new Date(ban.created_at).toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-accent" style="padding: 5px 12px; font-size: 0.75rem;" onclick="removeBan(${ban.id})">Lift Restriction</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function addBan() {
+            const type = document.getElementById('banType').value;
+            const value = document.getElementById('banValue').value.trim();
+            const reason = document.getElementById('banReason').value.trim();
+
+            if (!value) {
+                alert("Target value required.");
+                return;
+            }
+
+            const res = await fetch('/api/bans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ type, value, reason })
+            });
+
+            if ((await res.json()).success) {
+                document.getElementById('banValue').value = '';
+                document.getElementById('banReason').value = '';
+                fetchBans();
+                fetchUsers(); // Refresh user list if an email was banned
+            }
+        }
+
+        async function removeBan(id) {
+            if (confirm("Lift this restriction?")) {
+                const res = await fetch(`/api/bans/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if ((await res.json()).success) {
+                    fetchBans();
+                    fetchUsers();
                 }
             }
         }
