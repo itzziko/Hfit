@@ -29,6 +29,12 @@ await initDb();
 const OWNER_KEY = process.env.OWNER_KEY || "default_owner_key";
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret_key_123";
 
+// HFIT CORE CONFIGURATION & BYPASS LOGIC
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
+const isDemoMode = !OPENROUTER_API_KEY.startsWith('sk-or-v1-');
+
+console.log(`[HFIT CORE] Mode: ${isDemoMode ? 'DEMO' : 'LIVE'} | Key Status: ${OPENROUTER_API_KEY ? 'CONFIGURED' : 'MISSING'}`);
+
 
 const app = express();
 app.set('trust proxy', 1);
@@ -274,10 +280,10 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
         let response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
-                "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
                 "Content-Type": "application/json",
-                "HTTP-Referer": "https://hfit.ai",
-                "X-Title": "Hfit Performance System"
+                "HTTP-Referer": "https://render.com",
+                "X-Title": "Antigravity"
             },
             body: JSON.stringify({
                 model: "google/gemini-2.5-flash",
@@ -294,10 +300,10 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
             response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                    "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
                     "Content-Type": "application/json",
-                    "HTTP-Referer": "https://hfit.ai",
-                    "X-Title": "Hfit Performance System"
+                    "HTTP-Referer": "https://render.com",
+                    "X-Title": "Antigravity"
                 },
                 body: JSON.stringify({
                     model: "google/gemini-2.0-flash-lite-001", // Reliable stable model
@@ -317,7 +323,7 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
         console.error("OpenRouter Error:", error);
         
         // Fallback for invalid API key so the frontend demo still works
-        if (error.message && (error.message.includes("401") || error.message.includes("key not valid") || error.message.includes("Authentication"))) {
+        if (isDemoMode && error.message && (error.message.includes("401") || error.message.includes("key not valid") || error.message.includes("Authentication"))) {
             return res.json({ 
                 reply: "DEMO MODE: HFIT Core is connected, but the API key is invalid.\n\nThis is a simulated response to verify the frontend works perfectly. Please update your OPENROUTER_API_KEY.", 
                 model_used: "demo-mock" 
