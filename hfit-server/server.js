@@ -109,35 +109,6 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-const blockVPN = async (req, res, next) => {
-    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    
-    // Check for common proxy headers
-    const proxyHeaders = [
-        'x-proxy-id',
-        'x-proxy-agent',
-        'via',
-        'proxy-connection',
-        'x-forwarded-proto'
-    ];
-    
-    const isProxyHeader = proxyHeaders.some(h => req.headers[h]);
-    
-    if (isProxyHeader) {
-        return res.status(403).json({ 
-            success: false, 
-            message: "SECURITY ALERT: VPN/Proxy usage detected. Hfit requires a direct residential connection for data integrity.",
-            ip: ip
-        });
-    }
-
-    // Optional: Real-time IP check (using a free tier of a geo-api if possible, 
-    // but for now we rely on headers and a basic 'hosting' check simulation)
-    // In production, you would use a service like IP2Proxy or similar.
-    
-    next();
-};
-
 const checkBan = async (req, res, next) => {
     try {
         const db = await dbPromise;
@@ -183,7 +154,7 @@ app.get("/health", (req, res) => {
     });
 });
 
-app.post("/signup", blockVPN, checkBan, async (req, res) => {
+app.post("/signup", checkBan, async (req, res) => {
     const { email, password, username, age } = req.body;
     
 
@@ -214,7 +185,7 @@ app.post("/signup", blockVPN, checkBan, async (req, res) => {
     }
 });
 
-app.post("/login", blockVPN, checkBan, async (req, res) => {
+app.post("/login", checkBan, async (req, res) => {
     const { email, password } = req.body;
     try {
         const db = await dbPromise;
@@ -346,7 +317,7 @@ app.post("/feedback", checkBan, async (req, res) => {
 
 /* ---------------- ADMIN PORTAL ---------------- */
 
-app.get("/architect-portal", authenticateToken, blockVPN, (req, res) => {
+app.get("/architect-portal", authenticateToken, (req, res) => {
     if (!req.user.is_admin) return res.status(403).send("ADMIN CLEARANCE REQUIRED");
     res.sendFile(path.join(__dirname, "private", "feedback.html"));
 });
