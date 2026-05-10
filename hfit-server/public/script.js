@@ -177,8 +177,9 @@ window.onload = async () => {
     document.getElementById("app").classList.add("hidden");
   }
 
-  const theme = localStorage.getItem("hfitTheme") || "dark-mode";
+  const theme = localStorage.getItem("hfitTheme") || "light-mode";
   document.body.className = theme;
+  loadCustomColors();
   checkBioRhythm(); // Ensure bio-rhythm is applied on top of saved theme
 
   const recentAccounts = getRecentAccounts();
@@ -518,6 +519,65 @@ function logout() {
 function toggleTheme() {
   const isLight = document.body.classList.toggle("light-mode");
   localStorage.setItem("hfitTheme", isLight ? "light-mode" : "dark-mode");
+  // Re-apply custom colors if they exist to override defaults
+  loadCustomColors();
+}
+
+function openThemeCustomizer() {
+  const modal = document.getElementById('themeModal');
+  if (modal) {
+    // Set picker values to current computed styles
+    const styles = getComputedStyle(document.body);
+    document.getElementById('primaryColorInput').value = rgbToHex(styles.getPropertyValue('--accent-primary').trim());
+    document.getElementById('secondaryColorInput').value = rgbToHex(styles.getPropertyValue('--accent-secondary').trim());
+    modal.classList.remove('hidden');
+  }
+}
+
+function applyCustomColors() {
+  const primary = document.getElementById('primaryColorInput').value;
+  const secondary = document.getElementById('secondaryColorInput').value;
+  
+  document.documentElement.style.setProperty('--accent-primary', primary);
+  document.documentElement.style.setProperty('--accent-secondary', secondary);
+  document.documentElement.style.setProperty('--accent-glow', primary + '33'); // Add transparency (0.2 approx)
+
+  localStorage.setItem('hfit_primary_color', primary);
+  localStorage.setItem('hfit_secondary_color', secondary);
+}
+
+function loadCustomColors() {
+  const primary = localStorage.getItem('hfit_primary_color');
+  const secondary = localStorage.getItem('hfit_secondary_color');
+  
+  if (primary && secondary) {
+    document.documentElement.style.setProperty('--accent-primary', primary);
+    document.documentElement.style.setProperty('--accent-secondary', secondary);
+    document.documentElement.style.setProperty('--accent-glow', primary + '33');
+  }
+}
+
+function resetThemeColors() {
+  localStorage.removeItem('hfit_primary_color');
+  localStorage.removeItem('hfit_secondary_color');
+  document.documentElement.style.removeProperty('--accent-primary');
+  document.documentElement.style.removeProperty('--accent-secondary');
+  document.documentElement.style.removeProperty('--accent-glow');
+  document.getElementById('themeModal').classList.add('hidden');
+  // Re-trigger theme logic to get defaults
+  const theme = localStorage.getItem("hfitTheme") || "dark-mode";
+  document.body.className = theme;
+}
+
+// Helper to convert rgb(r, g, b) to #hex
+function rgbToHex(rgb) {
+  if (rgb.startsWith('#')) return rgb;
+  const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+  if (!match) return "#0ea5e9"; // Default sky blue
+  const r = parseInt(match[1]);
+  const g = parseInt(match[2]);
+  const b = parseInt(match[3]);
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
 }
 
 // Secret Dev Reveal Logic
