@@ -286,7 +286,7 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
                 "X-Title": "Antigravity"
             },
             body: JSON.stringify({
-                model: "google/gemini-flash-1.5",
+                model: "google/gemini-2.5-flash",
                 messages: messages,
                 max_tokens: 2000
             })
@@ -316,10 +316,6 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
 
         if (!response.ok) {
             throw new Error(data.error?.message || `OpenRouter Error ${response.status}`);
-        }
-
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-            throw new Error("Invalid response structure from AI Core.");
         }
 
         res.json({ reply: data.choices[0].message.content, model_used: data.model });

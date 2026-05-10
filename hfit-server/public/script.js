@@ -858,10 +858,9 @@ async function askAI(message, systemPrompt = "You are a helpful health agent.", 
       return fullReply;
     } else {
       const data = await res.json();
-      if (!data || typeof data !== 'object') throw new Error("Malformed core response.");
       console.log("[AI SYNC]", data);
       updateStatusUI("CONNECTED TO CORE", "var(--accent-primary)");
-      return data.reply || data.error || "No response received.";
+      return data.reply || "No response received.";
     }
   } catch (error) {
     console.warn(`Request failed:`, error.message);
@@ -1378,18 +1377,11 @@ function clearBruiseAnalyzer() {
 async function analyzeBruise(e) {
   const lang = document.documentElement.lang || 'en';
   const status = document.getElementById("bruiseResult");
-  const scanner = document.getElementById("scannerContainer");
-  const placeholder = document.getElementById("bruisePlaceholder");
-  
-  if (!status || !scanner || !placeholder) {
-    console.error("Dermal UI elements missing.");
-    return;
-  }
-
   const btn = e?.target?.closest('button') || document.querySelector('button[onclick*="analyzeBruise"]');
   const currentImage = bruiseImageBase64;
 
   if (!currentImage) {
+    const lang = document.documentElement.lang || 'en';
     const dict = translations[lang] || translations['en'];
     status.classList.remove("hidden");
     status.innerHTML = `<span style="color:#ef4444;">${dict["vision-error"] || "SYNC ERROR: NO VISUAL DATA UPLOADED."}</span>`;
@@ -1397,13 +1389,11 @@ async function analyzeBruise(e) {
   }
 
   // Visual Feedback
-  const originalHtml = btn ? btn.innerHTML : "ANALYZE";
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = `<div class="spinner"></div> SCANNING...`;
-  }
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> SCANNING...`;
 
-  scanner.classList.add("active-scan");
+  document.getElementById("scannerContainer").classList.add("active-scan");
   status.classList.remove("hidden");
   status.innerHTML = `<div class="typing"><span>SCANNING DERMAL TISSUE...</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
 
@@ -1412,8 +1402,9 @@ async function analyzeBruise(e) {
   try {
     const reply = await askAI(prompt, "Hfit Vision Module. Medical diagnostic tone with clear, professional headers. Elite response formatting.", currentImage);
 
-    if (!reply || typeof reply !== 'string' || reply.startsWith("Error:")) {
-      throw new Error(reply || "Empty transmission from core.");
+    // Check if error message returned
+    if (reply.startsWith("Error:")) {
+      throw new Error(reply);
     }
 
     // Save result to dashboard
@@ -1426,9 +1417,9 @@ async function analyzeBruise(e) {
     if (currentUser.data.visionHistory.length > 5) currentUser.data.visionHistory.pop();
 
     // Clear visual preview
-    scanner.classList.remove("active-scan");
-    scanner.classList.add("hidden");
-    placeholder.classList.remove("hidden");
+    document.getElementById("scannerContainer").classList.remove("active-scan");
+    document.getElementById("scannerContainer").classList.add("hidden");
+    document.getElementById("bruisePlaceholder").classList.remove("hidden");
     bruiseImageBase64 = null;
     
     saveCurrentUserData();
@@ -1436,16 +1427,15 @@ async function analyzeBruise(e) {
     
     // Switch to dashboard to show permanence
     setTimeout(() => openTab('dashboard'), 3000);
-  } catch (err) {
+  } catch (e) {
+    const lang = document.documentElement.lang || 'en';
     const dict = translations[lang] || translations['en'];
-    console.error("BRUISE_SCAN_ERROR:", err);
-    scanner.classList.remove("active-scan");
-    status.innerHTML = `<span style="color:#ef4444;">${dict["scan-interrupted"] || "SCAN INTERRUPTED."} <br><small>${err.message || ""}</small></span>`;
+    console.error("BRUISE_SCAN_ERROR:", e);
+    document.getElementById("scannerContainer").classList.remove("active-scan");
+    status.innerHTML = `<span style="color:#ef4444;">${dict["scan-interrupted"] || "SCAN INTERRUPTED."}</span>`;
   } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = originalHtml;
-    }
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
   }
 }
 
