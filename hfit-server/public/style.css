@@ -15,22 +15,17 @@
 }
 
 body.light-mode {
-  --bg-color: #f0f9ff; /* Light Sky Blue BG */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(14, 165, 233, 0.1);
-  --accent-primary: #0ea5e9; /* Sky Blue */
-  --accent-secondary: #0284c7; /* Darker Sky Blue */
-  --accent-glow: rgba(14, 165, 233, 0.2);
-  --text-main: #0f172a;
-  --text-dim: #475569;
+  --bg-color: #f8fafc;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --accent-primary: #0ea5e9;
+  --accent-secondary: #6366f1;
+  --accent-glow: rgba(14, 165, 233, 0.15);
+  --text-main: #000000;
+  --text-dim: #334155;
   --card-bg: #ffffff;
-  --sidebar-bg: #e0f2fe;
+  --sidebar-bg: #f1f5f9;
   --input-outline: rgba(14, 165, 233, 0.1);
-}
-
-:root {
-  --custom-accent-primary: var(--accent-primary);
-  --custom-accent-secondary: var(--accent-secondary);
 }
 
 /* BIO-RHYTHM MODES - CONFORMING TO CORE BLUE THEME */

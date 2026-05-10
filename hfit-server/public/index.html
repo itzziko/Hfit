@@ -15,7 +15,7 @@
   <script src="translations.js"></script>
 </head>
 
-<body class="light-mode">
+<body class="dark-mode">
 
   <!-- SPLASH SCREEN -->
   <div id="splashScreen" class="splash-screen">
@@ -111,33 +111,6 @@
     </div>
   </div>
 
-  <!-- THEME CUSTOMIZER MODAL -->
-  <div id="themeModal" class="hidden"
-    style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:10000; backdrop-filter:blur(15px);">
-    <div class="card" style="max-width:400px; width:90%; position:relative;">
-      <button onclick="document.getElementById('themeModal').classList.add('hidden')"
-        style="position:absolute; top:20px; right:20px; background:none; box-shadow:none; color:var(--text-dim); font-size:1.5rem; padding:0;">✖</button>
-      <h3 style="margin-bottom:10px;">Theme Customizer</h3>
-      <p style="color:var(--text-dim); margin-bottom:20px; font-size:0.9rem;">Personalize your Hfit experience with custom colors.</p>
-      
-      <div style="display:flex; flex-direction:column; gap:20px; margin-bottom:25px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-weight:700;">Primary Accent</span>
-          <input type="color" id="primaryColorInput" style="width:60px; height:40px; padding:0; border-radius:8px; cursor:pointer;" onchange="applyCustomColors()">
-        </div>
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-weight:700;">Secondary Accent</span>
-          <input type="color" id="secondaryColorInput" style="width:60px; height:40px; padding:0; border-radius:8px; cursor:pointer;" onchange="applyCustomColors()">
-        </div>
-      </div>
-
-      <div style="display:flex; gap:10px;">
-        <button onclick="resetThemeColors()" class="btn-secondary" style="flex:1;">Reset Default</button>
-        <button onclick="document.getElementById('themeModal').classList.add('hidden')" style="flex:1;">Done</button>
-      </div>
-    </div>
-  </div>
-
   <!-- VISITS MODAL -->
   <div id="visitsModal" class="hidden"
     style="position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:10000; backdrop-filter:blur(10px);">
@@ -209,16 +182,14 @@
             <h1 id="welcomeText"><span data-t="welcome-message">Hi</span>, <span id="userName">User</span></h1>
             <p class="subtitle" data-t="subtitle">Your health performance overview.</p>
           </div>
-          <div style="display:flex; align-items:center; gap: 10px;">
+          <div style="display:flex; align-items:center; gap: 15px;">
             <button class="btn-secondary btn-small" onclick="fetchVisitsCount()" data-t="site-visits"
               title="View Site Visits">👁️ Visits</button>
             <button id="themeToggleBtn" class="btn-secondary btn-small" onclick="toggleTheme()"
-              title="Toggle Light/Dark Mode" style="font-size: 1.2rem; padding: 5px 10px;">🌓</button>
-            <button class="btn-secondary btn-small" onclick="openThemeCustomizer()"
-              title="Customize Theme Colors" style="font-size: 1.2rem; padding: 5px 10px;">🎨</button>
+              title="Toggle Light/Dark Mode" style="font-size: 1.5rem; padding: 5px 10px;">🌓</button>
             <div class="status-badge" onclick="resetDevice()" style="cursor:pointer;" title="Click to Reset Device">
               <span class="pulse-dot"></span>
-              <span id="reset-device-text" data-t="reset-device">RESET</span>
+              <span id="reset-device-text" data-t="reset-device">RESET DEVICE</span>
             </div>
           </div>
         </div>
