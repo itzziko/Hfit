@@ -270,6 +270,15 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
         res.json({ reply: (await result.response).text(), model_used: "gemini-1.5-flash" });
     } catch (error) {
         console.error("Gemini Error:", error);
+        
+        // Fallback for invalid API key so the frontend demo still works
+        if (error.message && (error.message.includes("API_KEY_INVALID") || error.message.includes("API key not valid"))) {
+            return res.json({ 
+                reply: "DEMO MODE: HFIT Core is connected, but the Google API key in your .env file is invalid.\n\nThis is a simulated response to verify the frontend works perfectly. Please update your GOOGLE_API_KEY.", 
+                model_used: "demo-mock" 
+            });
+        }
+        
         res.status(500).json({ error: "HFIT CORE OFFLINE." });
     }
 });
