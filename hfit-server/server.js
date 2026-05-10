@@ -8,7 +8,6 @@ import { fileURLToPath } from "url";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import fs from "fs";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { initDb } from "./db.js";
 import dbPromise from "./db.js";
 import helmet from "helmet";
@@ -25,7 +24,7 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 await initDb();
 
 // Initialize Google AI
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+// OpenRouter replaces genAI
 
 const OWNER_KEY = process.env.OWNER_KEY || "default_owner_key";
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_super_secret_key_123";
@@ -257,24 +256,47 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
             if (pageContent) webData = "\n\nWebsite Data:\n" + pageContent.substring(0, 5000);
         }
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: systemMessage });
-        const promptParts = [userMessage + webData];
+        let messages = [
+            { role: "system", content: systemMessage }
+        ];
+
+        let content = [];
+        if (userMessage || webData) {
+            content.push({ type: "text", text: (userMessage || "") + webData });
+        }
         
         if (image) {
-            const [header, data] = image.split(',');
-            const mimeType = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
-            promptParts.push({ inlineData: { data, mimeType } });
+            content.push({ type: "image_url", image_url: { url: image } });
+        }
+        
+        messages.push({ role: "user", content: content });
+
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "google/gemini-2.5-flash",
+                messages: messages,
+                max_tokens: 2000
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error?.message || "OpenRouter API Error");
         }
 
-        const result = await model.generateContent(promptParts);
-        res.json({ reply: (await result.response).text(), model_used: "gemini-1.5-flash" });
+        res.json({ reply: data.choices[0].message.content, model_used: data.model });
     } catch (error) {
-        console.error("Gemini Error:", error);
+        console.error("OpenRouter Error:", error);
         
         // Fallback for invalid API key so the frontend demo still works
-        if (error.message && (error.message.includes("API_KEY_INVALID") || error.message.includes("API key not valid"))) {
+        if (error.message && (error.message.includes("401") || error.message.includes("key not valid") || error.message.includes("Authentication"))) {
             return res.json({ 
-                reply: "DEMO MODE: HFIT Core is connected, but the Google API key in your .env file is invalid.\n\nThis is a simulated response to verify the frontend works perfectly. Please update your GOOGLE_API_KEY.", 
+                reply: "DEMO MODE: HFIT Core is connected, but the API key is invalid.\n\nThis is a simulated response to verify the frontend works perfectly. Please update your OPENROUTER_API_KEY.", 
                 model_used: "demo-mock" 
             });
         }
