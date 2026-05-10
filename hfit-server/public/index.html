@@ -38,6 +38,7 @@
   <div id="authScreen" class="auth-screen">
     <h1 data-t="hfit">Hfit</h1>
     <p style="color:var(--text-dim); font-weight:500;" data-t="premium-companion">Premium AI Health Companion</p>
+    <div id="ai-status-pulse" style="margin-top: 0.625rem; font-size: 0.7rem; font-weight: 800; color: var(--accent-primary); letter-spacing: 0.125rem;">CORE ONLINE</div>
 
     <div id="recentAccountsContainer" class="hidden" style="margin-bottom: 20px; width: 100%; max-width: 400px;">
       <p style="font-size: 0.8rem; color: var(--text-dim); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;"
@@ -130,9 +131,9 @@
 
   <!-- MOBILE HEADER -->
   <header class="mobile-header">
-    <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle Menu">☰</button>
+    <button class="menu-toggle" id="mobileMenuBtn" aria-label="Toggle Menu">☰</button>
     <h2 class="sidebar-logo" onclick="openTab('dashboard')" style="margin-bottom:0; font-size:1.5rem;">Hfit</h2>
-    <div style="width: 44px;"></div> <!-- Spacer for symmetry -->
+    <div id="ai-status-pulse-mobile" style="font-size: 0.65rem; font-weight: 800; color: var(--accent-primary); letter-spacing: 1px;">CORE ONLINE</div>
   </header>
 
   <!-- APP -->
@@ -142,6 +143,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <h2 class="sidebar-logo">Hfit</h2>
+        <div id="ai-status-pulse-sidebar" style="font-size: 0.65rem; font-weight: 800; color: var(--accent-primary); letter-spacing: 1px; opacity: 0.8; margin-bottom: 20px;">CORE ONLINE</div>
       </div>
       <nav>
         <button id="btn-dashboard" onclick="openTab('dashboard')" class="active"

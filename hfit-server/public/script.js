@@ -332,25 +332,29 @@ function selectRecentAccount(email) {
   document.getElementById("password").focus();
 }
 
-async function checkAiStatus(retries = 10) {
-  const statusEl = document.getElementById("ai-status-pulse");
-  if (!statusEl) return;
+function updateStatusUI(text, color) {
+  const ids = ["ai-status-pulse", "ai-status-pulse-mobile", "ai-status-pulse-sidebar"];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.textContent = text;
+      if (color) el.style.color = color;
+    }
+  });
+}
 
-  statusEl.textContent = "SYNCING WITH CORE...";
-  statusEl.style.color = "var(--accent-primary)";
+async function checkAiStatus(retries = 10) {
+  updateStatusUI("SYNCING WITH CORE...", "var(--accent-primary)");
 
   try {
     const res = await fetch(`${BACKEND_URL}/health`);
 
     if (res.ok) {
       const data = await res.json();
-      // Relaxed check: if we got success:true, core is at least partially online
       if (data.ai_key_status === "MISSING") {
-        statusEl.textContent = "AI KEY MISSING";
-        statusEl.style.color = "#f59e0b";
+        updateStatusUI("AI KEY MISSING", "#f59e0b");
       } else {
-        statusEl.textContent = "CORE ONLINE";
-        statusEl.style.color = "var(--accent-primary)";
+        updateStatusUI("CORE ONLINE", "var(--accent-primary)");
       }
     } else {
       throw new Error(`Server status ${res.status}`);
@@ -359,12 +363,10 @@ async function checkAiStatus(retries = 10) {
     console.warn("Core connectivity issue:", e);
     if (retries > 0) {
       const dots = ".".repeat(3 - (retries % 3));
-      statusEl.textContent = `WAKING CORE${dots}`;
-      statusEl.style.color = "#f59e0b";
+      updateStatusUI(`WAKING CORE${dots}`, "#f59e0b");
       setTimeout(() => checkAiStatus(retries - 1), 3000);
     } else {
-      statusEl.textContent = "CORE OFFLINE";
-      statusEl.style.color = "#ef4444";
+      updateStatusUI("CORE OFFLINE", "#ef4444");
     }
   }
 }
@@ -704,6 +706,21 @@ function toggleSidebar() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Mobile Menu Toggle
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', toggleSidebar);
+  }
+
+  // Dashboard buttons (Theme, Visits, Reset)
+  document.getElementById('themeToggleBtn')?.addEventListener('click', toggleTheme);
+  
+  const visitsBtn = document.querySelector('[data-t="site-visits"]');
+  if (visitsBtn) visitsBtn.addEventListener('click', fetchVisitsCount);
+
+  const resetBadge = document.querySelector('.status-badge');
+  if (resetBadge) resetBadge.addEventListener('click', resetDevice);
+
   setTimeout(() => {
     const logo = document.querySelector('.sidebar-logo');
     if (logo) {
@@ -713,6 +730,14 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
   }, 1000);
+
+  const authForm = document.getElementById('authForm');
+  if (authForm) {
+    authForm.addEventListener('submit', handleAuth);
+  }
+
+  // Initial check
+  checkAiStatus();
 });
 
 // --- DATA PERSISTENCE HELPERS ---
@@ -759,8 +784,7 @@ window.fetchVisitsCount = async function() {
 async function askAI(message, systemPrompt = "You are a helpful health agent.", imageBase64 = null, onChunk = null) {
   const disclaimer = "\n\nDISCLAIMER: This information is for 'good purpose' only and must be confirmed with a licensed medical professional before taking any action. Do not make medical decisions based on this AI.";
 
-  const statusEl = document.getElementById("ai-status-pulse");
-  if (statusEl) statusEl.textContent = "SYNCING...";
+  updateStatusUI("SYNCING...", "var(--accent-primary)");
 
   try {
     const langCode = document.documentElement.lang || 'en';
@@ -830,26 +854,17 @@ async function askAI(message, systemPrompt = "You are a helpful health agent.", 
         if (!fullReply) fullReply = "Connection interrupted. Partial response unavailable.";
       }
 
-      if (statusEl) {
-        statusEl.textContent = "CORE READY";
-        statusEl.style.color = "var(--accent-primary)";
-      }
+      updateStatusUI("CORE READY", "var(--accent-primary)");
       return fullReply;
     } else {
       const data = await res.json();
       console.log("[AI SYNC]", data);
-      if (statusEl) {
-        statusEl.textContent = "CONNECTED TO CORE";
-        statusEl.style.color = "var(--accent-primary)";
-      }
+      updateStatusUI("CONNECTED TO CORE", "var(--accent-primary)");
       return data.reply || "No response received.";
     }
   } catch (error) {
     console.warn(`Request failed:`, error.message);
-    if (statusEl) {
-      statusEl.textContent = "CORE OFFLINE";
-      statusEl.style.color = "#ef4444";
-    }
+    updateStatusUI("CORE OFFLINE", "#ef4444");
     return `Error: ${error.message}. Potential Reasons: Server not running or API issue.`;
   }
 }
