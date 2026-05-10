@@ -1026,6 +1026,10 @@ Ending the Response:
         }
       }).catch(e => console.error("Topic generation failed", e));
     }
+  }).catch(error => {
+    console.error("Chat Error:", error);
+    aiMsgBox.innerHTML = `<span style="color:#ef4444;">HFIT CORE ERROR: ${error.message || "Unknown error during transmission."}</span>`;
+    updateStatusUI("CORE OFFLINE", "#ef4444");
   });
 }
 

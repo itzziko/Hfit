@@ -271,11 +271,13 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
         
         messages.push({ role: "user", content: content });
 
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        let response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://hfit.ai",
+                "X-Title": "Hfit Performance System"
             },
             body: JSON.stringify({
                 model: "google/gemini-2.5-flash",
@@ -284,9 +286,30 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
             })
         });
 
-        const data = await response.json();
+        let data = await response.json();
+        
+        // Fallback to free model if primary fails (e.g. out of credits)
+        if (!response.ok && (response.status === 402 || response.status === 429 || response.status === 400)) {
+            console.warn("Primary model failed, attempting free fallback...");
+            response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://hfit.ai",
+                    "X-Title": "Hfit Performance System"
+                },
+                body: JSON.stringify({
+                    model: "google/gemini-2.0-flash-lite-001", // Reliable stable model
+                    messages: messages,
+                    max_tokens: 2000
+                })
+            });
+            data = await response.json();
+        }
+
         if (!response.ok) {
-            throw new Error(data.error?.message || "OpenRouter API Error");
+            throw new Error(data.error?.message || `OpenRouter Error ${response.status}`);
         }
 
         res.json({ reply: data.choices[0].message.content, model_used: data.model });
@@ -301,7 +324,7 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
             });
         }
         
-        res.status(500).json({ error: "HFIT CORE OFFLINE." });
+        res.status(500).json({ error: error.message || "HFIT CORE OFFLINE." });
     }
 });
 
