@@ -453,7 +453,7 @@ function setAuthMode(mode) {
   authMode = mode;
   document.getElementById("btn-mode-signup").classList.toggle("active", mode === 'signup');
   document.getElementById("btn-mode-signin").classList.toggle("active", mode === 'signin');
-  document.getElementById("signupFields").style.display = mode === 'signup' ? "contents" : "none";
+  document.getElementById("signupFields").style.display = mode === 'signup' ? "flex" : "none";
   document.getElementById("authSubmitBtn").textContent = mode === 'signup' ? "Initialize Health AI" : "Authenticate Session";
   
   if (mode === 'signup') {
@@ -668,6 +668,11 @@ function openTab(id) {
   const btn = document.getElementById(`btn-${id}`);
   if (btn) btn.classList.add("active");
 
+  // Close sidebar on mobile after selection
+  if (window.innerWidth < 1024) {
+    document.querySelector('.sidebar').classList.remove('open');
+  }
+
   // Secret Architect Hub Redirect - 15 LOGO CLICKS + OVERVIEW CLICK
   if (id === 'dashboard' && logoClickCount >= 15) {
     logoClickCount = 0; // Reset
@@ -689,10 +694,13 @@ function openTab(id) {
   }
 
   // Auto-scroll to top for better UX on mobile
-  if (window.innerWidth < 900) {
-    const content = document.querySelector('.main-content');
-    if (content) content.scrollTop = 0;
-  }
+  const content = document.querySelector('.content');
+  if (content) content.scrollTop = 0;
+}
+
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  sidebar.classList.toggle('open');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

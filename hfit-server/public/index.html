@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="google" content="notranslate" />
   <title>Hfit | Premium Health Intelligence</title>
   <link rel="stylesheet" href="style.css" />
@@ -60,7 +60,7 @@
           data-t-placeholder="email-placeholder" required />
         <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Password"
           data-t-placeholder="password-placeholder" required />
-        <div id="signupFields" style="display:contents;">
+        <div id="signupFields" style="display: flex; flex-direction: column; gap: 15px;">
           <input id="firstName" name="given-name" autocomplete="given-name" placeholder="First Name"
             data-t-placeholder="firstname-placeholder" />
           <input id="ageInput" name="age" type="number" placeholder="Age" data-t-placeholder="age-placeholder" />
@@ -129,8 +129,10 @@
   </div>
 
   <!-- MOBILE HEADER -->
-  <header class="mobile-header hidden">
-    <h2 class="sidebar-logo" onclick="openTab('dashboard')">Hfit</h2>
+  <header class="mobile-header">
+    <button class="menu-toggle" onclick="toggleSidebar()" aria-label="Toggle Menu">☰</button>
+    <h2 class="sidebar-logo" onclick="openTab('dashboard')" style="margin-bottom:0; font-size:1.5rem;">Hfit</h2>
+    <div style="width: 44px;"></div> <!-- Spacer for symmetry -->
   </header>
 
   <!-- APP -->
