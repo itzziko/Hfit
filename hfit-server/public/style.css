@@ -942,7 +942,7 @@ button:disabled {
     width: 100%;
     height: auto;
     flex-direction: row;
-    padding: 8px 10px;
+    padding: 5px 8px; /* More compact */
     position: fixed;
     bottom: 0;
     left: 0;
@@ -951,11 +951,12 @@ button:disabled {
     border-top: 1px solid var(--glass-border);
     justify-content: space-around;
     overflow-x: auto;
-    gap: 5px;
+    gap: 2px;
     background: var(--sidebar-bg);
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(30px); /* Slightly stronger blur */
     z-index: 1000;
-    padding-bottom: env(safe-area-inset-bottom, 15px);
+    padding-bottom: env(safe-area-inset-bottom, 5px); /* Lower place: reduced from 15px */
+    box-shadow: 0 -10px 25px rgba(0,0,0,0.3);
   }
 
   .sidebar-header {

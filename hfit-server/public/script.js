@@ -1,4 +1,4 @@
-const AI_MODEL = "gemini-1.5-flash"; // Powered by HFIT CORE (Gemini)
+const AI_MODEL = "gemini-2.0-flash"; // Powered by HFIT CORE (Gemini)
 const BACKEND_URL = window.location.protocol === "file:" ? "http://localhost:3000" : "";
 
 
@@ -516,8 +516,18 @@ function logout() {
 }
 
 function toggleTheme() {
-  const isLight = document.body.classList.toggle("light-mode");
-  localStorage.setItem("hfitTheme", isLight ? "light-mode" : "dark-mode");
+  const body = document.body;
+  const isLight = body.classList.contains("light-mode");
+  
+  if (isLight) {
+    body.classList.remove("light-mode");
+    body.classList.add("dark-mode");
+    localStorage.setItem("hfitTheme", "dark-mode");
+  } else {
+    body.classList.remove("dark-mode");
+    body.classList.add("light-mode");
+    localStorage.setItem("hfitTheme", "light-mode");
+  }
 }
 
 // Secret Dev Reveal Logic

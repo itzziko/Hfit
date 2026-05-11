@@ -286,7 +286,7 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
                 "X-Title": "Antigravity"
             },
             body: JSON.stringify({
-                model: "google/gemini-2.5-flash",
+                model: "google/gemini-2.0-flash-001",
                 messages: messages,
                 max_tokens: 2000
             })
@@ -306,7 +306,7 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
                     "X-Title": "Antigravity"
                 },
                 body: JSON.stringify({
-                    model: "google/gemini-2.0-flash-lite-001", // Reliable stable model
+                    model: "google/gemini-flash-1.5-8b", // Reliable stable model
                     messages: messages,
                     max_tokens: 2000
                 })
