@@ -127,7 +127,10 @@ const translations = {
     "ai-insight-text": "Use our tracking tools to receive personalized wellness insights here.",
     "adjust-goal": "Adjust Goal",
     "save-progress": "SAVE PROGRESS",
-    "ai-tagline": "AI Agent for nutrition, fitness, and health – analyzes your routine and helps you live better."
+    "ai-tagline": "AI Agent for nutrition, fitness, and health – analyzes your routine and helps you live better.",
+    "core-thinking": "HFIT CORE THINKING...",
+    "analyzing-sleep": "ANALYZING SLEEP METRICS...",
+    "scanning-tissue": "SCANNING DERMAL TISSUE..."
   },
   iw: {
     "welcome-message": "שלום,",
@@ -257,7 +260,10 @@ const translations = {
     "ai-insight-text": "השתמש בכלי המעקב שלנו כדי לקבל כאן תובנות בריאותיות מותאמות אישית.",
     "adjust-goal": "התאם מטרה",
     "save-progress": "שמור התקדמות",
-    "ai-tagline": "סוכן AI לתזונה, כושר ובריאות – מנתח את השגרה שלך ועוזר לך לחיות טוב יותר."
+    "ai-tagline": "סוכן AI לתזונה, כושר ובריאות – מנתח את השגרה שלך ועוזר לך לחיות טוב יותר.",
+    "core-thinking": "ליבת Hfit חושבת...",
+    "analyzing-sleep": "מנתח מדדי שינה...",
+    "scanning-tissue": "סורק רקמת עור..."
   }
 };
 

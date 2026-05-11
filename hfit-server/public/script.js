@@ -806,10 +806,12 @@ async function askAI(message, systemPrompt = "You are a helpful health agent.", 
   updateStatusUI("SYNCING...", "var(--accent-primary)");
 
   try {
+    const isHebrewInput = /[\u0590-\u05FF]/.test(message);
     const langCode = document.documentElement.lang || 'en';
-    const langName = langCode === 'iw' ? 'Hebrew (עברית)' : 'English';
-    const languageDirective = langCode === 'iw' 
-      ? `\n\nCRITICAL: Respond in HIGH-QUALITY, NATIVE HEBREW. Use clear, modern Hebrew terminology. Be concise and fast. Ensure all medical/health info is 100% accurate.`
+    const respondInHebrew = langCode === 'iw' || isHebrewInput;
+    const langName = respondInHebrew ? 'Hebrew (עברית)' : 'English';
+    const languageDirective = respondInHebrew 
+      ? `\n\nCRITICAL: Respond in HIGH-QUALITY, NATIVE HEBREW. Use clear, modern Hebrew terminology. Be concise and fast. Ensure all medical/health info is 100% accurate. Maintain a professional health assistant tone. EVERYTHING MUST BE IN HEBREW.`
       : `\n\nCRITICAL: Respond ONLY in ${langName}. Do not use any other language. Ensure all medical and health information is accurate and professional.`;
 
     const res = await fetch(`${BACKEND_URL}/chat`, {
@@ -977,17 +979,19 @@ function sendMessage() {
   // Create temporary wrapper for loading
   const wrapper = document.createElement("div");
   wrapper.className = "message-wrapper assistant-wrapper";
+  const lang = document.documentElement.lang || 'en';
+  const dict = translations[lang] || translations['en'];
   wrapper.innerHTML = `
     <div class="message-avatar">🤖</div>
     <div class="message ai-msg">
-      <div class="typing"><span>HFIT CORE THINKING...</span><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
+      <div class="typing"><span>${dict["core-thinking"] || "HFIT CORE THINKING..."}</span><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>
     </div>
   `;
   container.appendChild(wrapper);
   const aiMsgBox = wrapper.querySelector(".ai-msg");
   container.scrollTop = container.scrollHeight;
 
-  const sysPrompt = `You are Hfit AI Agent, an elite advanced health agent.
+  const sysPromptEn = `You are Hfit AI Agent, an elite advanced health agent.
 Follow these 20 core rules strictly:
 
 Safety & Reliability:
@@ -1023,6 +1027,45 @@ User Experience (UX):
 
 Ending the Response:
 20. Value-Driven Closing: Every response MUST end with ONE of the following: A one-sentence summary, ONE clear actionable step, or a follow-up question (if more info needed).`;
+
+  const sysPromptIw = `אתה סוכן Hfit AI, סוכן בריאות מתקדם ועלית.
+פעל לפי 20 חוקי הליבה הללו בקפידה:
+
+בטיחות ואמינות:
+1. אל תנחש: אם חסר מידע, שאל שאלת הבהרה או ציין בבירור שהתשובה היא "הערכה".
+2. גבולות ידע: אם אינך בטוח, ציין זאת בבירור. לעולם אל תמציא תשובות.
+3. מניעת סיכונים רפואיים: בנושאים רגישים, ספק מידע כללי בלבד והמלץ במפורש להתייעץ עם איש מקצוע רפואי. לעולם אל תספק הוראות מסוכנות.
+
+הבנת המשתמש:
+4. הבהרות חכמות: לפני המלצות חשובות, שאל עד 2 שאלות הבהרה קצרות וחיוניות.
+5. מודעות להקשר: השתמש במידע שסופק. אל תענה כאילו כל פנייה היא הראשונה.
+
+מבנה וטון:
+6. ישר לעניין: המשפט הראשון חייב לענות ישירות על שאלת המשתמש.
+7. הצמדות להנחיה: ענה רק על מה שנשאל.
+8. תשובות מקיפות: כסה את כל חלקי השאלה.
+9. התאמת עומק: קצר לשאלות פשוטות, מפורט למורכבות.
+10. שפה פשוטה ואנושית: הימנע מז'רגון רפואי מיותר.
+
+דיוק ועקביות:
+11. ללא סתירות: שמור על עקביות במספרים/נתונים.
+12. טרמינולוגיה מדויקת: השתמש במושגים/מונחים נכונים ומדויקים.
+13. תיקון עצמי: עדכן את התגובה אם סופק מידע חדש על ידי המשתמש.
+14. בדיקת לוגיקה: ודא פנימית אם התשובה לוגית וריאליסטית.
+
+חישובים ונתונים:
+15. חישובים חכמים: פרק את המתמטיקה, חשב לפי כמות, סכם, ציין אם מדויק או הערכה. אל תדלג על שלבים.
+
+חווית משתמש (UX):
+16. תעדוף: התחל במידע החשוב ביותר.
+17. מניעת בלבול: מקסימום 1-2 אפשרויות, המלץ בבירור על הטובה ביותר.
+18. עקביות בפורמט: שמור על מבנה אחיד. השתמש בעיצוב חד ונקי.
+19. השתמש בדוגמאות: ספק דוגמאות קצרות במידת הצורך.
+
+סיום התגובה:
+20. סגירה מונעת ערך: כל תגובה חייבת להסתיים באחד מהבאים: סיכום במשפט אחד, צעד מעשי ברור אחד, או שאלת המשך (אם נדרש מידע נוסף).`;
+
+  const sysPrompt = lang === 'iw' ? sysPromptIw : sysPromptEn;
 
   askAI(text, sysPrompt, null, null).then(response => {
     // Check if the response is an object (for special actions) or just text
@@ -1272,11 +1315,14 @@ function trackSleep() {
   updateDashboard();
   document.getElementById("sleepInput").value = "";
 
-  const insightEl = document.getElementById("sleepAiInsight");
+  const lang = document.documentElement.lang || 'en';
+  const dict = translations[lang] || translations['en'];
   insightEl.classList.remove("hidden");
-  insightEl.innerHTML = `<div class="typing"><span>ANALYZING SLEEP METRICS...</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  insightEl.innerHTML = `<div class="typing"><span>${dict["analyzing-sleep"] || "ANALYZING SLEEP METRICS..."}</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
   const age = currentUser.profile.age || 25;
-  const prompt = `I am ${age} years old and I slept for ${hours} hours today. Analyze this in one short paragraph and provide a small description saying if I need more or less sleep for my age. Use a supportive tone.`;
+  const prompt = lang === 'iw' 
+    ? `אני בן ${age} וישנתי ${hours} שעות היום. נתח זאת בפסקה קצרה אחת וספק תיאור קטן האומר אם אני זקוק ליותר או פחות שינה לגילי. השתמש בטון תומך.`
+    : `I am ${age} years old and I slept for ${hours} hours today. Analyze this in one short paragraph and provide a small description saying if I need more or less sleep for my age. Use a supportive tone.`;
   askAI(prompt, "You are an elite sleep expert AI. Respond in a few sentences only.").then(resultObj => {
      const reply = typeof resultObj === 'string' ? resultObj : resultObj.reply;
      insightEl.innerHTML = `<button type="button" onclick="document.getElementById('sleepAiInsight').classList.add('hidden')" style="float:right; background:none; color:var(--text-dim); padding:0; font-size:1.2rem;">✖</button><strong>🤖 Sleep Expert Insight:</strong><br><br>${reply}`;
@@ -1428,9 +1474,10 @@ async function analyzeBruise(e) {
   btn.disabled = true;
   btn.innerHTML = `<div class="spinner"></div> SCANNING...`;
 
+  const dict = translations[lang] || translations['en'];
   document.getElementById("scannerContainer").classList.add("active-scan");
   status.classList.remove("hidden");
-  status.innerHTML = `<div class="typing"><span>SCANNING DERMAL TISSUE...</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+  status.innerHTML = `<div class="typing"><span>${dict["scanning-tissue"] || "SCANNING DERMAL TISSUE..."}</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
 
   const prompt = `Analyze this image extremely carefully. Identify what is in this image (skin concern, bruise, rash, etc.) with high accuracy. Provide a professional medical description, potential causes, and urgency level. Use bold headers. Respond in ${lang === 'iw' ? 'Hebrew' : 'English'}.`;
 

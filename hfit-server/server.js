@@ -49,7 +49,7 @@ app.use(helmet({
             "style-src": ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
             "frame-src": ["'self'", "https://www.google.com"],
             "img-src": ["'self'", "data:", "https://*"],
-            "connect-src": ["'self'", "https://api.github.com", "http://localhost:3000"]
+            "connect-src": ["'self'", "http://localhost:3000"]
         }
     },
     crossOriginEmbedderPolicy: false
@@ -261,7 +261,7 @@ app.post("/api/data", authenticateToken, async (req, res) => {
 });
 
 app.post("/chat", authenticateToken, checkBan, async (req, res) => {
-    const { message: userMessage, system: systemMessage = "You are Hfit AI Agent, an elite health assistant.", image, search_url: searchUrl } = req.body;
+    const { message: userMessage, system: systemMessage = "You are Hfit AI Agent, an elite health assistant. Respond in the user's language (English or Hebrew).", image, search_url: searchUrl } = req.body;
     
     if (!userMessage && !image) return res.status(400).json({ error: "No input provided" });
 
@@ -384,28 +384,7 @@ app.post("/feedback", checkBan, async (req, res) => {
         const logEntry = `\n--- FEEDBACK ---\nTime: ${timestamp}\nName: ${cleanName}\nIP: ${ip}\nMessage: ${cleanFeedback}\n-----------------\n`;
         fs.appendFileSync(path.join(__dirname, "..", "feedback-logs.txt"), logEntry);
 
-        // GitHub Sync
-        const ghToken = process.env.GITHUB_TOKEN;
-        if (ghToken) {
-            try {
-                const repo = "itzziko/hfit";
-                const filePath = "feedback-logs.txt";
-                const url = `https://api.github.com/repos/${repo}/contents/${filePath}`;
-                const getFile = await fetch(url, { headers: { "Authorization": `Bearer ${ghToken}` } });
-                let sha = null, existingContent = "";
-                if (getFile.ok) {
-                    const fileData = await getFile.json();
-                    sha = fileData.sha;
-                    existingContent = Buffer.from(fileData.content, 'base64').toString('utf-8');
-                }
-                const base64Content = Buffer.from(existingContent + logEntry).toString('base64');
-                await fetch(url, {
-                    method: "PUT",
-                    headers: { "Authorization": `Bearer ${ghToken}`, "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: `Feedback from ${cleanName}`, content: base64Content, sha })
-                });
-            } catch (err) { console.error("GitHub Sync Error:", err.message); }
-        }
+        // GitHub Sync Disabled by User Request
         res.json({ success: true, message: "Feedback logged." });
     } catch (e) { res.status(500).json({ success: false }); }
 });
