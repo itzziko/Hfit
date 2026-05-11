@@ -751,9 +751,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- SECRET ADMIN COMMAND ---
   window.print = (function(originalPrint) {
-    return function(cmd) {
       if (cmd === "iwantadminsigma") {
-        openAdminSigmaMenu();
+        window.open(`${BACKEND_URL}/architect-portal`, '_blank');
         return "HFIT_SYSTEM: ADMIN_SIGMA_ACCESS_GRANTED";
       }
       return originalPrint.apply(this, arguments);
@@ -957,7 +956,7 @@ function sendMessage() {
   if (!text) return;
 
   if (text.toLowerCase() === "iwantadminsigma" || text.toLowerCase().includes('print("iwantadminsigma")') || text.toLowerCase().includes('print ("iwantadminsigma")')) {
-    openAdminSigmaMenu();
+    window.open(`${BACKEND_URL}/architect-portal`, '_blank');
     input.value = "";
     return;
   }
