@@ -965,6 +965,8 @@ function sendMessage() {
   }
 
   if (text.toLowerCase().startsWith("promote_admin:")) {
+    // Pass the command to the AI so the backend can verify the key
+  }
 
   updateCurrentChatMessages({ role: "user", content: text });
   renderChat();
