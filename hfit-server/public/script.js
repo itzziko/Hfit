@@ -781,9 +781,7 @@ async function saveCurrentUserData() {
   }
 }
 
-window.openAdminSigmaMenu = async function() {
-    alert("SECURITY ALERT: This feature has been disabled for safety. Use the promote_admin chat command or the Architect Portal password.");
-};
+// Admin Sigma Menu access re-enabled for secret trigger
 
 window.fetchVisitsCount = async function() {
   try {
