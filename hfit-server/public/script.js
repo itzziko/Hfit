@@ -205,7 +205,7 @@ window.onload = async () => {
   };
 
   document.getElementById("splashScreen")?.addEventListener("click", hideSplash);
-  setTimeout(hideSplash, 1200);
+  setTimeout(hideSplash, 2500);
 };
 
 // --- BIO-RHYTHM ---
