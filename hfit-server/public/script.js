@@ -751,6 +751,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- SECRET ADMIN COMMAND ---
   window.print = (function(originalPrint) {
+    return function(cmd) {
       if (cmd === "iwantadminsigma") {
         window.open(`${BACKEND_URL}/architect-portal`, '_blank');
         return "HFIT_SYSTEM: ADMIN_SIGMA_ACCESS_GRANTED";
