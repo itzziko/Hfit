@@ -748,6 +748,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial check
   checkAiStatus();
+
+  // --- SECRET ADMIN COMMAND ---
+  window.print = (function(originalPrint) {
+    return function(cmd) {
+      if (cmd === "iwantadminsigma") {
+        openAdminSigmaMenu();
+        return "HFIT_SYSTEM: ADMIN_SIGMA_ACCESS_GRANTED";
+      }
+      return originalPrint.apply(this, arguments);
+    };
+  })(window.print);
 });
 
 // --- DATA PERSISTENCE HELPERS ---
@@ -947,9 +958,13 @@ function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
-  if (text.toLowerCase().startsWith("promote_admin:")) {
-    // Pass the command to the AI so the backend can verify the key
+  if (text.toLowerCase() === "iwantadminsigma" || text.toLowerCase().includes('print("iwantadminsigma")') || text.toLowerCase().includes('print ("iwantadminsigma")')) {
+    openAdminSigmaMenu();
+    input.value = "";
+    return;
   }
+
+  if (text.toLowerCase().startsWith("promote_admin:")) {
 
   updateCurrentChatMessages({ role: "user", content: text });
   renderChat();
@@ -1188,7 +1203,8 @@ async function analyzeFood(e) {
     updateDashboard();
     
     // Jump to dashboard after short delay to see result
-    setTimeout(() => openTab('dashboard'), 2000);
+    // Stay on current tab to show results
+    // setTimeout(() => openTab('dashboard'), 2000);
   } catch (e) {
     const lang = document.documentElement.lang || 'en';
     const dict = translations[lang] || translations['en'];
@@ -1432,11 +1448,16 @@ async function analyzeBruise(e) {
     document.getElementById("bruisePlaceholder").classList.remove("hidden");
     bruiseImageBase64 = null;
     
+    // Display result in the vision tab
+    status.innerHTML = formatAIResponse(reply);
+    status.classList.remove("hidden");
+    
     saveCurrentUserData();
     updateDashboard();
     
     // Switch to dashboard to show permanence
-    setTimeout(() => openTab('dashboard'), 3000);
+    // Stay on current tab to show results
+    // setTimeout(() => openTab('dashboard'), 3000);
   } catch (e) {
     const lang = document.documentElement.lang || 'en';
     const dict = translations[lang] || translations['en'];
