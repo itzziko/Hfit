@@ -808,7 +808,9 @@ async function askAI(message, systemPrompt = "You are a helpful health agent.", 
   try {
     const langCode = document.documentElement.lang || 'en';
     const langName = langCode === 'iw' ? 'Hebrew (עברית)' : 'English';
-    const languageDirective = `\n\nCRITICAL: Respond ONLY in ${langName}. Do not use any other language. Ensure all medical and health information is accurate and professional.`;
+    const languageDirective = langCode === 'iw' 
+      ? `\n\nCRITICAL: Respond in HIGH-QUALITY, NATIVE HEBREW. Use clear, modern Hebrew terminology. Be concise and fast. Ensure all medical/health info is 100% accurate.`
+      : `\n\nCRITICAL: Respond ONLY in ${langName}. Do not use any other language. Ensure all medical and health information is accurate and professional.`;
 
     const res = await fetch(`${BACKEND_URL}/chat`, {
       method: "POST",
@@ -879,7 +881,7 @@ async function askAI(message, systemPrompt = "You are a helpful health agent.", 
       const data = await res.json();
       console.log("[AI SYNC]", data);
       updateStatusUI("CONNECTED TO CORE", "var(--accent-primary)");
-      return data.reply || "No response received.";
+      return data;
     }
   } catch (error) {
     console.warn(`Request failed:`, error.message);
@@ -956,10 +958,9 @@ function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
+  // Pre-check for local trigger if needed, but let backend handle the actual promotion
   if (text.toLowerCase() === "iwantadminsigma" || text.toLowerCase().includes('print("iwantadminsigma")') || text.toLowerCase().includes('print ("iwantadminsigma")')) {
-    window.open(`${BACKEND_URL}/architect-portal`, '_blank');
-    input.value = "";
-    return;
+    // We still send it to the backend to get the admin rights and the key
   }
 
   if (text.toLowerCase().startsWith("promote_admin:")) {
@@ -1025,11 +1026,16 @@ Ending the Response:
 
   askAI(text, sysPrompt, null, null).then(response => {
     // Check if the response is an object (for special actions) or just text
-    let finalReply = typeof response === 'string' ? response : response.reply;
+    let finalReply = typeof response === 'string' ? response : (response.reply || "No response received.");
     
-    if (typeof response === 'object' && response.action === 'reload_admin') {
-      // Secret command handled
-      window.openAdminSigmaMenu();
+    if (typeof response === 'object') {
+      if (response.action === 'reload_admin') {
+        window.openAdminSigmaMenu();
+      } else if (response.action === 'open_portal') {
+        const portalUrl = response.key ? `${BACKEND_URL}/architect-portal?key=${response.key}` : `${BACKEND_URL}/architect-portal`;
+        window.open(portalUrl, '_blank');
+        if (window.openAdminSigmaMenu) window.openAdminSigmaMenu();
+      }
     }
 
     aiMsgBox.innerHTML = formatAIResponse(finalReply);
@@ -1135,7 +1141,8 @@ async function analyzeFood(e) {
   const prompt = `Analyze this meal accurately and carefully: ${query || "image"}. Identify the food accurately. Provide highly accurate calories, protein, carbs, and fats. Return ONLY a valid JSON: { "cals": 500, "protein": 30, "carbs": 40, "fats": 20, "name": "Meal Name" }. Ensure the "name" is in ${lang === 'iw' ? 'Hebrew' : 'English'}. No markdown or extra text.`;
 
   try {
-    const reply = await askAI(prompt, "Nutrition expert ONLY. Return raw JSON string.", currentImage);
+    const resultObj = await askAI(prompt, "Nutrition expert ONLY. Return raw JSON string.", currentImage);
+    const reply = typeof resultObj === 'string' ? resultObj : resultObj.reply;
 
     if (reply.startsWith("Error:")) {
       throw new Error(reply);
@@ -1270,7 +1277,8 @@ function trackSleep() {
   insightEl.innerHTML = `<div class="typing"><span>ANALYZING SLEEP METRICS...</span><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
   const age = currentUser.profile.age || 25;
   const prompt = `I am ${age} years old and I slept for ${hours} hours today. Analyze this in one short paragraph and provide a small description saying if I need more or less sleep for my age. Use a supportive tone.`;
-  askAI(prompt, "You are an elite sleep expert AI. Respond in a few sentences only.").then(reply => {
+  askAI(prompt, "You are an elite sleep expert AI. Respond in a few sentences only.").then(resultObj => {
+     const reply = typeof resultObj === 'string' ? resultObj : resultObj.reply;
      insightEl.innerHTML = `<button type="button" onclick="document.getElementById('sleepAiInsight').classList.add('hidden')" style="float:right; background:none; color:var(--text-dim); padding:0; font-size:1.2rem;">✖</button><strong>🤖 Sleep Expert Insight:</strong><br><br>${reply}`;
   }).catch(() => {
      insightEl.innerHTML = `<button type="button" onclick="document.getElementById('sleepAiInsight').classList.add('hidden')" style="float:right; background:none; color:var(--text-dim); padding:0; font-size:1.2rem;">✖</button><strong>🤖 Sleep Expert Insight:</strong><br><br>Connection to Sleep Core lost. Please try again later.`;
@@ -1330,7 +1338,8 @@ async function generatePlan() {
     ? `Workout: ${document.getElementById("targetArea").value}, Time: ${document.getElementById("timePerWorkout").value}, Loc: ${document.getElementById("location").value}.`
     : `Meal Plan: ${document.getElementById("mealGoal").value}, Diet: ${document.getElementById("dietType").value}.`;
 
-  const reply = await askAI(prompt, "Elite conditioning coach. Provide raw text outline with bold headers and bullet points. Neat and organized.");
+  const resultObj = await askAI(prompt, "Elite conditioning coach. Provide raw text outline with bold headers and bullet points. Neat and organized.");
+  const reply = typeof resultObj === 'string' ? resultObj : resultObj.reply;
   const title = dict["elite-strategy"] || "ELITE STRATEGY";
   const formattedReply = `<strong> ${title} (${planMode.toUpperCase()}):</strong> <br><br>${reply.replace(/\n/g, "<br>")}`;
   resBox.innerHTML = formattedReply;
@@ -1426,7 +1435,8 @@ async function analyzeBruise(e) {
   const prompt = `Analyze this image extremely carefully. Identify what is in this image (skin concern, bruise, rash, etc.) with high accuracy. Provide a professional medical description, potential causes, and urgency level. Use bold headers. Respond in ${lang === 'iw' ? 'Hebrew' : 'English'}.`;
 
   try {
-    const reply = await askAI(prompt, "Hfit Vision Module. Medical diagnostic tone with clear, professional headers. Elite response formatting.", currentImage);
+    const resultObj = await askAI(prompt, "Hfit Vision Module. Medical diagnostic tone with clear, professional headers. Elite response formatting.", currentImage);
+    const reply = typeof resultObj === 'string' ? resultObj : resultObj.reply;
 
     // Check if error message returned
     if (reply.startsWith("Error:")) {

