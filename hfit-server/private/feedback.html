@@ -488,17 +488,23 @@
         let globalFeedback = [];
         let globalUsers = [];
         let currentUserEmail = null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlKey = urlParams.get('key');
         const token = localStorage.getItem('hfit_token');
 
         async function init() {
             const status = document.getElementById('status');
-            if (!token) {
+            if (!token && !urlKey) {
                 status.innerHTML = "ACCESS DENIED. <br><br> Admin privileges required.";
                 return;
             }
 
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (urlKey) headers['x-hfit-key'] = urlKey;
+
             try {
-                const userRes = await fetch('/api/user', { headers: { 'Authorization': `Bearer ${token}` } });
+                const userRes = await fetch('/api/user', { headers });
                 const userData = await userRes.json();
 
                 if (!userData.user || !userData.user.is_admin) {
@@ -525,7 +531,10 @@
         }
 
         async function refreshStats() {
-            const res = await fetch('/api/stats', { headers: { 'Authorization': `Bearer ${token}` } });
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (urlKey) headers['x-hfit-key'] = urlKey;
+            const res = await fetch('/api/stats', { headers });
             const data = await res.json();
             if (data.success) {
                 animateValue("stat-visits", data.visits);
@@ -550,7 +559,10 @@
         }
 
         async function fetchFeedback() {
-            const res = await fetch('/feedback-logs');
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (urlKey) headers['x-hfit-key'] = urlKey;
+            const res = await fetch('/feedback-logs', { headers });
             const data = await res.json();
             if (data.success) {
                 globalFeedback = data.logs;
@@ -559,7 +571,10 @@
         }
 
         async function fetchUsers() {
-            const res = await fetch('/api/users', { headers: { 'Authorization': `Bearer ${token}` } });
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (urlKey) headers['x-hfit-key'] = urlKey;
+            const res = await fetch('/api/users', { headers });
             const data = await res.json();
             if (data.success) {
                 globalUsers = data.users;
@@ -641,9 +656,14 @@
         async function submitPasswordReset() {
             const newPassword = document.getElementById('new-password').value;
             if (!newPassword) return;
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (urlKey) headers['x-hfit-key'] = urlKey;
+            headers['Content-Type'] = 'application/json';
+
             await fetch('/api/reset-password', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers,
                 body: JSON.stringify({ userId: currentUserId, newPassword })
             });
             alert("Password reset.");
@@ -664,10 +684,14 @@
                 return;
             }
             if (confirm(`CRITICAL: Are you absolutely sure you want to permanently delete the user account for ${email} and all associated data?`)) {
+                const headers = {};
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                if (urlKey) headers['x-hfit-key'] = urlKey;
+
                 try {
                     const res = await fetch(`/api/users/${id}`, {
                         method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${token}` }
+                        headers
                     });
                     const data = await res.json();
                     if (data.success) {
@@ -683,7 +707,10 @@
         }
 
         async function fetchBans() {
-            const res = await fetch('/api/bans', { headers: { 'Authorization': `Bearer ${token}` } });
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (urlKey) headers['x-hfit-key'] = urlKey;
+            const res = await fetch('/api/bans', { headers });
             const data = await res.json();
             if (data.success) {
                 renderBans(data.bans);
@@ -715,9 +742,14 @@
                 return;
             }
 
+            const headers = {};
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            if (urlKey) headers['x-hfit-key'] = urlKey;
+            headers['Content-Type'] = 'application/json';
+
             const res = await fetch('/api/bans', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers,
                 body: JSON.stringify({ type, value, reason })
             });
 
@@ -731,9 +763,13 @@
 
         async function removeBan(id) {
             if (confirm("Lift this restriction?")) {
+                const headers = {};
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                if (urlKey) headers['x-hfit-key'] = urlKey;
+
                 const res = await fetch(`/api/bans/${id}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers
                 });
                 if ((await res.json()).success) {
                     fetchBans();
